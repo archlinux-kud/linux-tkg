@@ -72,6 +72,11 @@ for f in "$_where"/linux-tkg-config/"$_basekernel"/* "$_where"/linux-tkg-patches
   sha256sums+=( "SKIP" )
 done
 
+if [ "$_compiler_name" = "-llvm" ]; then
+  # If we are using LLVM, ensure stripping behaves exactly like GNU strip
+  STRIP_BINARIES='--strip-all-gnu'
+fi
+
 export KBUILD_BUILD_HOST=archlinux
 export KBUILD_BUILD_USER=$pkgbase
 export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})"
