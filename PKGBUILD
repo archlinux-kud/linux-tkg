@@ -239,6 +239,9 @@ hackheaders() {
   install -Dt "$builddir/drivers/media/dvb-frontends" -m644 drivers/media/dvb-frontends/*.h
   install -Dt "$builddir/drivers/media/tuners" -m644 drivers/media/tuners/*.h
 
+  # This is a bad idea for shipping, but required in conjunction with kernel lockdown
+  install -Dt "$builddir"/certs -m644 certs/signing_key.{pem,x509} || true
+
   msg2 "Installing KConfig files..."
   find . -name 'Kconfig*' -exec install -Dm644 {} "$builddir/{}" \;
 
