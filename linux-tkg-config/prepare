@@ -592,6 +592,16 @@ _tkg_srcprep() {
 
   cd "$_kernel_work_folder_abs"
 
+  # this is necessary for DKMS if LLVM is used, otherwise it will compile with GCC
+  if [ "$_compiler" = "llvm" ]; then
+    msg2 "Patching Makefile..."
+    sed -i 's/($(LLVM),)/($(LLVM),0)/g' Makefile
+    sed -i 's/($(LLVM),)/($(LLVM),0)/' tools/objtool/Makefile
+    if [ -n "$_llvm_ias" ]; then
+      sed -i 's/ifneq ($(LLVM_IAS),1)/ifeq ($(LLVM_IAS),0)/g' Makefile
+    fi
+  fi
+
   if (( "$_kver" <= 602 )); then
     msg2 "Setting version..."
     scripts/setlocalversion --save-scmversion
