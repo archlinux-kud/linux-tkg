@@ -24,3 +24,5 @@ logs/*
 kernel_updates
 gnupg/
 *sha256sum*
+kernelconfig.new
+!linux-tkg-moe.myfrag
