@@ -1,4 +1,4 @@
-From 52e108937cb87f9b49c947f0b96a813b58b7cb6e Mon Sep 17 00:00:00 2001
+From 2f15dd77b44ed3694f9d9e1c8c6298afee8b86a2 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 1 Sep 2021 16:06:21 +0800
 Subject: [PATCH 001/144] f2fs: avoid attaching SB_ACTIVE flag during mount
@@ -72,10 +72,10 @@ index 66b75bc6a60a..6a1b4668d933 100644
  	fix_curseg_write_pointer = !check_only || list_empty(&inode_list);
  
 -- 
-2.37.2
+2.37.3
 
 
-From 9c0465afbbef6d25731ef057511ffea1c9a3453a Mon Sep 17 00:00:00 2001
+From 5e3ce4a45301bfa4d1393eba147ca7a7e754c754 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Thu, 16 Sep 2021 17:09:03 +0800
 Subject: [PATCH 002/144] f2fs: introduce excess_dirty_threshold()
@@ -173,10 +173,10 @@ index e98c90bd8ef6..be937e1ac68c 100644
  
  	/* there is background inflight IO or foreground operation recently */
 -- 
-2.37.2
+2.37.3
 
 
-From 98325084923e0363ea96b83f86dbfcf86a493c3d Mon Sep 17 00:00:00 2001
+From e823b49a5ab6ac1e1617d0cc6eba34043d8f784a Mon Sep 17 00:00:00 2001
 From: Qing Wang <wangqing@vivo.com>
 Date: Tue, 12 Oct 2021 20:29:04 -0700
 Subject: [PATCH 003/144] f2fs: replace snprintf in show functions with
@@ -220,10 +220,10 @@ index 8b36e61fe7ed..d338f2140cbe 100644
  }
  
 -- 
-2.37.2
+2.37.3
 
 
-From 7b685991ee5229a3985514d679b59d8d62127f3b Mon Sep 17 00:00:00 2001
+From 1ae3bf6b827c30a88c2f9fc5571824900c22c36d Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Wed, 29 Sep 2021 11:12:03 -0700
 Subject: [PATCH 004/144] f2fs: introduce fragment allocation mode mount option
@@ -527,10 +527,10 @@ index d338f2140cbe..8885c7383472 100644
  };
  ATTRIBUTE_GROUPS(f2fs);
 -- 
-2.37.2
+2.37.3
 
 
-From ef09c4076ab0a101bdb98595b16f8f7373782475 Mon Sep 17 00:00:00 2001
+From 492358220bdddf0e573a1d7f8a2e44c208e9388f Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 1 Sep 2021 14:39:20 +0800
 Subject: [PATCH 005/144] f2fs: multidevice: support direct IO
@@ -912,10 +912,10 @@ index 4cb055af1ec0..f8cb916f3595 100644
  );
  
 -- 
-2.37.2
+2.37.3
 
 
-From 490eb298d23fed37c8f30f4cbba24b22beb2dfa2 Mon Sep 17 00:00:00 2001
+From 5a3ac83f4399711cda06be3cce0d1c84b7acfb60 Mon Sep 17 00:00:00 2001
 From: Fengnan Chang <changfengnan@vivo.com>
 Date: Fri, 22 Oct 2021 20:08:00 -0700
 Subject: [PATCH 006/144] f2fs: compress: fix overwrite may reduce compress
@@ -1054,10 +1054,10 @@ index 77b46b52a2d9..6ab7c249b79c 100644
  void f2fs_compress_ctx_add_page(struct compress_ctx *cc, struct page *page);
  int f2fs_write_multi_pages(struct compress_ctx *cc,
 -- 
-2.37.2
+2.37.3
 
 
-From 1bcd9e85a086b46ecbad30828967c87e258536b2 Mon Sep 17 00:00:00 2001
+From 09a6ef29212ade252443f1e9742d997723b4f3ce Mon Sep 17 00:00:00 2001
 From: Hyeong-Jun Kim <hj514.kim@samsung.com>
 Date: Tue, 2 Nov 2021 16:10:02 +0900
 Subject: [PATCH 007/144] f2fs: invalidate META_MAPPING before IPU/DIO write
@@ -1129,10 +1129,10 @@ index dbe95427cbe3..cb1058a3c060 100644
  
  	if (fio->bio && !(SM_I(sbi)->ipu_policy & (1 << F2FS_IPU_NOCACHE)))
 -- 
-2.37.2
+2.37.3
 
 
-From 36be5857e21af31a6aa0a6ed98348ac980cd07f4 Mon Sep 17 00:00:00 2001
+From affed2d50b7e22b50635d306cedd5e87a7264fba Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Thu, 9 Sep 2021 11:45:13 -0700
 Subject: [PATCH 008/144] fscrypt: remove fscrypt_operations::max_namelen
@@ -1214,10 +1214,10 @@ index e912ed9141d9..91ea9477e9bd 100644
  	 * Check whether the filesystem's inode numbers and UUID are stable,
  	 * meaning that they will never be changed even by offline operations
 -- 
-2.37.2
+2.37.3
 
 
-From 6dcae4f552e6a3e59a907f91096c4de52d8ae136 Mon Sep 17 00:00:00 2001
+From f14f52ad517ea1bbf2f61cb64f40c8b0172a9144 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Thu, 9 Sep 2021 12:07:37 -0700
 Subject: [PATCH 009/144] fscrypt: clean up comments in bio.c
@@ -1285,10 +1285,10 @@ index 68a2de6b5a9b..bfc2a5b74ed3 100644
  {
  	struct bio_vec *bv;
 -- 
-2.37.2
+2.37.3
 
 
-From d1900d14886827b6772a8e81db5634ccbd4c3093 Mon Sep 17 00:00:00 2001
+From 50a8f7913933f24fb9429b2aebd2fe7f6cbd68e1 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Thu, 16 Sep 2021 10:49:26 -0700
 Subject: [PATCH 010/144] fscrypt: improve documentation for inline encryption
@@ -1427,10 +1427,10 @@ index 7940a45d3952..4d5d50dca65c 100644
  -----------------------------
  
 -- 
-2.37.2
+2.37.3
 
 
-From 6d24cdea3f4b94446396c680e24e607350a91ac7 Mon Sep 17 00:00:00 2001
+From c54e5cd5e92d014d873b257f62457d56013191b6 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 25 Oct 2021 19:10:42 -0700
 Subject: [PATCH 011/144] fscrypt: improve a few comments
@@ -1492,10 +1492,10 @@ index 89cd533a88bf..eede186b04ce 100644
  int fscrypt_prepare_key(struct fscrypt_prepared_key *prep_key,
  			const u8 *raw_key, const struct fscrypt_info *ci)
 -- 
-2.37.2
+2.37.3
 
 
-From a3d638c0b65180b690d97889a91c7d28e8f3ad0c Mon Sep 17 00:00:00 2001
+From 9341519fe1eb897a98fc43bcf7571c8d4856e697 Mon Sep 17 00:00:00 2001
 From: Yue Hu <huyue2@yulong.com>
 Date: Thu, 14 Oct 2021 14:57:44 +0800
 Subject: [PATCH 012/144] erofs: remove the fast path of per-CPU buffer
@@ -1603,10 +1603,10 @@ index 8193c14bb111..6955cc292820 100644
  
  	/* general decoding path which can be used for all cases */
 -- 
-2.37.2
+2.37.3
 
 
-From 56958f7055a6c2559a8cb57c3e5a7dffbed3e521 Mon Sep 17 00:00:00 2001
+From 8c73a6cdb30a66f552310887f8de811c22eebf8d Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Thu, 7 Oct 2021 15:02:23 +0800
 Subject: [PATCH 013/144] erofs: decouple basic mount options from fs_context
@@ -1647,7 +1647,7 @@ index a552399e211d..2345f1de438e 100644
  		inode->i_flags |= S_DAX;
  	if (!nblks)
 diff --git a/fs/erofs/internal.h b/fs/erofs/internal.h
-index 9524e155b38f..b1b9d1b5cb66 100644
+index b77acf09726c..185f67f7ad1e 100644
 --- a/fs/erofs/internal.h
 +++ b/fs/erofs/internal.h
 @@ -47,7 +47,7 @@ typedef u64 erofs_off_t;
@@ -1928,10 +1928,10 @@ index eb51df4a9f77..de8c0f1e2aee 100644
  	struct page *page, *head = NULL;
  	LIST_HEAD(pagepool);
 -- 
-2.37.2
+2.37.3
 
 
-From 6903bed38e66f91ea7476b1e7bb038a8f650757b Mon Sep 17 00:00:00 2001
+From c3c998ef6364b34a5fba3bb9b95c0c4879f80135 Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Thu, 14 Oct 2021 16:10:10 +0800
 Subject: [PATCH 014/144] erofs: add multiple device support
@@ -2220,7 +2220,7 @@ index b0b23f41abc3..e480b3854d88 100644
  	BUILD_BUG_ON(BIT(Z_EROFS_VLE_DI_CLUSTER_TYPE_BITS) <
  		     Z_EROFS_VLE_CLUSTER_TYPE_MAX - 1);
 diff --git a/fs/erofs/internal.h b/fs/erofs/internal.h
-index b1b9d1b5cb66..0661d7d6969a 100644
+index 185f67f7ad1e..d1377b5ea6cb 100644
 --- a/fs/erofs/internal.h
 +++ b/fs/erofs/internal.h
 @@ -47,6 +47,15 @@ typedef u64 erofs_off_t;
@@ -2282,7 +2282,7 @@ index b1b9d1b5cb66..0661d7d6969a 100644
  
  	/* inode slot unit size in bit shift */
  	unsigned char islotbits;
-@@ -241,6 +261,7 @@ static inline bool erofs_sb_has_##name(struct erofs_sb_info *sbi) \
+@@ -212,6 +232,7 @@ static inline bool erofs_sb_has_##name(struct erofs_sb_info *sbi) \
  EROFS_FEATURE_FUNCS(lz4_0padding, incompat, INCOMPAT_LZ4_0PADDING)
  EROFS_FEATURE_FUNCS(compr_cfgs, incompat, INCOMPAT_COMPR_CFGS)
  EROFS_FEATURE_FUNCS(big_pcluster, incompat, INCOMPAT_BIG_PCLUSTER)
@@ -2290,7 +2290,7 @@ index b1b9d1b5cb66..0661d7d6969a 100644
  EROFS_FEATURE_FUNCS(sb_chksum, compat, COMPAT_SB_CHKSUM)
  
  /* atomic flag definitions */
-@@ -359,6 +380,7 @@ struct erofs_map_blocks {
+@@ -330,6 +351,7 @@ struct erofs_map_blocks {
  	erofs_off_t m_pa, m_la;
  	u64 m_plen, m_llen;
  
@@ -2298,7 +2298,7 @@ index b1b9d1b5cb66..0661d7d6969a 100644
  	unsigned int m_flags;
  
  	struct page *mpage;
-@@ -390,9 +412,18 @@ static inline int z_erofs_map_blocks_iter(struct inode *inode,
+@@ -361,9 +383,18 @@ static inline int z_erofs_map_blocks_iter(struct inode *inode,
  }
  #endif	/* !CONFIG_EROFS_FS_ZIP */
  
@@ -2628,10 +2628,10 @@ index de8c0f1e2aee..7c8d1d116725 100644
  					LOG_SECTORS_PER_BLOCK;
  				bio->bi_private = bi_private;
 -- 
-2.37.2
+2.37.3
 
 
-From 5fcd0c96eb6630f0a60ff3bed617f05adadd13de Mon Sep 17 00:00:00 2001
+From 7079a561cc5624fd439baea4a57a332fe15bc81c Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Sat, 9 Oct 2021 04:08:37 +0800
 Subject: [PATCH 015/144] erofs: get compression algorithms directly on mapping
@@ -2686,10 +2686,10 @@ index 3701c72bacb2..ad62d1b4d371 100644
  	struct super_block *sb;
  	struct page **in, **out;
 diff --git a/fs/erofs/internal.h b/fs/erofs/internal.h
-index 0661d7d6969a..f8537ffdefeb 100644
+index d1377b5ea6cb..bf3ce8f0d45d 100644
 --- a/fs/erofs/internal.h
 +++ b/fs/erofs/internal.h
-@@ -363,7 +363,7 @@ extern const struct address_space_operations z_erofs_aops;
+@@ -334,7 +334,7 @@ extern const struct address_space_operations z_erofs_aops;
   * of the corresponding uncompressed data in the file.
   */
  enum {
@@ -2698,7 +2698,7 @@ index 0661d7d6969a..f8537ffdefeb 100644
  	BH_FullMapped,
  };
  
-@@ -371,8 +371,8 @@ enum {
+@@ -342,8 +342,8 @@ enum {
  #define EROFS_MAP_MAPPED	(1 << BH_Mapped)
  /* Located in metadata (could be copied from bd_inode) */
  #define EROFS_MAP_META		(1 << BH_Meta)
@@ -2709,7 +2709,7 @@ index 0661d7d6969a..f8537ffdefeb 100644
  /* The length of extent is full */
  #define EROFS_MAP_FULL_MAPPED	(1 << BH_FullMapped)
  
-@@ -381,6 +381,7 @@ struct erofs_map_blocks {
+@@ -352,6 +352,7 @@ struct erofs_map_blocks {
  	u64 m_plen, m_llen;
  
  	unsigned short m_deviceid;
@@ -2717,7 +2717,7 @@ index 0661d7d6969a..f8537ffdefeb 100644
  	unsigned int m_flags;
  
  	struct page *mpage;
-@@ -394,6 +395,11 @@ struct erofs_map_blocks {
+@@ -365,6 +366,11 @@ struct erofs_map_blocks {
   */
  #define EROFS_GET_BLOCKS_FIEMAP	0x0002
  
@@ -2847,10 +2847,10 @@ index db4f2cec8360..16ae7b666810 100644
  TRACE_EVENT(erofs_lookup,
  
 -- 
-2.37.2
+2.37.3
 
 
-From fb00cc784fb439797441f1b01d69d9a19f645d90 Mon Sep 17 00:00:00 2001
+From e577709e1f19f96a50cb28730add8a09bf4bd4e8 Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Mon, 18 Oct 2021 00:57:21 +0800
 Subject: [PATCH 016/144] erofs: introduce the secondary compression head
@@ -3067,10 +3067,10 @@ index 1c3b068e5a42..85d0289429b3 100644
  		map->m_algorithmformat = vi->z_algorithmtype[0];
  
 -- 
-2.37.2
+2.37.3
 
 
-From c66a5f7ee7b36ed75c1323a5d461c7fbb1cfd1f7 Mon Sep 17 00:00:00 2001
+From 718f888bb0372823ac1ea38163f00e936c44229c Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Sat, 9 Oct 2021 04:08:39 +0800
 Subject: [PATCH 017/144] erofs: introduce readmore decompression strategy
@@ -3099,10 +3099,10 @@ Signed-off-by: Gao Xiang <hsiangkao@linux.alibaba.com>
  2 files changed, 93 insertions(+), 19 deletions(-)
 
 diff --git a/fs/erofs/internal.h b/fs/erofs/internal.h
-index f8537ffdefeb..354ce3cb2b32 100644
+index bf3ce8f0d45d..cb39934ef226 100644
 --- a/fs/erofs/internal.h
 +++ b/fs/erofs/internal.h
-@@ -332,6 +332,19 @@ static inline unsigned int erofs_inode_datalayout(unsigned int value)
+@@ -303,6 +303,19 @@ static inline unsigned int erofs_inode_datalayout(unsigned int value)
  			      EROFS_I_DATALAYOUT_BITS);
  }
  
@@ -3267,10 +3267,10 @@ index 7f30d151ea17..2253c6bd3828 100644
  		put_page(f.map.mpage);
  
 -- 
-2.37.2
+2.37.3
 
 
-From a28a8647de2135a287a69c8f028cc0a449b52b1d Mon Sep 17 00:00:00 2001
+From 458ea6bd679c745e8133f80fa5e56c1aa377d077 Mon Sep 17 00:00:00 2001
 From: Lasse Collin <lasse.collin@tukaani.org>
 Date: Mon, 11 Oct 2021 05:31:41 +0800
 Subject: [PATCH 018/144] lib/xz: Move s->lzma.len = 0 initialization to
@@ -3309,10 +3309,10 @@ index d548cf0e59fe..22b789645ce5 100644
  	s->lzma2.need_dict_reset = true;
  
 -- 
-2.37.2
+2.37.3
 
 
-From 93a8387436678532c2a7a6322be9bd0232085ad8 Mon Sep 17 00:00:00 2001
+From 8bf5e823c5c18dcf9a2880afb90ae6daafc40b53 Mon Sep 17 00:00:00 2001
 From: Lasse Collin <lasse.collin@tukaani.org>
 Date: Mon, 11 Oct 2021 05:31:42 +0800
 Subject: [PATCH 019/144] lib/xz: Add MicroLZMA decoder
@@ -3709,10 +3709,10 @@ index 09360ebb510e..bf1e94ec7873 100644
  #		define memzero(buf, size) memset(buf, 0, size)
  #	endif
 -- 
-2.37.2
+2.37.3
 
 
-From ff09c720f098a3320453794a0938dbd8ea1848d4 Mon Sep 17 00:00:00 2001
+From 1215abdd703de8abe7ced21595a58926d91a9f13 Mon Sep 17 00:00:00 2001
 From: Lasse Collin <lasse.collin@tukaani.org>
 Date: Mon, 11 Oct 2021 05:31:43 +0800
 Subject: [PATCH 020/144] lib/xz, lib/decompress_unxz.c: Fix spelling in
@@ -3778,10 +3778,10 @@ index 46b186d7eb45..27ce34520e78 100644
   * NOTE: This must return an int. Do not make it return a bool or the speed
   * of the code generated by GCC 3.x decreases 10-15 %. (GCC 4.3 doesn't care,
 -- 
-2.37.2
+2.37.3
 
 
-From 34f93cbab9b6d49709b516bde835c9a8c422e3d8 Mon Sep 17 00:00:00 2001
+From 8edea7de0b55ab5515106505ae84ff55328031e7 Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Mon, 11 Oct 2021 05:31:44 +0800
 Subject: [PATCH 021/144] erofs: rename some generic methods in decompressor
@@ -3941,10 +3941,10 @@ index 6955cc292820..f07b8494b457 100644
 +	return decompressors[rq->alg].decompress(rq, pagepool);
  }
 -- 
-2.37.2
+2.37.3
 
 
-From 6b040110be98341a9529f934f4ea3b25d47b0ade Mon Sep 17 00:00:00 2001
+From 00ea465d8f4eb9e75402970a73caf0db1bdf14b5 Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Mon, 11 Oct 2021 05:31:45 +0800
 Subject: [PATCH 022/144] erofs: lzma compression support
@@ -4412,10 +4412,10 @@ index 1c2917181346..083997a034e5 100644
   * bit 0 : COMPACTED_2B indexes (0 - off; 1 - on)
   *  e.g. for 4k logical cluster size,      4B        if compacted 2B is off;
 diff --git a/fs/erofs/internal.h b/fs/erofs/internal.h
-index 354ce3cb2b32..a6a53d22dfd6 100644
+index cb39934ef226..98a94e515f27 100644
 --- a/fs/erofs/internal.h
 +++ b/fs/erofs/internal.h
-@@ -407,6 +407,8 @@ struct erofs_map_blocks {
+@@ -378,6 +378,8 @@ struct erofs_map_blocks {
   * approach instead if possible since it's more metadata lightweight.)
   */
  #define EROFS_GET_BLOCKS_FIEMAP	0x0002
@@ -4424,7 +4424,7 @@ index 354ce3cb2b32..a6a53d22dfd6 100644
  
  enum {
  	Z_EROFS_COMPRESSION_SHIFTED = Z_EROFS_COMPRESSION_MAX,
-@@ -537,6 +539,26 @@ static inline int z_erofs_load_lz4_config(struct super_block *sb,
+@@ -508,6 +510,26 @@ static inline int z_erofs_load_lz4_config(struct super_block *sb,
  }
  #endif	/* !CONFIG_EROFS_FS_ZIP */
  
@@ -4552,10 +4552,10 @@ index 85d0289429b3..660489a7fb64 100644
  		if (!err)
  			map->m_flags |= EROFS_MAP_FULL_MAPPED;
 -- 
-2.37.2
+2.37.3
 
 
-From bd61a98038cb85c60df20d14345d755bb00b810f Mon Sep 17 00:00:00 2001
+From ced99c48a30d58854610db3dda510a94de160b82 Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Fri, 22 Oct 2021 17:01:20 +0800
 Subject: [PATCH 023/144] erofs: get rid of ->lru usage
@@ -4684,10 +4684,10 @@ index bd7d9809ecf7..50045510a1f4 100644
  	const unsigned int nrpages_out =
  		PAGE_ALIGN(rq->pageofs_out + rq->outputsize) >> PAGE_SHIFT;
 diff --git a/fs/erofs/internal.h b/fs/erofs/internal.h
-index a6a53d22dfd6..3265688af7f9 100644
+index 98a94e515f27..8ff965f0842e 100644
 --- a/fs/erofs/internal.h
 +++ b/fs/erofs/internal.h
-@@ -499,7 +499,14 @@ void erofs_pcpubuf_init(void);
+@@ -470,7 +470,14 @@ void erofs_pcpubuf_init(void);
  void erofs_pcpubuf_exit(void);
  
  /* utils.c / zdata.c */
@@ -4928,10 +4928,10 @@ index 7489d86157c1..c798574d8321 100644
  
  const struct address_space_operations z_erofs_aops = {
 -- 
-2.37.2
+2.37.3
 
 
-From e6756c89df0a09e8ae2fcaad1effa1a4c2e9de91 Mon Sep 17 00:00:00 2001
+From e7011712d187fa14c1f96f4fcd3c4951d30f2036 Mon Sep 17 00:00:00 2001
 From: Yue Hu <huyue2@yulong.com>
 Date: Sat, 6 Nov 2021 16:23:15 +0800
 Subject: [PATCH 024/144] erofs: remove useless cache strategy of DELAYEDALLOC
@@ -5008,10 +5008,10 @@ index 879df5362777..4a69515dea75 100644
  #endif
 -
 -- 
-2.37.2
+2.37.3
 
 
-From 857f95cc68ee6408dce3765fb0107885ace059e7 Mon Sep 17 00:00:00 2001
+From 1651287590174b7277eeddf5fc0b680263acdcfb Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Mon, 29 Nov 2021 10:36:12 -0800
 Subject: [PATCH 025/144] f2fs: show number of pending discard commands
@@ -5079,10 +5079,10 @@ index 8885c7383472..a8dada3be06b 100644
  	ATTR_LIST(ipu_policy),
  	ATTR_LIST(min_ipu_util),
 -- 
-2.37.2
+2.37.3
 
 
-From 886396bca9f84381fe9a6dc69adc7e89d032bbf1 Mon Sep 17 00:00:00 2001
+From 1ff4d2436275d220f82933d20eb58b00c4543824 Mon Sep 17 00:00:00 2001
 From: Fengnan Chang <changfengnan@vivo.com>
 Date: Wed, 10 Nov 2021 10:37:13 +0800
 Subject: [PATCH 026/144] f2fs: compress: reduce one page array alloc and free
@@ -5239,10 +5239,10 @@ index 6ab7c249b79c..c001e817994b 100644
  	struct compress_data *cbuf;	/* virtual mapped address on cpages */
  	size_t rlen;			/* valid data length in rbuf */
 -- 
-2.37.2
+2.37.3
 
 
-From da2bdf9a3bf9f27c636b4785aba40db069caae16 Mon Sep 17 00:00:00 2001
+From af1948898155806247f3ca3e6ec496a245a6a126 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 16 Jul 2021 09:39:13 -0500
 Subject: [PATCH 027/144] f2fs: rework write preallocations
@@ -5548,10 +5548,10 @@ index 758048a885d2..fa938346f67d 100644
  out:
  	trace_f2fs_file_write_iter(inode, iocb->ki_pos,
 -- 
-2.37.2
+2.37.3
 
 
-From 47a8b4a595eee2d7d0a77c7a2180ecd65d4a7bae Mon Sep 17 00:00:00 2001
+From 1e0910e1e1b03e24b703ddaf4b513e1d7b9399ea Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 16 Jul 2021 09:39:14 -0500
 Subject: [PATCH 028/144] f2fs: reduce indentation in f2fs_file_write_iter()
@@ -5650,10 +5650,10 @@ index fa938346f67d..93d4ac3a7668 100644
  	inode_unlock(inode);
  out:
 -- 
-2.37.2
+2.37.3
 
 
-From 4a002267d808417dd1be9a902efa2f638bdb75c4 Mon Sep 17 00:00:00 2001
+From 246b586c1ece5a89172f869a69318abb80632ffd Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 12 Nov 2021 14:31:16 -0800
 Subject: [PATCH 029/144] f2fs: do not expose unwritten blocks to user by DIO
@@ -5797,10 +5797,10 @@ index bd8960f4966b..4e633e0fefc0 100644
  	trace_f2fs_iget(inode);
  	return inode;
 -- 
-2.37.2
+2.37.3
 
 
-From b98e84aa9e8bc746dd6bc01a59d992fdae602d52 Mon Sep 17 00:00:00 2001
+From 2e1e045fa90df19d4b44a6a79b3f9b69f64ddc47 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 16 Jul 2021 09:39:15 -0500
 Subject: [PATCH 030/144] f2fs: fix the f2fs_file_write_iter tracepoint
@@ -5878,10 +5878,10 @@ index f8cb916f3595..dcb94d740e12 100644
  		__entry->offset,
  		__entry->length,
 -- 
-2.37.2
+2.37.3
 
 
-From ddce8271ea5cdb13b7db114e6bda8678f2939d47 Mon Sep 17 00:00:00 2001
+From 65b7d1748dadd5fd58b47f91fca9e57d246301a2 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 23 Jul 2021 00:59:20 -0700
 Subject: [PATCH 031/144] f2fs: implement iomap operations
@@ -5996,10 +5996,10 @@ index a07f01415176..ebd306629c8f 100644
  /*
   * gc.c
 -- 
-2.37.2
+2.37.3
 
 
-From 23a2e8310df27b958892d18171bac6e1cc86f11a Mon Sep 17 00:00:00 2001
+From c973fd2ebcb87781a32caa7f23a4a50864ab385c Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 23 Jul 2021 00:59:21 -0700
 Subject: [PATCH 032/144] f2fs: use iomap for direct I/O
@@ -6844,10 +6844,10 @@ index cdcf54ae0db8..be599f31d3c4 100644
  
  void iostat_update_and_unbind_ctx(struct bio *bio, int rw)
 -- 
-2.37.2
+2.37.3
 
 
-From 036102f3bf8f1caf4a88281c5ac1c51a9e12a1ed Mon Sep 17 00:00:00 2001
+From 0cbcf75b92244b3a2b2a59277cb68e497469bab3 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 19 Nov 2021 11:20:33 -0800
 Subject: [PATCH 033/144] f2fs: show more DIO information in tracepoint
@@ -6928,10 +6928,10 @@ index dcb94d740e12..f701bb23f83c 100644
  );
  
 -- 
-2.37.2
+2.37.3
 
 
-From 90d2f56ae16956bbf1f160eb0cd702374e4b03ae Mon Sep 17 00:00:00 2001
+From c49ec060ad66b93f62a8be2488aa42afc45b0f2c Mon Sep 17 00:00:00 2001
 From: Fengnan Chang <changfengnan@vivo.com>
 Date: Mon, 29 Nov 2021 10:13:41 +0800
 Subject: [PATCH 034/144] f2fs: support POSIX_FADV_DONTNEED drop compressed
@@ -6985,10 +6985,10 @@ index d1fcf5520a0f..20f7e129c929 100644
  
  #ifdef CONFIG_COMPAT
 -- 
-2.37.2
+2.37.3
 
 
-From cb8d66296d78a4bdc13d754139db3afefccfa4f7 Mon Sep 17 00:00:00 2001
+From 8f609e54366e492038f6a7f5ad909500492d3153 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Sat, 4 Dec 2021 09:55:35 -0800
 Subject: [PATCH 035/144] f2fs: avoid duplicate call of mark_inode_dirty
@@ -7022,10 +7022,10 @@ index a9e5213899d6..973742d77b09 100644
  	f2fs_mark_inode_dirty_sync(inode, true);
  }
 -- 
-2.37.2
+2.37.3
 
 
-From fd60736d8b882ae67c37a4eae87d9d685aef2ef2 Mon Sep 17 00:00:00 2001
+From 21d86657eeb0244f2b80b7085b8ccccc0a263092 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Wed, 8 Dec 2021 16:41:51 -0800
 Subject: [PATCH 036/144] f2fs: add gc_urgent_high_remaining sysfs node
@@ -7146,10 +7146,10 @@ index a8dada3be06b..dce956eab938 100644
  	ATTR_LIST(dirty_segments),
  	ATTR_LIST(free_segments),
 -- 
-2.37.2
+2.37.3
 
 
-From 438541b5685980c7c1b26bd93228868453f385e6 Mon Sep 17 00:00:00 2001
+From 17ee39d68af2db664c16f6a41dd8ad2b6250c7d9 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Mon, 13 Dec 2021 13:28:40 -0800
 Subject: [PATCH 037/144] f2fs: avoid down_write on nat_tree_lock during
@@ -7178,10 +7178,10 @@ index 0e6e73bc42d4..ebfd0f92b195 100644
  	if (!new)
  		return;
 -- 
-2.37.2
+2.37.3
 
 
-From 7442177ea94110e362b583f6c75dbb53fb1a9138 Mon Sep 17 00:00:00 2001
+From 72d6ce82cf411ab7ec13ba1f84a5f14884cd30cb Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Mon, 13 Dec 2021 14:16:32 -0800
 Subject: [PATCH 038/144] f2fs: do not bother checkpoint by f2fs_get_node_info
@@ -7472,10 +7472,10 @@ index cb1058a3c060..0e25f6bd9346 100644
  				f2fs_put_dnode(&dn);
  				return err;
 -- 
-2.37.2
+2.37.3
 
 
-From 84b51ee5bb7f891a07028dc8570f58aea4f1a4ef Mon Sep 17 00:00:00 2001
+From b7710fcc77e8b77a5447bec5bf8b07a6c37c1a8a Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 12 Dec 2021 17:16:56 +0800
 Subject: [PATCH 039/144] f2fs: clean up __find_inline_xattr() with
@@ -7557,10 +7557,10 @@ index 797ac505a075..8e5cd9c916ff 100644
  		f2fs_err(F2FS_I_SB(inode), "inode (%lu) has corrupted xattr",
  								inode->i_ino);
 -- 
-2.37.2
+2.37.3
 
 
-From aee8b81c9c4f7eac5740e6cd0c047e8dd854c107 Mon Sep 17 00:00:00 2001
+From c1839217c3bfe1a18d43a576329511329f412972 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 12 Dec 2021 17:17:51 +0800
 Subject: [PATCH 040/144] f2fs: support fault injection to f2fs_trylock_op()
@@ -7629,10 +7629,10 @@ index 4b8c5628375e..e370b939f8ee 100644
  
  void f2fs_build_fault_attr(struct f2fs_sb_info *sbi, unsigned int rate,
 -- 
-2.37.2
+2.37.3
 
 
-From 76be4844a0d32aeedad605381f1974c29113d6d8 Mon Sep 17 00:00:00 2001
+From 69a51ad2a48e87f1e2cbc5821041b820d2d11310 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Thu, 16 Dec 2021 17:13:56 +0800
 Subject: [PATCH 041/144] f2fs: don't drop compressed page cache in
@@ -7695,10 +7695,10 @@ index c2a2a2818f5e..eca2c39eb200 100644
  	}
  
 -- 
-2.37.2
+2.37.3
 
 
-From 2aa55c3786838800ffa657cb5d15b57bf94b4c33 Mon Sep 17 00:00:00 2001
+From 493e8a25842bf6312178beabc59b0d03debce055 Mon Sep 17 00:00:00 2001
 From: Yang Li <yang.lee@linux.alibaba.com>
 Date: Wed, 15 Dec 2021 10:38:58 +0800
 Subject: [PATCH 042/144] f2fs: Simplify bool conversion
@@ -7727,10 +7727,10 @@ index dce956eab938..699f97610e8a 100644
  		spin_unlock(&sbi->gc_urgent_high_lock);
  
 -- 
-2.37.2
+2.37.3
 
 
-From 1b95a0dd02b367d89954e90e37078fc060854e6c Mon Sep 17 00:00:00 2001
+From 5875cb8f2ddbcd39345ab26e7f0546f18aac2e6d Mon Sep 17 00:00:00 2001
 From: Fengnan Chang <changfengnan@vivo.com>
 Date: Wed, 29 Dec 2021 17:47:00 +0800
 Subject: [PATCH 043/144] f2fs: remove redunant invalidate compress pages
@@ -7760,10 +7760,10 @@ index ee0b73909f16..8c38b7711f70 100644
  
  	if (inode->i_ino == F2FS_NODE_INO(sbi) ||
 -- 
-2.37.2
+2.37.3
 
 
-From f1420d940f9884460b9c25e5a1a262da20a56aad Mon Sep 17 00:00:00 2001
+From 7b80b1e6b8300a0df0bb51a9f23f1e708bf92037 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 7 Jan 2022 20:08:45 -0800
 Subject: [PATCH 044/144] f2fs: do not allow partial truncation on pinned file
@@ -7795,10 +7795,10 @@ index a85308f2d12f..606d4d72c70f 100644
  			FALLOC_FL_ZERO_RANGE | FALLOC_FL_INSERT_RANGE)))
  		return -EOPNOTSUPP;
 -- 
-2.37.2
+2.37.3
 
 
-From 58cdb72e857d18318cc69e766587503f51a191b7 Mon Sep 17 00:00:00 2001
+From 05774b4b248fda563f4dcd2b32c9e1990daac341 Mon Sep 17 00:00:00 2001
 From: Tim Murray <timmurray@google.com>
 Date: Fri, 7 Jan 2022 12:48:44 -0800
 Subject: [PATCH 045/144] f2fs: move f2fs to use reader-unfair rwsems
@@ -10045,10 +10045,10 @@ index 8e5cd9c916ff..c76c15086e5f 100644
  
  	f2fs_update_time(sbi, REQ_TIME);
 -- 
-2.37.2
+2.37.3
 
 
-From 1f891ec08671b979a5d6320d6d456be738997b3d Mon Sep 17 00:00:00 2001
+From d29a8ccf914679c8a5b1457d31bd9a25f54490eb Mon Sep 17 00:00:00 2001
 From: Konstantin Vyshetsky <vkon@google.com>
 Date: Mon, 13 Dec 2021 17:12:03 -0800
 Subject: [PATCH 046/144] f2fs: move discard parameters into
@@ -10143,10 +10143,10 @@ index d71b53a5bcd0..f61a12282e7c 100644
  	dcc->next_pos = 0;
  	dcc->root = RB_ROOT_CACHED;
 -- 
-2.37.2
+2.37.3
 
 
-From 55210c1f3f9b8fffc6426ffaa831b36ab4aa1a7e Mon Sep 17 00:00:00 2001
+From fda1fe3ce6f4a9d5cdca07787e4acccee2e331a0 Mon Sep 17 00:00:00 2001
 From: Konstantin Vyshetsky <vkon@google.com>
 Date: Mon, 13 Dec 2021 17:12:43 -0800
 Subject: [PATCH 047/144] f2fs: expose discard related parameters in sysfs
@@ -10228,10 +10228,10 @@ index 778868e4a2fb..ccb807a36b08 100644
  	ATTR_LIST(pending_discard),
  	ATTR_LIST(batched_trim_sections),
 -- 
-2.37.2
+2.37.3
 
 
-From 637a5e7683b7362221532e930c9da5051387d8a7 Mon Sep 17 00:00:00 2001
+From 5fd91b1cfa570e1c4a9aa8c34d45f2a00597c48d Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Fri, 4 Feb 2022 08:34:10 +0800
 Subject: [PATCH 048/144] f2fs: adjust readahead block number during recovery
@@ -10384,10 +10384,10 @@ index be784f983b4a..9d1d249032ed 100644
  	if (!err)
  		f2fs_allocate_new_segments(sbi);
 -- 
-2.37.2
+2.37.3
 
 
-From 5ae7cd5b822dd0820765eda0be6c8aa83ad5d6c0 Mon Sep 17 00:00:00 2001
+From 4e822c94178661d06bc9570df973d84f681026e6 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Fri, 4 Feb 2022 15:19:46 +0800
 Subject: [PATCH 049/144] f2fs: introduce F2FS_IPU_HONOR_OPU_WRITE ipu policy
@@ -10609,10 +10609,10 @@ index 856ba6fcceaa..38df02d751fe 100644
  
  	sbi->readdir_ra = 1;
 -- 
-2.37.2
+2.37.3
 
 
-From fc08751ef9ad92be485208b0e5df55f2067fe827 Mon Sep 17 00:00:00 2001
+From 71890aebf2190b3bd05330d56df55dff93f8e424 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Thu, 27 Jan 2022 13:31:43 -0800
 Subject: [PATCH 050/144] f2fs: add a way to limit roll forward recovery time
@@ -10803,10 +10803,10 @@ index ccb807a36b08..b6218f42f110 100644
  	ATTR_LIST(idle_interval),
  	ATTR_LIST(discard_idle_interval),
 -- 
-2.37.2
+2.37.3
 
 
-From 696a71b22a45d945d37dfb4b263b8aa9ad847dfd Mon Sep 17 00:00:00 2001
+From 70b4cbc728a2e300266fdbf42b0ed7632d4b084e Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Fri, 4 Feb 2022 13:24:56 +0800
 Subject: [PATCH 051/144] f2fs: support idmapped mounts
@@ -11164,10 +11164,10 @@ index 7b48c71ce30c..59b6d661fdd9 100644
  MODULE_ALIAS_FS("f2fs");
  
 -- 
-2.37.2
+2.37.3
 
 
-From ae74a6e7001a45730029aa72f7135cc98c9eb8a5 Mon Sep 17 00:00:00 2001
+From 11dd1e8c6cbfcab7874bff62f8b0e4d95c6e7538 Mon Sep 17 00:00:00 2001
 From: Bart Van Assche <bvanassche@acm.org>
 Date: Tue, 22 Feb 2022 10:43:13 -0800
 Subject: [PATCH 052/144] f2fs: Restore rwsem lockdep support
@@ -11223,10 +11223,10 @@ index a7bf13e8dcc5..46e148a1dcfc 100644
  }
  
 -- 
-2.37.2
+2.37.3
 
 
-From 6eb472828d02d83b33c1a03e0a9445dea844a52f Mon Sep 17 00:00:00 2001
+From b5dbc62b9a0b9f3f0c5cd324092c292cb845488a Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Wed, 2 Mar 2022 11:39:08 -0800
 Subject: [PATCH 053/144] f2fs: avoid an infinite loop in
@@ -11317,10 +11317,10 @@ index 46e148a1dcfc..2dcc6e3de066 100644
  	/* for checkpoint */
  	struct f2fs_checkpoint *ckpt;		/* raw checkpoint pointer */
 -- 
-2.37.2
+2.37.3
 
 
-From acce9fa165577ea7370dfc7df85d1064785b223a Mon Sep 17 00:00:00 2001
+From 3cb0f948802182cc59839843f17021533ca606fe Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Thu, 3 Mar 2022 13:21:27 -0800
 Subject: [PATCH 054/144] f2fs: introduce F2FS_UNFAIR_RWSEM to support unfair
@@ -11417,10 +11417,10 @@ index 2dcc6e3de066..4aa687aac933 100644
  
  static inline void f2fs_lock_op(struct f2fs_sb_info *sbi)
 -- 
-2.37.2
+2.37.3
 
 
-From aac7ca4972fafc71d0ddeae1cdf6930d22040d76 Mon Sep 17 00:00:00 2001
+From e4f4f748a2f86d6a218e50636a735dffff2d57b3 Mon Sep 17 00:00:00 2001
 From: Jia Yang <jiayang5@huawei.com>
 Date: Wed, 9 Mar 2022 19:09:35 +0800
 Subject: [PATCH 055/144] f2fs: remove unnecessary read for F2FS_FITS_IN_INODE
@@ -11478,10 +11478,10 @@ index 192d747891de..3892de310457 100644
  	err = f2fs_dquot_initialize(inode);
  	if (err)
 -- 
-2.37.2
+2.37.3
 
 
-From 3362957f99883765292fcd500a18fb50bfcaa186 Mon Sep 17 00:00:00 2001
+From ac353badc6254b5de19d9ec3a393c32b2c67d2ae Mon Sep 17 00:00:00 2001
 From: Wang Xiaojun <wangxiaojun11@huawei.com>
 Date: Mon, 14 Mar 2022 15:15:15 +0800
 Subject: [PATCH 056/144] f2fs: remove redundant parameter judgment
@@ -11511,10 +11511,10 @@ index a77ac0cccbe8..be27dc697ef2 100644
  }
  
 -- 
-2.37.2
+2.37.3
 
 
-From 78653ca7bda1bb3f1415ec671b75c9f1b70cd21d Mon Sep 17 00:00:00 2001
+From 9b699f58b51bf2cc2d1141a1ea7c132d85c21b33 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Tue, 15 Mar 2022 21:14:14 -0700
 Subject: [PATCH 057/144] f2fs: introduce gc_urgent_mid mode
@@ -11645,10 +11645,10 @@ index b6218f42f110..d6ecd710216d 100644
  			return -EINVAL;
  		}
 -- 
-2.37.2
+2.37.3
 
 
-From 703a2a62899492f7672995f94839fa43ecc38bc0 Mon Sep 17 00:00:00 2001
+From b444931935d76a6b6b6bcf8138f228f90418596c Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Thu, 17 Mar 2022 16:33:15 +0800
 Subject: [PATCH 058/144] f2fs: initialize sbi->gc_mode explicitly
@@ -11674,10 +11674,10 @@ index 59b6d661fdd9..ca571a455116 100644
  	sbi->next_victim_seg[FG_GC] = NULL_SEGNO;
  	sbi->max_victim_search = DEF_MAX_VICTIM_SEARCH;
 -- 
-2.37.2
+2.37.3
 
 
-From cfe94db567edfd90a6dc48bd5d9febf3d979a8e5 Mon Sep 17 00:00:00 2001
+From 29fd86f155a496a472e984931ede8bd7f03d3d4c Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Fri, 18 Mar 2022 17:02:30 +0800
 Subject: [PATCH 059/144] f2fs: use aggressive GC policy during
@@ -11725,10 +11725,10 @@ index ca571a455116..3295fe63aa94 100644
  	return err;
  }
 -- 
-2.37.2
+2.37.3
 
 
-From 57c7015b40c1f992dea4d29b76ed6705e9c33294 Mon Sep 17 00:00:00 2001
+From fceb6761f166e840088935f4cbde77d068cb8d96 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Fri, 18 Mar 2022 12:13:23 -0700
 Subject: [PATCH 060/144] f2fs: make gc_urgent and gc_segment_mode sysfs node
@@ -11780,10 +11780,10 @@ index d6ecd710216d..cec6dd492974 100644
  	if (!strcmp(a->attr.name, "gc_reclaimed_segments")) {
  		return sysfs_emit(buf, "%u\n",
 -- 
-2.37.2
+2.37.3
 
 
-From 0b7f035a1549781b879e0335a5de07d377b960ff Mon Sep 17 00:00:00 2001
+From 72da91c7de26349d3d9fd0d7fa41468375ce1b2f Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 28 Jan 2022 15:39:36 -0800
 Subject: [PATCH 061/144] fscrypt: add functions for direct I/O support
@@ -11989,10 +11989,10 @@ index 91ea9477e9bd..50d92d805bd8 100644
  
  /**
 -- 
-2.37.2
+2.37.3
 
 
-From 786e342c752d00e69ae4131dc99be5ed49b68270 Mon Sep 17 00:00:00 2001
+From 23b32308e3af9ef90cbef83fcf3354a715e0bd74 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 28 Jan 2022 15:39:37 -0800
 Subject: [PATCH 062/144] iomap: support direct I/O with fscrypt using
@@ -12058,10 +12058,10 @@ index 468dcbba45bc..b50785429962 100644
  		bio->bi_iter.bi_sector = iomap_sector(iomap, pos);
  		bio->bi_write_hint = dio->iocb->ki_hint;
 -- 
-2.37.2
+2.37.3
 
 
-From b833ee6f92ba7ad0803a9e7c651bf6bf7f1fabc5 Mon Sep 17 00:00:00 2001
+From ad8141a8cf24287ec9f8599d74e4bd17aaad29c9 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 28 Jan 2022 15:39:38 -0800
 Subject: [PATCH 063/144] ext4: support direct I/O with fscrypt using
@@ -12151,10 +12151,10 @@ index 98f381f6fc18..910b3ea64d8b 100644
  
  	return 0;
 -- 
-2.37.2
+2.37.3
 
 
-From 337d9c6943b68f517bc5c7a4ef7a2aa262b629ff Mon Sep 17 00:00:00 2001
+From 515229a863492b54b4a50252c4475fe6739d9ecd Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 28 Jan 2022 15:39:39 -0800
 Subject: [PATCH 064/144] f2fs: support direct I/O with fscrypt using
@@ -12224,10 +12224,10 @@ index 3eda1cf094d8..e82cbd542be3 100644
  
  	/* disallow direct IO if any of devices has unaligned blksize */
 -- 
-2.37.2
+2.37.3
 
 
-From 844d20a0217730d24e79dd57ef6943ad2ba6d0cb Mon Sep 17 00:00:00 2001
+From cc49d7d68c74aaabc6dfc298b1cf8b3d422da91a Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 28 Jan 2022 15:39:40 -0800
 Subject: [PATCH 065/144] fscrypt: update documentation for direct I/O support
@@ -12286,10 +12286,10 @@ index 4d5d50dca65c..6ccd5efb25b7 100644
  ======================
  
 -- 
-2.37.2
+2.37.3
 
 
-From 9b12cbd7abb436f1a372db5e977ca5090c5e121d Mon Sep 17 00:00:00 2001
+From d547bf37289b32a9eb960fb4f9a00eaf7c0a6c08 Mon Sep 17 00:00:00 2001
 From: Bart Van Assche <bvanassche@acm.org>
 Date: Thu, 21 Apr 2022 11:30:15 -0700
 Subject: [PATCH 066/144] FROMGIT: scsi: sd: sd_zbc: Improve source code
@@ -12445,10 +12445,10 @@ index ed06798983f8..ddd752e728ac 100644
  	struct gendisk *disk = sdkp->disk;
  	struct request_queue *q = disk->queue;
 -- 
-2.37.2
+2.37.3
 
 
-From 652e300d0f3e98658694bc3684c19222b1c97396 Mon Sep 17 00:00:00 2001
+From de74d097217c6a661b64063dab3148e0ba9048ec Mon Sep 17 00:00:00 2001
 From: Bart Van Assche <bvanassche@acm.org>
 Date: Thu, 21 Apr 2022 11:30:16 -0700
 Subject: [PATCH 067/144] FROMGIT: scsi: sd: sd_zbc: Verify that the zone size
@@ -12496,10 +12496,10 @@ index ddd752e728ac..bc2bd6d64340 100644
  
  	return 0;
 -- 
-2.37.2
+2.37.3
 
 
-From 64ca3ac462a150b88c14216d89a6399e28fc105c Mon Sep 17 00:00:00 2001
+From 98551e5d6f9af3ca327ca63af8394513a7027d49 Mon Sep 17 00:00:00 2001
 From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Date: Thu, 21 Apr 2022 11:30:17 -0700
 Subject: [PATCH 068/144] FROMGIT: scsi: sd: sd_zbc: Use logical blocks as unit
@@ -12567,10 +12567,10 @@ index bc2bd6d64340..f40633ac8f4b 100644
  
  	ret = zone_idx;
 -- 
-2.37.2
+2.37.3
 
 
-From c91d9783720ba63383b05447ee399c647f2098d6 Mon Sep 17 00:00:00 2001
+From 808ecc715511b33114c88b55e8f83e4665cfb93d Mon Sep 17 00:00:00 2001
 From: Bart Van Assche <bvanassche@acm.org>
 Date: Thu, 21 Apr 2022 11:30:18 -0700
 Subject: [PATCH 069/144] FROMGIT: scsi: sd: sd_zbc: Introduce struct
@@ -12789,10 +12789,10 @@ index f40633ac8f4b..1b31e623ba31 100644
  	return 0;
  
 -- 
-2.37.2
+2.37.3
 
 
-From 55e3e660eeed2e5473c5ad252e5be465cc1f5221 Mon Sep 17 00:00:00 2001
+From 44332058dfa2e492686d465b4ff1948d83eef43f Mon Sep 17 00:00:00 2001
 From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Date: Thu, 21 Apr 2022 11:30:19 -0700
 Subject: [PATCH 070/144] FROMGIT: scsi: sd: sd_zbc: Return early in
@@ -12844,10 +12844,10 @@ index 1b31e623ba31..592b279b1d88 100644
  	 * Check for unconstrained reads: host-managed devices with
  	 * constrained reads (drives failing read after write pointer)
 -- 
-2.37.2
+2.37.3
 
 
-From f6848e576e404d231d05ca938d480407bb55d221 Mon Sep 17 00:00:00 2001
+From 26f671146ec55981dfe3ad640caf6f5bffd7011d Mon Sep 17 00:00:00 2001
 From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Date: Thu, 21 Apr 2022 11:30:20 -0700
 Subject: [PATCH 071/144] FROMGIT: scsi: sd: sd_zbc: Hide gap zones
@@ -13102,10 +13102,10 @@ index f017843a8124..c03e35fc382c 100644
  enum scsi_version_descriptor {
  	SCSI_VERSION_DESCRIPTOR_FCP4	= 0x0a40,
 -- 
-2.37.2
+2.37.3
 
 
-From f757ad97fd3143951a7b7a21d34374b169b0d17a Mon Sep 17 00:00:00 2001
+From 34296ff88eeee0ad2e73639c5865a267eda59cb6 Mon Sep 17 00:00:00 2001
 From: Bart Van Assche <bvanassche@acm.org>
 Date: Thu, 21 Apr 2022 11:30:21 -0700
 Subject: [PATCH 072/144] FROMGIT: scsi: scsi_debug: Fix a typo
@@ -13141,10 +13141,10 @@ index 747e1cbb7ec9..68969d5c520b 100644
  			     struct sdebug_dev_info *devip)
  {
 -- 
-2.37.2
+2.37.3
 
 
-From e283d9b3488b6253cc760e5d19a2d58349bdd485 Mon Sep 17 00:00:00 2001
+From 5f0b64bd5315b4bbbd6c4a831d5eb6c134757670 Mon Sep 17 00:00:00 2001
 From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Date: Thu, 21 Apr 2022 11:30:22 -0700
 Subject: [PATCH 073/144] FROMGIT: scsi: scsi_debug: Rename zone type constants
@@ -13230,10 +13230,10 @@ index 68969d5c520b..7607bee99251 100644
  			zsp->z_wp = zsp->z_start;
  		}
 -- 
-2.37.2
+2.37.3
 
 
-From dd1658cf178a80b9fbd7fa6516d8b907c2c383d9 Mon Sep 17 00:00:00 2001
+From 813381262ad60381928bd0a21acb26df34757021 Mon Sep 17 00:00:00 2001
 From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Date: Thu, 21 Apr 2022 11:30:23 -0700
 Subject: [PATCH 074/144] FROMGIT: scsi: scsi_debug: Add gap zone support
@@ -13594,10 +13594,10 @@ index 7607bee99251..6353476a6377 100644
  MODULE_PARM_DESC(zone_nr_conv, "Number of conventional zones (def=1)");
  MODULE_PARM_DESC(zone_size_mb, "Zone size in MiB (def=auto)");
 -- 
-2.37.2
+2.37.3
 
 
-From 3f83250461638cc77744d4573db20f7a3ac95f19 Mon Sep 17 00:00:00 2001
+From b7fccb9c72d080d2c00134dff6653d1b14565149 Mon Sep 17 00:00:00 2001
 From: NeilBrown <neilb@suse.de>
 Date: Tue, 22 Mar 2022 14:39:13 -0700
 Subject: [PATCH 075/144] f2fs: replace congestion_wait() calls with
@@ -13740,10 +13740,10 @@ index 3295fe63aa94..313a0e1f2cac 100644
  			}
  			set_sbi_flag(F2FS_SB(sb), SBI_QUOTA_NEED_REPAIR);
 -- 
-2.37.2
+2.37.3
 
 
-From 8ad7a52bc11a6adf4474c2200a8c2e71c220b9a2 Mon Sep 17 00:00:00 2001
+From aa2561b4fcc65890a1dc307b64f282563f67e1a0 Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Mon, 28 Feb 2022 14:41:22 +0200
 Subject: [PATCH 076/144] f2fs: don't pass a bio to f2fs_target_device
@@ -13838,10 +13838,10 @@ index 7ee30286d744..a2351d8f306b 100644
  void f2fs_set_data_blkaddr(struct dnode_of_data *dn);
  void f2fs_update_data_blkaddr(struct dnode_of_data *dn, block_t blkaddr);
 -- 
-2.37.2
+2.37.3
 
 
-From 59ca689d0d93f474dd2697611c40ad39083c26d3 Mon Sep 17 00:00:00 2001
+From 6cd232e911b3c69eeecc675daa29d66df46a8bd7 Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Mon, 28 Feb 2022 14:41:23 +0200
 Subject: [PATCH 077/144] f2fs: pass the bio operation to bio_alloc_bioset
@@ -13997,10 +13997,10 @@ index 43ce83c2f2fe..e563fc28a902 100644
  	if (fscrypt_inode_uses_fs_layer_crypto(inode))
  		post_read_steps |= STEP_DECRYPT;
 -- 
-2.37.2
+2.37.3
 
 
-From 5b0fb874dcdb4162107d2024109866f6e7753f10 Mon Sep 17 00:00:00 2001
+From 63a95657093633cba5f6b560772b7f0f964c666d Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 12 Apr 2022 14:45:50 -0700
 Subject: [PATCH 078/144] f2fs: remove obsolete whint_mode
@@ -14379,10 +14379,10 @@ index 313a0e1f2cac..c5c24c650db9 100644
  
  		set_sbi_flag(sbi, SBI_IS_DIRTY);
 -- 
-2.37.2
+2.37.3
 
 
-From 43d073f75c284f71096543a9e90de5d71be37bcd Mon Sep 17 00:00:00 2001
+From cb95c855cd3c1af7b8746f0f48ac082f080362fc Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 12 Apr 2022 15:01:58 -0700
 Subject: [PATCH 079/144] f2fs: keep io_flags to avoid IO split due to
@@ -14459,10 +14459,10 @@ index 98db194cc85c..7b39665da532 100644
  	if (is_read_io(fio->op)) {
  		bio->bi_end_io = f2fs_read_end_io;
 -- 
-2.37.2
+2.37.3
 
 
-From bd66aec1c843a3f7b3bed8e405a5c1b7f170ef79 Mon Sep 17 00:00:00 2001
+From 8bbc6261336ff3ce98176d4949fa15f99bf8af7b Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 29 Mar 2022 11:28:07 -0700
 Subject: [PATCH 080/144] f2fs: fix wrong condition check when failing metapage
@@ -14494,10 +14494,10 @@ index f346d1ad99f4..1ba5deff5e98 100644
  			sbi->metapage_eio_ofs = page->index;
  			sbi->metapage_eio_cnt = 0;
 -- 
-2.37.2
+2.37.3
 
 
-From 10d76dbe3966bf8f9953b78e5281c5fc8549bc7f Mon Sep 17 00:00:00 2001
+From c83f3d753acb1b1da29b3bf7dbfddcda2c67cda2 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Thu, 21 Apr 2022 16:47:02 -0700
 Subject: [PATCH 081/144] f2fs: should not truncate blocks during roll-forward
@@ -14528,10 +14528,10 @@ index 8c38b7711f70..2849eb9d18dd 100644
  		if (ret)
  			goto bad_inode;
 -- 
-2.37.2
+2.37.3
 
 
-From 6d0cc798547b4debea28826781a8b9aa4a18a855 Mon Sep 17 00:00:00 2001
+From d763008991d5442fc13c6666a93d123a27cc3efc Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 20 Mar 2022 23:11:17 +0800
 Subject: [PATCH 082/144] f2fs: check pinfile in gc_data_segment() in advance
@@ -14564,10 +14564,10 @@ index 79dc38eacb19..e2c9555f8bd6 100644
  				&F2FS_I(inode)->i_gc_rwsem[WRITE])) {
  				iput(inode);
 -- 
-2.37.2
+2.37.3
 
 
-From afe42126393b9a33f0e50609e67b03f15e196ab2 Mon Sep 17 00:00:00 2001
+From 59128218c1d550bdd7ed0503669109ea95023b1b Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 20 Mar 2022 23:11:18 +0800
 Subject: [PATCH 083/144] f2fs: don't set GC_FAILURE_PIN for background GC
@@ -14596,10 +14596,10 @@ index e2c9555f8bd6..79ea591f176c 100644
  		goto out;
  	}
 -- 
-2.37.2
+2.37.3
 
 
-From 1bb7ed2c1bdceb02067d53602791605fab21c8cf Mon Sep 17 00:00:00 2001
+From 4823de283ad1e07fbe02114998b9b27937870a0d Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Wed, 23 Mar 2022 13:30:04 -0700
 Subject: [PATCH 084/144] f2fs: remove unnecessary f2fs_lock_op in
@@ -14634,10 +14634,10 @@ index be27dc697ef2..501d12f81ec8 100644
  	nid_free = true;
  
 -- 
-2.37.2
+2.37.3
 
 
-From 47d34dd6a8e9485183a3f7cc443b6c3653ddf445 Mon Sep 17 00:00:00 2001
+From de535c5d96b1cc64688e6270c725bbedfbb54ea1 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Mon, 21 Mar 2022 15:13:06 -0700
 Subject: [PATCH 085/144] f2fs: introduce data read/write showing path info
@@ -14845,10 +14845,10 @@ index f701bb23f83c..11f6b7147be2 100644
  
   /* This part must be outside protection */
 -- 
-2.37.2
+2.37.3
 
 
-From 0da2989455cd373422144656c9c42aeea28feb1c Mon Sep 17 00:00:00 2001
+From 5e86fefd14c3139c65bf308977844d94eae7d80b Mon Sep 17 00:00:00 2001
 From: Jakob Koschel <jakobkoschel@gmail.com>
 Date: Tue, 12 Apr 2022 14:20:39 +0200
 Subject: [PATCH 086/144] f2fs: Remove usage of list iterator pas the loop for
@@ -14891,10 +14891,10 @@ index 688a18ed2e59..356bd1a34d9f 100644
  
  static void add_sit_entry(unsigned int segno, struct list_head *head)
 -- 
-2.37.2
+2.37.3
 
 
-From e34c69b229a4fdce69404dc3b6f95bf536289d78 Mon Sep 17 00:00:00 2001
+From cd7789d7f11884defb6dbc5011f0b490162380e5 Mon Sep 17 00:00:00 2001
 From: Jakob Koschel <jakobkoschel@gmail.com>
 Date: Tue, 12 Apr 2022 14:20:40 +0200
 Subject: [PATCH 087/144] f2fs: replace usage of found with dedicated list
@@ -14971,10 +14971,10 @@ index 356bd1a34d9f..6a0b88e9dada 100644
  		goto next;
  	}
 -- 
-2.37.2
+2.37.3
 
 
-From 6ec86623b0c47d892f9147647481b7857e58ede4 Mon Sep 17 00:00:00 2001
+From b61e8e64604d67fe1b986c77fa8a2123b13edc3d Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Mon, 18 Apr 2022 16:57:44 -0700
 Subject: [PATCH 088/144] f2fs: use flush command instead of FUA for zoned
@@ -15017,10 +15017,10 @@ index 966d6144fca2..144e01e706b5 100644
  
  	/* should add to global list before clearing PAGECACHE status */
 -- 
-2.37.2
+2.37.3
 
 
-From d3aca67daddb294be2d3ee1586f27ed2085a2162 Mon Sep 17 00:00:00 2001
+From b08552c4a692635f4890f9206c2cc6bc49c5e084 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 29 Mar 2022 16:25:54 -0700
 Subject: [PATCH 089/144] f2fs: avoid infinite loop to flush node pages
@@ -15192,10 +15192,10 @@ index 144e01e706b5..961ea46effc7 100644
  
  struct page *f2fs_get_node_page(struct f2fs_sb_info *sbi, pgoff_t nid)
 -- 
-2.37.2
+2.37.3
 
 
-From e9f701ed912d6a470f29764a6949453694e4350f Mon Sep 17 00:00:00 2001
+From 46d21806f866e6ec14242e91619be0cbe99b4364 Mon Sep 17 00:00:00 2001
 From: Niels Dossche <dossche.niels@gmail.com>
 Date: Fri, 22 Apr 2022 20:05:04 +0200
 Subject: [PATCH 090/144] f2fs: extend stat_lock to avoid potential race in
@@ -15266,10 +15266,10 @@ index c5c24c650db9..2170647f520d 100644
  	}
  
 -- 
-2.37.2
+2.37.3
 
 
-From 1fd8a571d65d67381f74cc6ebe2bd2cb36fe7ec3 Mon Sep 17 00:00:00 2001
+From 7a6a7bdf357e0639239864212563d15872cdcb2c Mon Sep 17 00:00:00 2001
 From: Luis Chamberlain <mcgrof@kernel.org>
 Date: Wed, 27 Apr 2022 18:02:53 +0200
 Subject: [PATCH 091/144] f2fs: call bdev_zone_sectors() only once on
@@ -15320,10 +15320,10 @@ index 2170647f520d..f18d2f2803f1 100644
  
  	FDEV(devi).blkz_seq = f2fs_kvzalloc(sbi,
 -- 
-2.37.2
+2.37.3
 
 
-From 8a0de993e768b91765dab7268214bd7600d53f60 Mon Sep 17 00:00:00 2001
+From a38e22e545d270ae3fa78977cf10f8fc25ab6d64 Mon Sep 17 00:00:00 2001
 From: Luis Chamberlain <mcgrof@kernel.org>
 Date: Wed, 27 Apr 2022 18:02:54 +0200
 Subject: [PATCH 092/144] f2fs: ensure only power of 2 zone sizes are allowed
@@ -15359,10 +15359,10 @@ index f18d2f2803f1..9cc97caa8c09 100644
  	if (sbi->blocks_per_blkz && sbi->blocks_per_blkz !=
  				SECTOR_TO_BLOCK(zone_sectors))
 -- 
-2.37.2
+2.37.3
 
 
-From 9e6bf14eb5965569b0d6b7dddcf768f8e0df5359 Mon Sep 17 00:00:00 2001
+From 57b7da0837de51d015eccdb6b4e10b90c284422d Mon Sep 17 00:00:00 2001
 From: Byungki Lee <dominicus79@gmail.com>
 Date: Fri, 29 Apr 2022 13:29:53 -0700
 Subject: [PATCH 093/144] f2fs: write checkpoint during FG_GC
@@ -15429,10 +15429,10 @@ index 79ea591f176c..97efa11beb27 100644
  	SIT_I(sbi)->last_victim[ALLOC_NEXT] = 0;
  	SIT_I(sbi)->last_victim[FLUSH_DEVICE] = init_segno;
 -- 
-2.37.2
+2.37.3
 
 
-From 0601999d94a1559cb46fbe4d9c2bb24f3eb09057 Mon Sep 17 00:00:00 2001
+From 761c98a54325352a987333b53e0009b1f5c33b48 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Fri, 6 May 2022 18:30:31 +0800
 Subject: [PATCH 094/144] f2fs: give priority to select unpinned section for
@@ -15642,10 +15642,10 @@ index 1fa26a9603cb..8fbc9f6afa55 100644
  
  /* victim selection function for cleaning and SSR */
 -- 
-2.37.2
+2.37.3
 
 
-From 489d45fb0232ccb1b1552ffbc0ffd0748dcff4a6 Mon Sep 17 00:00:00 2001
+From af19cd714521cae5690eefe769b8599edf5a0fd2 Mon Sep 17 00:00:00 2001
 From: Weichao Guo <guoweichao@oppo.com>
 Date: Sat, 7 May 2022 00:28:14 +0800
 Subject: [PATCH 095/144] f2fs: skip GC if possible when checkpoint disabling
@@ -15699,10 +15699,10 @@ index 9cc97caa8c09..7b0a31dceb4c 100644
  	cpc.reason = CP_PAUSE;
  	set_sbi_flag(sbi, SBI_CP_DISABLED);
 -- 
-2.37.2
+2.37.3
 
 
-From 80febd9eeb30677c1217afcc29355251d33fa3dc Mon Sep 17 00:00:00 2001
+From e8b5295b533fcea74a71b09e0efacb1e231e40ce Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 6 May 2022 14:17:32 -0700
 Subject: [PATCH 096/144] f2fs: stop allocating pinned sections if EAGAIN
@@ -15729,10 +15729,10 @@ index 074b088edd5b..b1e067d2a6d9 100644
  		}
  
 -- 
-2.37.2
+2.37.3
 
 
-From 8248946e1d64dbc6bd2b9b0aea744b8acc461996 Mon Sep 17 00:00:00 2001
+From 010429a39ec661372e46a558ab2c0a183c069c66 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Thu, 28 Apr 2022 11:18:09 -0700
 Subject: [PATCH 097/144] f2fs: change the current atomic write way
@@ -17103,10 +17103,10 @@ index 11f6b7147be2..eb33eb18ae69 100644
  
  	TP_PROTO(struct inode *inode, pgoff_t index, unsigned long ret),
 -- 
-2.37.2
+2.37.3
 
 
-From b46d8a0e90fce94d86229c723e07be36814740e8 Mon Sep 17 00:00:00 2001
+From 64e3687ad6f670b82202d30841b5e221ca508e81 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Thu, 5 May 2022 17:49:18 -0700
 Subject: [PATCH 098/144] f2fs: kill volatile write support
@@ -17460,10 +17460,10 @@ index 3d793202cc9f..5ac7e756a1bb 100644
  
  	/*
 -- 
-2.37.2
+2.37.3
 
 
-From ae6cdbc2324dbbf9c40606a9f8a55f5c3483ebb4 Mon Sep 17 00:00:00 2001
+From 4e13f2bc03563f88a41e8336ebe6cc4fdeaa983b Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Sat, 30 Apr 2022 22:08:52 -0700
 Subject: [PATCH 099/144] f2fs: reject test_dummy_encryption when
@@ -17499,10 +17499,10 @@ index e12405ee4533..16361edc6327 100644
  
  #ifdef CONFIG_F2FS_FS_COMPRESSION
 -- 
-2.37.2
+2.37.3
 
 
-From c8aa68bb5e41aa430acdd1b7fa5c8f7a51014cc5 Mon Sep 17 00:00:00 2001
+From 49a312b071cf7cf487289e168e86932c1c2586c5 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 6 May 2022 11:40:33 -0700
 Subject: [PATCH 100/144] f2fs: introduce f2fs_gc_control to consolidate
@@ -17893,10 +17893,10 @@ index eb33eb18ae69..1de200beea50 100644
  		__entry->dirty_dents,
  		__entry->dirty_imeta,
 -- 
-2.37.2
+2.37.3
 
 
-From 077b38812d939db06c35ddc6a20370a8f01ea69d Mon Sep 17 00:00:00 2001
+From 501fe73350819070316635517c3c835c8b9fda40 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 6 May 2022 14:23:27 -0700
 Subject: [PATCH 101/144] f2fs: keep wait_ms if EAGAIN happens
@@ -17932,10 +17932,10 @@ index 9af3190cfdf7..8715d4d15b79 100644
  		/* if return value is not zero, no victim was selected */
  		if (f2fs_gc(sbi, &gc_control))
 -- 
-2.37.2
+2.37.3
 
 
-From f4367a57bc1b63b5e407d111599f11f351c13edb Mon Sep 17 00:00:00 2001
+From d3dfd96a970964017cac1d0dcf52255f3c493108 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 6 May 2022 13:34:41 -0700
 Subject: [PATCH 102/144] f2fs: do not stop GC when requiring a free section
@@ -18139,10 +18139,10 @@ index 1de200beea50..0edcd4e11638 100644
  		__entry->dirty_dents,
  		__entry->dirty_imeta,
 -- 
-2.37.2
+2.37.3
 
 
-From b90ab0ca645715eafc3a47bb98ea39e74054d737 Mon Sep 17 00:00:00 2001
+From 94ad12598e68ef9234ffc3d8234b6e841f3ffb73 Mon Sep 17 00:00:00 2001
 From: Chao Liu <liuchao@coolpad.com>
 Date: Thu, 19 May 2022 18:40:10 +0800
 Subject: [PATCH 103/144] f2fs: make f2fs_read_inline_data() more readable
@@ -18174,10 +18174,10 @@ index c2ad8aeb0cb5..3ea4a641bf3e 100644
  {
  	return is_inode_flag_set(inode, FI_INLINE_DATA);
 -- 
-2.37.2
+2.37.3
 
 
-From 7ccdf8c9fa2d027694c20b0d6b44f8c8824e7e85 Mon Sep 17 00:00:00 2001
+From 50e76b9da1e5fb4ac5f62a9d0ef34fe2d4d8a58b Mon Sep 17 00:00:00 2001
 From: Julia Lawall <Julia.Lawall@inria.fr>
 Date: Sat, 21 May 2022 13:11:43 +0200
 Subject: [PATCH 104/144] f2fs: fix typo in comment
@@ -18205,10 +18205,10 @@ index 3ea4a641bf3e..2445d55d28bc 100644
  	struct completion s_kobj_unregister;
  
 -- 
-2.37.2
+2.37.3
 
 
-From 93202892ccf9ccd479c308525b23baf88dec900e Mon Sep 17 00:00:00 2001
+From 711d08af1fe318662150e6a017d1d3d6b03f6c3c Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 25 May 2022 09:56:34 +0800
 Subject: [PATCH 105/144] f2fs: avoid unneeded error handling for
@@ -18240,10 +18240,10 @@ index 6b9382b3485d..f80c0c65e6ea 100644
  			ret = __replace_atomic_write_block(inode, index, blkaddr,
  							&new->old_addr, false);
 -- 
-2.37.2
+2.37.3
 
 
-From acbf9be5c8a1a89a3515b16b6b530067f01a2ade Mon Sep 17 00:00:00 2001
+From fe85a0dbf136b8088e7d392156b537ad44c3384e Mon Sep 17 00:00:00 2001
 From: Yufen Yu <yuyufen@huawei.com>
 Date: Wed, 25 May 2022 17:43:36 +0800
 Subject: [PATCH 106/144] f2fs: add f2fs_init_write_merge_io function
@@ -18354,10 +18354,10 @@ index 0a15ed236ee5..b19f4dcf2b9b 100644
  	init_f2fs_rwsem(&sbi->cp_rwsem);
  	init_f2fs_rwsem(&sbi->quota_sem);
 -- 
-2.37.2
+2.37.3
 
 
-From 1bf934f4cc3de01ef633cdbd53eb355d64b1afec Mon Sep 17 00:00:00 2001
+From 4a382c93fa12723e779a9dcfc1379b2b1841485e Mon Sep 17 00:00:00 2001
 From: Yufen Yu <yuyufen@huawei.com>
 Date: Thu, 26 May 2022 10:21:06 +0800
 Subject: [PATCH 107/144] f2fs: replace F2FS_I(inode) and sbi by the local
@@ -18505,10 +18505,10 @@ index c5ea1f7fea26..02a0005aac77 100644
  
  	stat_inc_inline_xattr(inode);
 -- 
-2.37.2
+2.37.3
 
 
-From f9d4512ea51f7054618bae99f6a79505b4484ff5 Mon Sep 17 00:00:00 2001
+From 2be0c2612c122af199503b2fcfae529f4866b821 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 4 Apr 2022 18:09:14 -0700
 Subject: [PATCH 108/144] fscrypt: split up FS_CRYPTO_BLOCK_SIZE
@@ -18642,10 +18642,10 @@ index 50d92d805bd8..efc7f96e5e26 100644
  union fscrypt_policy;
  struct fscrypt_info;
 -- 
-2.37.2
+2.37.3
 
 
-From de705d9cc23fd6dfd847831a88ccd462ca0ffc20 Mon Sep 17 00:00:00 2001
+From 922220a307b395ef4129d4247e39a55111902eba Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Wed, 13 Apr 2022 22:34:15 -0700
 Subject: [PATCH 109/144] fscrypt: log when starting to use inline encryption
@@ -18751,10 +18751,10 @@ index eede186b04ce..6b509af13e0d 100644
  		 * fscrypt performance can vary greatly depending on which
  		 * crypto algorithm implementation is used.  Help people debug
 -- 
-2.37.2
+2.37.3
 
 
-From b4cce4454c35859b08b49d720c0fbbaa72c4cdf9 Mon Sep 17 00:00:00 2001
+From 848a79823756ad7bbb3b31939eee4bbb311a90ff Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Sat, 30 Apr 2022 22:08:53 -0700
 Subject: [PATCH 110/144] fscrypt: factor out fscrypt_policy_to_key_spec()
@@ -18847,10 +18847,10 @@ index ed3d623724cd..2a11276913a9 100644
  fscrypt_get_dummy_policy(struct super_block *sb)
  {
 -- 
-2.37.2
+2.37.3
 
 
-From 91659429192edc2274132a901f7770d181ab09f6 Mon Sep 17 00:00:00 2001
+From 1ccf41a9ce7fadcc6fc0fb82d108a01f1af4c554 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Sat, 30 Apr 2022 22:08:54 -0700
 Subject: [PATCH 111/144] fscrypt: add new helper functions for
@@ -19224,10 +19224,10 @@ index efc7f96e5e26..e60d57c99cb6 100644
  {
  	return -EOPNOTSUPP;
 -- 
-2.37.2
+2.37.3
 
 
-From fe4f9da0d5a7a7c51d300ef57c5f50fdb4b0d6d2 Mon Sep 17 00:00:00 2001
+From 55f1d8f888a35e10eee575a630f88bad81b8d776 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 18 Oct 2021 11:04:50 -0700
 Subject: [PATCH 112/144] UPSTREAM: blk-crypto-fallback: properly prefix
@@ -19439,10 +19439,10 @@ index c322176a1e09..82b302597b47 100644
  	int err = 0;
  
 -- 
-2.37.2
+2.37.3
 
 
-From 9afbfb673ac64fd7e56a6ef6ae6ecf25ed6e80d4 Mon Sep 17 00:00:00 2001
+From 67671939b94b8f6467400636e60fdb60fb029d13 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 18 Oct 2021 11:04:51 -0700
 Subject: [PATCH 113/144] UPSTREAM: blk-crypto: rename keyslot-manager files to
@@ -19610,10 +19610,10 @@ index 0c0c9a0fdf57..725b1de41767 100644
  struct mmc_ios {
  	unsigned int	clock;			/* clock rate */
 -- 
-2.37.2
+2.37.3
 
 
-From 3d18ba5c8ee0317f18f5b12edfde91c35ad32355 Mon Sep 17 00:00:00 2001
+From 4f81d1a4035a576fa0b0dfcb44e3b8ab964a8d4c Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 18 Oct 2021 11:04:52 -0700
 Subject: [PATCH 114/144] BACKPORT: blk-crypto: rename blk_keyslot_manager to
@@ -21427,7 +21427,7 @@ index 78a58e788dff..e18c01276873 100644
  #endif /* CONFIG_SCSI_UFS_CRYPTO */
  
 diff --git a/drivers/scsi/ufs/ufshcd.c b/drivers/scsi/ufs/ufshcd.c
-index 2f6468f22b48..9c95a92f7bc3 100644
+index dae1a85f1512..3e5cdc29fd26 100644
 --- a/drivers/scsi/ufs/ufshcd.c
 +++ b/drivers/scsi/ufs/ufshcd.c
 @@ -4985,7 +4985,7 @@ static int ufshcd_slave_configure(struct scsi_device *sdev)
@@ -21681,7 +21681,7 @@ index a27605e2f826..bbab65bd5428 100644
 -#endif /* __LINUX_KEYSLOT_MANAGER_H */
 +#endif /* __LINUX_BLK_CRYPTO_PROFILE_H */
 diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 8863b4a378af..933a7a8ad1ce 100644
+index 67344dfe07a7..6ad3ac94b7bf 100644
 --- a/include/linux/blkdev.h
 +++ b/include/linux/blkdev.h
 @@ -37,7 +37,7 @@ struct pr_ops;
@@ -21712,7 +21712,7 @@ index 8863b4a378af..933a7a8ad1ce 100644
  #endif
  
  	unsigned int		rq_timeout;
-@@ -1818,19 +1817,20 @@ static inline struct bio_vec *rq_integrity_vec(struct request *rq)
+@@ -1829,19 +1828,20 @@ static inline struct bio_vec *rq_integrity_vec(struct request *rq)
  
  #ifdef CONFIG_BLK_INLINE_ENCRYPTION
  
@@ -21768,10 +21768,10 @@ index 725b1de41767..52eae8c45b8d 100644
  
  	/* Host Software Queue support */
 -- 
-2.37.2
+2.37.3
 
 
-From 1e6913285ed87fb5dceb10179cdb1b251fed95d5 Mon Sep 17 00:00:00 2001
+From 41c784c6cd40de2505af16d766c782ff5ae42354 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 18 Oct 2021 11:04:53 -0700
 Subject: [PATCH 115/144] UPSTREAM: blk-crypto: update inline encryption
@@ -22288,10 +22288,10 @@ index 2e2a2c627096..4d151fbe2058 100644
 +encryption context will use the fallback, and IO will complete as usual.  When
 +the fallback is disabled, a bio with an encryption context will be failed.
 -- 
-2.37.2
+2.37.3
 
 
-From b1f1892b432d132b4df8c29dc6d928f05fd6687a Mon Sep 17 00:00:00 2001
+From 3cdbe9a36bcfa32cfdd360554077f6f5e0962ffc Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Tue, 23 Nov 2021 17:37:33 -0800
 Subject: [PATCH 116/144] UPSTREAM: blk-crypto: remove blk_crypto_unregister()
@@ -22343,10 +22343,10 @@ index a8a0dd7dc779..f0e956d772f1 100644
  #endif
  }
 diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 933a7a8ad1ce..845f6f6afe7e 100644
+index 6ad3ac94b7bf..755dc59177d6 100644
 --- a/include/linux/blkdev.h
 +++ b/include/linux/blkdev.h
-@@ -1820,8 +1820,6 @@ static inline struct bio_vec *rq_integrity_vec(struct request *rq)
+@@ -1831,8 +1831,6 @@ static inline struct bio_vec *rq_integrity_vec(struct request *rq)
  bool blk_crypto_register(struct blk_crypto_profile *profile,
  			 struct request_queue *q);
  
@@ -22355,7 +22355,7 @@ index 933a7a8ad1ce..845f6f6afe7e 100644
  #else /* CONFIG_BLK_INLINE_ENCRYPTION */
  
  static inline bool blk_crypto_register(struct blk_crypto_profile *profile,
-@@ -1830,8 +1828,6 @@ static inline bool blk_crypto_register(struct blk_crypto_profile *profile,
+@@ -1841,8 +1839,6 @@ static inline bool blk_crypto_register(struct blk_crypto_profile *profile,
  	return true;
  }
  
@@ -22365,10 +22365,10 @@ index 933a7a8ad1ce..845f6f6afe7e 100644
  
  
 -- 
-2.37.2
+2.37.3
 
 
-From 8733e0a5e1c7661b8bc1f6191baa829d9c808893 Mon Sep 17 00:00:00 2001
+From a67488778bf6d2dee1b50dd749f6e53b3c234295 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 24 Jan 2022 13:59:36 -0800
 Subject: [PATCH 117/144] BACKPORT: block: simplify calling convention of
@@ -22445,10 +22445,10 @@ index 1b5e57f6115f..ca84e2b53575 100644
  		elevator_exit(q, q->elevator);
  	}
 -- 
-2.37.2
+2.37.3
 
 
-From 11c4b991ca6939e80fabcabc79370762fef7d13c Mon Sep 17 00:00:00 2001
+From dec417b266fa397380ce01fc434c9147089adea8 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Fri, 10 Jun 2022 11:32:40 -0700
 Subject: [PATCH 118/144] f2fs: fix iostat related lock protection
@@ -22583,10 +22583,10 @@ index be599f31d3c4..d84c5f6cc09d 100644
  
  void iostat_update_and_unbind_ctx(struct bio *bio, int rw)
 -- 
-2.37.2
+2.37.3
 
 
-From d6ee7601bfad3fc848206d7dba1534edafe06735 Mon Sep 17 00:00:00 2001
+From b382beeef8ea674bd8a7dddeef4895d15c0cdd8a Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Sat, 18 Jun 2022 00:42:24 -0700
 Subject: [PATCH 119/144] f2fs: do not count ENOENT for error case
@@ -22616,10 +22616,10 @@ index 76d3f90b07f0..c1b2f0c36db3 100644
  	return ERR_PTR(err);
  }
 -- 
-2.37.2
+2.37.3
 
 
-From da4102f2e61a40c441b9ba127a68aa94d1dcc33e Mon Sep 17 00:00:00 2001
+From 77fe1fbedbbbead3ada0556e9b22ef04cb602495 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 6 Jun 2022 15:32:41 -0700
 Subject: [PATCH 120/144] f2fs: use the updated test_dummy_encryption helper
@@ -22708,10 +22708,10 @@ index b19f4dcf2b9b..3268d981626a 100644
  
  #ifdef CONFIG_F2FS_FS_COMPRESSION
 -- 
-2.37.2
+2.37.3
 
 
-From 71cb1b6293d892b01a75b2f691d59fae92f7d2cd Mon Sep 17 00:00:00 2001
+From 7e0beba3b5fbe6cf1dd0bfe3d82e4a62e049b37d Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Sat, 11 Jun 2022 10:55:43 -0700
 Subject: [PATCH 121/144] f2fs: do not skip updating inode when retrying to
@@ -22752,10 +22752,10 @@ index c1b2f0c36db3..631c5c9db74f 100644
  			f2fs_wait_on_page_writeback(page, NODE, true, true);
  
 -- 
-2.37.2
+2.37.3
 
 
-From c246b227abfc800896a4ef205970eda8b6dfd0ba Mon Sep 17 00:00:00 2001
+From 4bb0542d7e0413f09f1cd40d810c7ff785f3c6e3 Mon Sep 17 00:00:00 2001
 From: Jack Qiu <jack.qiu@huawei.com>
 Date: Tue, 31 May 2022 09:16:56 +0800
 Subject: [PATCH 122/144] f2fs: optimize error handling in redirty_blocks
@@ -22790,10 +22790,10 @@ index a41baf264470..5a8b251a755c 100644
  		f2fs_put_page(page, 1);
  		f2fs_put_page(page, 0);
 -- 
-2.37.2
+2.37.3
 
 
-From d917cf1fd9356f0d4dfd87184f9d8a1636fa2817 Mon Sep 17 00:00:00 2001
+From c9ab95062948a2dee17a78a24cc3283d7dba8863 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 19 Jun 2022 01:51:55 +0800
 Subject: [PATCH 123/144] f2fs: initialize page_array_entry slab only if
@@ -22823,10 +22823,10 @@ index e98a0ef71941..d0f17dd18895 100644
  
  	sbi->page_array_slab_size = sizeof(struct page *) <<
 -- 
-2.37.2
+2.37.3
 
 
-From 02805cfc8f7b291db2e5f565714519260f8cc88a Mon Sep 17 00:00:00 2001
+From 2b09ff4b5f540b758a6f9916f57cbba7cbd14cb8 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Mon, 20 Jun 2022 10:38:42 -0700
 Subject: [PATCH 124/144] f2fs: introduce memory mode
@@ -22963,10 +22963,10 @@ index 3268d981626a..487a2cac1581 100644
  	sbi->sb->s_flags &= ~SB_INLINECRYPT;
  
 -- 
-2.37.2
+2.37.3
 
 
-From 73f1b7eb90beea619a5c23cc67486f62d40307a2 Mon Sep 17 00:00:00 2001
+From d41b3c8c1ae3696a07f68e3273edb3fdd318b465 Mon Sep 17 00:00:00 2001
 From: duguowei <duguowei@xiaomi.com>
 Date: Mon, 20 Jun 2022 21:39:45 +0800
 Subject: [PATCH 125/144] f2fs: remove redundant code for gc condition
@@ -23028,10 +23028,10 @@ index 3fe145e8e594..19b956c2d697 100644
 +			limit_free_user_blocks(invalid_user_blocks));
  }
 -- 
-2.37.2
+2.37.3
 
 
-From 3c7d4d3af40017c2b1f0b3fe50aa2bd749049628 Mon Sep 17 00:00:00 2001
+From 630bf4f462c58259e87a5416b3d3947f82a1e6f3 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 28 Jun 2022 10:57:24 -0700
 Subject: [PATCH 126/144] f2fs: enforce single zone capacity
@@ -23208,10 +23208,10 @@ index 487a2cac1581..b2d83a08cdca 100644
  }
  #endif
 -- 
-2.37.2
+2.37.3
 
 
-From d4f4d14462cab6e214c8e61d3ccd9ca53cd70fe8 Mon Sep 17 00:00:00 2001
+From fd4b49f4ae779ac3c06b02600e99018ec89b50c2 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 28 Jun 2022 11:03:57 -0700
 Subject: [PATCH 127/144] f2fs: adjust zone capacity when considering valid
@@ -23354,10 +23354,10 @@ index 813a892cd979..d1d63766f2c7 100644
  
  	if (unlikely(is_sbi_flag_set(sbi, SBI_POR_DOING)))
 -- 
-2.37.2
+2.37.3
 
 
-From cfcfc7934caea21fb7514cee4a7d1745a016246a Mon Sep 17 00:00:00 2001
+From 0985e014bd3ece21ae2ae6543e523e31a98d1c06 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 28 Jun 2022 15:49:47 -0700
 Subject: [PATCH 128/144] f2fs: add a sysfs entry to show zone capacity
@@ -23421,10 +23421,10 @@ index cec6dd492974..f09fe66b0a31 100644
  	ATTR_LIST(compr_written_block),
  	ATTR_LIST(compr_saved_block),
 -- 
-2.37.2
+2.37.3
 
 
-From 6039377dd54ed9432202470a5095f3b7daa3a2fe Mon Sep 17 00:00:00 2001
+From 4d1c18ae41c97b5e85f1721aa3752b4bf0b73e16 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 6 Jul 2022 14:30:15 +0800
 Subject: [PATCH 129/144] f2fs: fix to invalidate META_MAPPING before DIO write
@@ -23505,10 +23505,10 @@ index d09d2bc9a9b6..091c29d51d91 100644
  		if (map->m_multidev_dio) {
  			block_t blk_addr = map->m_pblk;
 -- 
-2.37.2
+2.37.3
 
 
-From e5025f035e8e823a88dc096fca94fc42389ce174 Mon Sep 17 00:00:00 2001
+From 5c408a3c5ac39d0ef3b169abd2dedc5666ecf20d Mon Sep 17 00:00:00 2001
 From: "Fabio M. De Francesco" <fmdefrancesco@gmail.com>
 Date: Sun, 17 Jul 2022 10:36:13 +0200
 Subject: [PATCH 130/144] f2fs: Delete f2fs_copy_page() and replace with
@@ -23581,10 +23581,10 @@ index aa73ef54142e..ea9aca493c38 100644
  			f2fs_put_page(pdst, 1);
  			f2fs_put_page(psrc, 1);
 -- 
-2.37.2
+2.37.3
 
 
-From e5fed8db62e8f9e885df14a7618643b4967a6ba0 Mon Sep 17 00:00:00 2001
+From 6f219d1d978f92efd848eb138b53e3d13832e966 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Tue, 12 Jul 2022 11:17:15 +0800
 Subject: [PATCH 131/144] f2fs: fix to check inline_data during compressed
@@ -23614,10 +23614,10 @@ index 48fda826e622..5f35242134b6 100644
  	return S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode);
  }
 -- 
-2.37.2
+2.37.3
 
 
-From d67542a8d26bad189cd7ba67e2c2840dbed7791a Mon Sep 17 00:00:00 2001
+From 7a469d7a5cba0b178fed26bde0dcb9cf465e6bec Mon Sep 17 00:00:00 2001
 From: Chao Liu <liuchao@coolpad.com>
 Date: Thu, 7 Jul 2022 17:09:24 +0800
 Subject: [PATCH 132/144] f2fs: allow compression of files without blocks
@@ -23646,10 +23646,10 @@ index ea9aca493c38..ef58a38a53e4 100644
  
  			set_compress_context(inode);
 -- 
-2.37.2
+2.37.3
 
 
-From cc2d79d0d63532a8a382c9d84ae5ccf746944205 Mon Sep 17 00:00:00 2001
+From d2761a16a7fa0cf127c3e086ba9160a5ea82f5c0 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Tue, 12 Jul 2022 23:26:43 +0800
 Subject: [PATCH 133/144] f2fs: invalidate meta pages only for post_read
@@ -23750,10 +23750,10 @@ index 81638f38e164..5734673e8499 100644
  
  static int read_compacted_summaries(struct f2fs_sb_info *sbi)
 -- 
-2.37.2
+2.37.3
 
 
-From 55a3195c80b8ee34665496e6206065e69c8066e7 Mon Sep 17 00:00:00 2001
+From 17a704fef9aee98c836c8bb3bec4148cb68c80c9 Mon Sep 17 00:00:00 2001
 From: qixiaoyu1 <qxy65535@gmail.com>
 Date: Mon, 18 Jul 2022 11:28:40 +0800
 Subject: [PATCH 134/144] f2fs: don't bother wait_ms by foreground gc
@@ -23788,10 +23788,10 @@ index 626baec9dd1b..a5c0c835c99b 100644
  		if (foreground)
  			wake_up_all(&gc_th->fggc_wq);
 -- 
-2.37.2
+2.37.3
 
 
-From 3886e659729fc7407cd40cd23fbb335c5a237e4f Mon Sep 17 00:00:00 2001
+From 391c0bf6d423e8720541131f7a4730d6c37e5be5 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Mon, 18 Jul 2022 16:02:48 -0700
 Subject: [PATCH 135/144] f2fs: introduce sysfs atomic write statistics
@@ -24064,10 +24064,10 @@ index f09fe66b0a31..3183c44d44c5 100644
  };
  ATTRIBUTE_GROUPS(f2fs);
 -- 
-2.37.2
+2.37.3
 
 
-From dd98c0ae5b1b7f24aedf0811d7197e34db856a77 Mon Sep 17 00:00:00 2001
+From 85933ac1b253a0b5bf3c4588ab92fa5a842712a1 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao.yu@oppo.com>
 Date: Mon, 25 Jul 2022 00:04:17 +0800
 Subject: [PATCH 136/144] f2fs: obsolete unused MAX_DISCARD_BLOCKS
@@ -24094,10 +24094,10 @@ index cf12dece1d8b..4843fceeef8a 100644
  #define DEF_MIN_DISCARD_ISSUE_TIME	50	/* 50 ms, if exists */
  #define DEF_MID_DISCARD_ISSUE_TIME	500	/* 500 ms, if device busy */
 -- 
-2.37.2
+2.37.3
 
 
-From 8214d25749f3d72c4d6694f68bf6d4648d8b4e47 Mon Sep 17 00:00:00 2001
+From d86026d4dd3cc8540cc652f3e3c8bb81eeae993c Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Mon, 1 Aug 2022 10:08:08 -0700
 Subject: [PATCH 137/144] f2fs: revive F2FS_IOC_ABORT_VOLATILE_WRITE
@@ -24185,10 +24185,10 @@ index 352a822d4370..3121d127d5aa 100644
  #define F2FS_IOC_WRITE_CHECKPOINT	_IO(F2FS_IOCTL_MAGIC, 7)
  #define F2FS_IOC_DEFRAGMENT		_IOWR(F2FS_IOCTL_MAGIC, 8,	\
 -- 
-2.37.2
+2.37.3
 
 
-From fe8ba68042cc9454eff2b27efb62d143afd605ad Mon Sep 17 00:00:00 2001
+From 2bea6bb95692c013bf8cabe954c8f99f35f88cb1 Mon Sep 17 00:00:00 2001
 From: Ye Bin <yebin10@huawei.com>
 Date: Mon, 1 Aug 2022 19:26:04 +0800
 Subject: [PATCH 138/144] f2fs: fix null-ptr-deref in f2fs_get_dnode_of_data
@@ -24305,10 +24305,10 @@ index b0dc9cdc8e33..1449c6070399 100644
  		return f2fs_rw_hint_to_seg_type(inode->i_write_hint);
  	} else {
 -- 
-2.37.2
+2.37.3
 
 
-From 19c42a296428a0e56f5279bc0fc756591198edd7 Mon Sep 17 00:00:00 2001
+From 77bffed00506499dd5a75dbedcb3b5855a80757e Mon Sep 17 00:00:00 2001
 From: Eunhee Rho <eunhee83.rho@samsung.com>
 Date: Mon, 1 Aug 2022 13:40:02 +0900
 Subject: [PATCH 139/144] f2fs: remove device type check for direct IO
@@ -24341,10 +24341,10 @@ index 537f08ece351..492a01a07721 100644
  		if (block_unaligned_IO(inode, iocb, iter))
  			return true;
 -- 
-2.37.2
+2.37.3
 
 
-From 7e6999b0fa925e5aa98e1fca44f0bb8d831ca80b Mon Sep 17 00:00:00 2001
+From 70064875f99ad010892e275fbedbcfa70fe646a4 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Wed, 3 Aug 2022 20:33:54 -0700
 Subject: [PATCH 140/144] f2fs: do not set compression bit if kernel doesn't
@@ -24402,10 +24402,10 @@ index 73c9d2b48886..06a152ff4d20 100644
  	}
  
 -- 
-2.37.2
+2.37.3
 
 
-From 263cebcbb540fc43f60fb71a2daac4740bba88b3 Mon Sep 17 00:00:00 2001
+From b6b9bedf18cb748bc4d64b30fc3ead79b3228ec6 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Tue, 2 Aug 2022 12:24:37 -0700
 Subject: [PATCH 141/144] f2fs: handle decompress only post processing in
@@ -24980,10 +24980,10 @@ index 9a5f2d1e23da..9807fd1c081e 100644
  	WARN_ON_ONCE(1);
  }
 -- 
-2.37.2
+2.37.3
 
 
-From 67daa3637ebd7f2e947cfae4132fa33976d4dc4b Mon Sep 17 00:00:00 2001
+From 2bef08b8191d9c80ccedf3698a26d5f94556e276 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao.yu@oppo.com>
 Date: Thu, 4 Aug 2022 21:38:21 +0800
 Subject: [PATCH 142/144] f2fs: clean up f2fs_abort_atomic_write()
@@ -25102,10 +25102,10 @@ index 55e3ae733305..d0ae5ef2538f 100644
  			/* should remain fi->extent_tree for writepage */
  			f2fs_destroy_extent_node(inode);
 -- 
-2.37.2
+2.37.3
 
 
-From 4adbe2ecf071ec56cad6c18f3c1269ee24c3d54d Mon Sep 17 00:00:00 2001
+From 1efc27ef9ef0fc84d45c4dcda11f723d58e7c552 Mon Sep 17 00:00:00 2001
 From: Fengnan Chang <changfengnan@vivo.com>
 Date: Sun, 31 Jul 2022 11:33:45 +0800
 Subject: [PATCH 143/144] f2fs: intorduce f2fs_all_cluster_page_ready
@@ -25204,10 +25204,10 @@ index 9807fd1c081e..1ca123f2434c 100644
  void f2fs_compress_ctx_add_page(struct compress_ctx *cc, struct page *page);
  int f2fs_write_multi_pages(struct compress_ctx *cc,
 -- 
-2.37.2
+2.37.3
 
 
-From 448c99c05a57024b5a02ce7d6f00f038f73f0637 Mon Sep 17 00:00:00 2001
+From 44f5259fcd885f87d86bb354523f18ff2aff6cb8 Mon Sep 17 00:00:00 2001
 From: Fengnan Chang <fengnanchang@gmail.com>
 Date: Sun, 31 Jul 2022 11:33:46 +0800
 Subject: [PATCH 144/144] f2fs: use onstack pages instead of pvec
@@ -25344,5 +25344,5 @@ index 1ca123f2434c..783dafc6f40c 100644
  bool f2fs_sanity_check_cluster(struct dnode_of_data *dn);
  void f2fs_compress_ctx_add_page(struct compress_ctx *cc, struct page *page);
 -- 
-2.37.2
+2.37.3
 
