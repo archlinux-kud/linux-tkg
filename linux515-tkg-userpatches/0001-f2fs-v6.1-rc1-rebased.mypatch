@@ -1,7 +1,7 @@
-From cef18f6ee0980cebe9d825228f64420dc5e24db4 Mon Sep 17 00:00:00 2001
+From 7c5765541d97ab4edd6e807428da5533e0935ad5 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 1 Sep 2021 16:06:21 +0800
-Subject: [PATCH 001/175] f2fs: avoid attaching SB_ACTIVE flag during mount
+Subject: [PATCH 001/174] f2fs: avoid attaching SB_ACTIVE flag during mount
 
 Quoted from [1]
 
@@ -75,10 +75,10 @@ index ed21e34b59c7..3630008a2b49 100644
 2.38.1
 
 
-From 81ed6d3725b4ae8aeb058ee5ccd711d00f22994b Mon Sep 17 00:00:00 2001
+From 51d85c59b07fd996cb00419e31f62288c19fa972 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Thu, 16 Sep 2021 17:09:03 +0800
-Subject: [PATCH 002/175] f2fs: introduce excess_dirty_threshold()
+Subject: [PATCH 002/174] f2fs: introduce excess_dirty_threshold()
 
 This patch enables f2fs_balance_fs_bg() to check all metadatas' dirty
 threshold rather than just checking node block's, so that checkpoint()
@@ -176,10 +176,10 @@ index af810b2d5d90..2867e9daef31 100644
 2.38.1
 
 
-From 1fa9623e34a7fb9735fa4f45b720779c17e315fd Mon Sep 17 00:00:00 2001
+From ea4d72f7297b62874eecec84d2a64e83d3ba89b2 Mon Sep 17 00:00:00 2001
 From: Qing Wang <wangqing@vivo.com>
 Date: Tue, 12 Oct 2021 20:29:04 -0700
-Subject: [PATCH 003/175] f2fs: replace snprintf in show functions with
+Subject: [PATCH 003/174] f2fs: replace snprintf in show functions with
  sysfs_emit
 
 coccicheck complains about the use of snprintf() in sysfs show functions.
@@ -223,10 +223,10 @@ index 8b36e61fe7ed..d338f2140cbe 100644
 2.38.1
 
 
-From 91bab7f9c89ea369673e74b8fe8a85e5053c8af8 Mon Sep 17 00:00:00 2001
+From 652ed51d63e8d30c462bcf2f84a1f0105f956ea7 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Wed, 29 Sep 2021 11:12:03 -0700
-Subject: [PATCH 004/175] f2fs: introduce fragment allocation mode mount option
+Subject: [PATCH 004/174] f2fs: introduce fragment allocation mode mount option
 
 Added two options into "mode=" mount option to make it possible for
 developers to simulate filesystem fragmentation/after-GC situation
@@ -530,10 +530,10 @@ index d338f2140cbe..8885c7383472 100644
 2.38.1
 
 
-From aa9104dee0fc3ce6ae8c07cbfa92b2417f2a041f Mon Sep 17 00:00:00 2001
+From 01baca26b25648d08c11831436db88381d12e5fb Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 1 Sep 2021 14:39:20 +0800
-Subject: [PATCH 005/175] f2fs: multidevice: support direct IO
+Subject: [PATCH 005/174] f2fs: multidevice: support direct IO
 
 Commit 3c62be17d4f5 ("f2fs: support multiple devices") missed
 to support direct IO for multiple device feature, this patch
@@ -915,10 +915,10 @@ index 4cb055af1ec0..f8cb916f3595 100644
 2.38.1
 
 
-From 7024bb8dc7900604b8a0518bdd58000310d32889 Mon Sep 17 00:00:00 2001
+From 8a93e7fabaffab7397fce477940b49efa237e856 Mon Sep 17 00:00:00 2001
 From: Fengnan Chang <changfengnan@vivo.com>
 Date: Fri, 22 Oct 2021 20:08:00 -0700
-Subject: [PATCH 006/175] f2fs: compress: fix overwrite may reduce compress
+Subject: [PATCH 006/174] f2fs: compress: fix overwrite may reduce compress
  ratio unproperly
 
 when overwrite only first block of cluster, since cluster is not full, it
@@ -1057,10 +1057,10 @@ index 2720a550b6c4..8e3d39893e7a 100644
 2.38.1
 
 
-From 171f09ad5a75eb75f27e0121545ebc48f9339a49 Mon Sep 17 00:00:00 2001
+From 4d638dcd23b145aa1b1926c545925de38f2936eb Mon Sep 17 00:00:00 2001
 From: Hyeong-Jun Kim <hj514.kim@samsung.com>
 Date: Tue, 2 Nov 2021 16:10:02 +0900
-Subject: [PATCH 007/175] f2fs: invalidate META_MAPPING before IPU/DIO write
+Subject: [PATCH 007/174] f2fs: invalidate META_MAPPING before IPU/DIO write
 
 Encrypted pages during GC are read and cached in META_MAPPING.
 However, due to cached pages in META_MAPPING, there is an issue where
@@ -1132,10 +1132,10 @@ index 4adc4e258495..4b0fc4cf3213 100644
 2.38.1
 
 
-From 52d10c58e71f999539a677c328f158d91426fb12 Mon Sep 17 00:00:00 2001
+From 81640dc4e17e7845f5a2d00de08a926de93e7e5b Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Thu, 9 Sep 2021 11:45:13 -0700
-Subject: [PATCH 008/175] fscrypt: remove fscrypt_operations::max_namelen
+Subject: [PATCH 008/174] fscrypt: remove fscrypt_operations::max_namelen
 
 The max_namelen field is unnecessary, as it is set to 255 (NAME_MAX) on
 all filesystems that support fscrypt (or plan to support fscrypt).  For
@@ -1200,7 +1200,7 @@ index 22be7aeb96c4..c57b46a352d8 100644
 -	.max_namelen		= UBIFS_MAX_NLEN,
  };
 diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
-index e912ed9141d9..91ea9477e9bd 100644
+index 3c7ea2cf85a5..c14292cc5dd3 100644
 --- a/include/linux/fscrypt.h
 +++ b/include/linux/fscrypt.h
 @@ -118,9 +118,6 @@ struct fscrypt_operations {
@@ -1217,10 +1217,10 @@ index e912ed9141d9..91ea9477e9bd 100644
 2.38.1
 
 
-From 5b2bd070952eb665e1e448001d5860a2f0adc705 Mon Sep 17 00:00:00 2001
+From 68908dca37dc23297c053d7e1149b950db7f1599 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Thu, 9 Sep 2021 12:07:37 -0700
-Subject: [PATCH 009/175] fscrypt: clean up comments in bio.c
+Subject: [PATCH 009/174] fscrypt: clean up comments in bio.c
 
 The file comment in bio.c is almost completely irrelevant to the actual
 contents of the file; it was originally copied from crypto.c.  Fix it
@@ -1288,10 +1288,10 @@ index 68a2de6b5a9b..bfc2a5b74ed3 100644
 2.38.1
 
 
-From 62405f4836b37c7cab28f380e6977d8b69d1ee60 Mon Sep 17 00:00:00 2001
+From 17ea2d33fad8bde503517bff4aadff7c2220386a Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Thu, 16 Sep 2021 10:49:26 -0700
-Subject: [PATCH 010/175] fscrypt: improve documentation for inline encryption
+Subject: [PATCH 010/174] fscrypt: improve documentation for inline encryption
 
 Currently the fscrypt inline encryption support is documented in the
 "Implementation details" section, and it doesn't go into much detail.
@@ -1430,10 +1430,10 @@ index 7940a45d3952..4d5d50dca65c 100644
 2.38.1
 
 
-From 45155af248b61ef15c5b5e5dfc0c57e875419fb7 Mon Sep 17 00:00:00 2001
+From 54d97109b30d644f30318c62d2123d69755d4bb2 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 25 Oct 2021 19:10:42 -0700
-Subject: [PATCH 011/175] fscrypt: improve a few comments
+Subject: [PATCH 011/174] fscrypt: improve a few comments
 
 Improve a few comments.  These were extracted from the patch
 "fscrypt: add support for hardware-wrapped keys"
@@ -1447,7 +1447,7 @@ Signed-off-by: Eric Biggers <ebiggers@google.com>
  2 files changed, 13 insertions(+), 3 deletions(-)
 
 diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
-index cb25ef0cdf1f..5b0a9e6478b5 100644
+index 373c434b375c..e5bf6f5cca53 100644
 --- a/fs/crypto/fscrypt_private.h
 +++ b/fs/crypto/fscrypt_private.h
 @@ -20,6 +20,11 @@
@@ -1476,10 +1476,10 @@ index cb25ef0cdf1f..5b0a9e6478b5 100644
  
  	/* For v1 policy keys: the raw key.  Wiped for v2 policy keys. */
 diff --git a/fs/crypto/keysetup.c b/fs/crypto/keysetup.c
-index 89cd533a88bf..eede186b04ce 100644
+index c3fbd594cc79..ad1278aff1bc 100644
 --- a/fs/crypto/keysetup.c
 +++ b/fs/crypto/keysetup.c
-@@ -122,8 +122,9 @@ fscrypt_allocate_skcipher(struct fscrypt_mode *mode, const u8 *raw_key,
+@@ -121,8 +121,9 @@ fscrypt_allocate_skcipher(struct fscrypt_mode *mode, const u8 *raw_key,
  
  /*
   * Prepare the crypto transform object or blk-crypto key in @prep_key, given the
@@ -1495,10 +1495,10 @@ index 89cd533a88bf..eede186b04ce 100644
 2.38.1
 
 
-From 271e618b29480737ce29fc2a605de03bda53da93 Mon Sep 17 00:00:00 2001
+From f8b882a02d24c672717467d34bb1b5fa24517605 Mon Sep 17 00:00:00 2001
 From: Yue Hu <huyue2@yulong.com>
 Date: Thu, 14 Oct 2021 14:57:44 +0800
-Subject: [PATCH 012/175] erofs: remove the fast path of per-CPU buffer
+Subject: [PATCH 012/174] erofs: remove the fast path of per-CPU buffer
  decompression
 
 As Xiang mentioned, such path has no real impact to our current
@@ -1606,10 +1606,10 @@ index 8193c14bb111..6955cc292820 100644
 2.38.1
 
 
-From 03d9bce16d1c0a60ee22c45ce12ce8222a4d0ad6 Mon Sep 17 00:00:00 2001
+From 7c0ecf5f9e35723564f60d401ab50cb22146be25 Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Thu, 7 Oct 2021 15:02:23 +0800
-Subject: [PATCH 013/175] erofs: decouple basic mount options from fs_context
+Subject: [PATCH 013/174] erofs: decouple basic mount options from fs_context
 
 Previously, EROFS mount options are all in the basic types, so
 erofs_fs_context can be directly copied with assignment. However,
@@ -1931,10 +1931,10 @@ index eb51df4a9f77..de8c0f1e2aee 100644
 2.38.1
 
 
-From 8c195538cf754b9dd9450a9860681a567ad18152 Mon Sep 17 00:00:00 2001
+From ce1d939e80d0218123a12098b1014d0f4bfd049e Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Thu, 14 Oct 2021 16:10:10 +0800
-Subject: [PATCH 014/175] erofs: add multiple device support
+Subject: [PATCH 014/174] erofs: add multiple device support
 
 In order to support multi-layer container images, add multiple
 device feature to EROFS. Two ways are available to use for now:
@@ -2631,10 +2631,10 @@ index de8c0f1e2aee..7c8d1d116725 100644
 2.38.1
 
 
-From 0e2b88a93ca2b8ff09cafc17bdb5c262a59b6392 Mon Sep 17 00:00:00 2001
+From 54419fcacf07ead86424765378172228ffac81de Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Sat, 9 Oct 2021 04:08:37 +0800
-Subject: [PATCH 015/175] erofs: get compression algorithms directly on mapping
+Subject: [PATCH 015/174] erofs: get compression algorithms directly on mapping
 
 Currently, z_erofs_map_blocks_iter() returns whether extents are
 compressed or not, and the decompression frontend gets the specific
@@ -2850,10 +2850,10 @@ index db4f2cec8360..16ae7b666810 100644
 2.38.1
 
 
-From 122cb15a13d46c3d67599ce7a26ffc4ce2661f1b Mon Sep 17 00:00:00 2001
+From 09ee8f1bb61dc2a02c59159963a86782a352e887 Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Mon, 18 Oct 2021 00:57:21 +0800
-Subject: [PATCH 016/175] erofs: introduce the secondary compression head
+Subject: [PATCH 016/174] erofs: introduce the secondary compression head
 
 Previously, for each HEAD lcluster, it can be either HEAD or PLAIN
 lcluster to indicate whether the whole pcluster is compressed or not.
@@ -3070,10 +3070,10 @@ index 1c3b068e5a42..85d0289429b3 100644
 2.38.1
 
 
-From d394b2df447229cb7ed84b8267e4675f46602933 Mon Sep 17 00:00:00 2001
+From c7cbe7edeaee916dc63dd87207ad9e45a892eb84 Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Sat, 9 Oct 2021 04:08:39 +0800
-Subject: [PATCH 017/175] erofs: introduce readmore decompression strategy
+Subject: [PATCH 017/174] erofs: introduce readmore decompression strategy
 
 Previously, the readahead window was strictly followed by EROFS
 decompression strategy in order to minimize extra memory footprint.
@@ -3270,10 +3270,10 @@ index 7f30d151ea17..2253c6bd3828 100644
 2.38.1
 
 
-From 36da8b2116236bd2a37e3a68eb735b431fc32181 Mon Sep 17 00:00:00 2001
+From fd09a4665759af1f3a9247874a9209826985f81a Mon Sep 17 00:00:00 2001
 From: Lasse Collin <lasse.collin@tukaani.org>
 Date: Mon, 11 Oct 2021 05:31:41 +0800
-Subject: [PATCH 018/175] lib/xz: Move s->lzma.len = 0 initialization to
+Subject: [PATCH 018/174] lib/xz: Move s->lzma.len = 0 initialization to
  lzma_reset()
 
 It's a more logical place even if the resetting needs to be done
@@ -3312,10 +3312,10 @@ index d548cf0e59fe..22b789645ce5 100644
 2.38.1
 
 
-From ca4c8642949931bfd8cc047b46dcb2322c537f21 Mon Sep 17 00:00:00 2001
+From b7c20068fa4d1831927a9a7b6c560e3d730a9220 Mon Sep 17 00:00:00 2001
 From: Lasse Collin <lasse.collin@tukaani.org>
 Date: Mon, 11 Oct 2021 05:31:42 +0800
-Subject: [PATCH 019/175] lib/xz: Add MicroLZMA decoder
+Subject: [PATCH 019/174] lib/xz: Add MicroLZMA decoder
 
 MicroLZMA is a yet another header format variant where the first
 byte of a raw LZMA stream (without the end of stream marker) has
@@ -3712,10 +3712,10 @@ index 09360ebb510e..bf1e94ec7873 100644
 2.38.1
 
 
-From 80f605e8dc847801a7dcb57d3c38d22f3851ce95 Mon Sep 17 00:00:00 2001
+From a4e3b0036bf4d48d434d9d2fbf84a69b3ef7211e Mon Sep 17 00:00:00 2001
 From: Lasse Collin <lasse.collin@tukaani.org>
 Date: Mon, 11 Oct 2021 05:31:43 +0800
-Subject: [PATCH 020/175] lib/xz, lib/decompress_unxz.c: Fix spelling in
+Subject: [PATCH 020/174] lib/xz, lib/decompress_unxz.c: Fix spelling in
  comments
 
 uncompressible -> incompressible
@@ -3781,10 +3781,10 @@ index 46b186d7eb45..27ce34520e78 100644
 2.38.1
 
 
-From aec7d977f278897fad4bfa26f415ce7c5d9f7598 Mon Sep 17 00:00:00 2001
+From 578a587c5d7b3c6f19b4a3fa07cafcf6da45e188 Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Mon, 11 Oct 2021 05:31:44 +0800
-Subject: [PATCH 021/175] erofs: rename some generic methods in decompressor
+Subject: [PATCH 021/174] erofs: rename some generic methods in decompressor
 
 Previously, some LZ4 methods were named with `generic'. However, while
 evaluating the effective LZMA approach, it seems they aren't quite
@@ -3944,10 +3944,10 @@ index 6955cc292820..f07b8494b457 100644
 2.38.1
 
 
-From 6f6a39fdf9353e88b7a6ee0a9894b634f26d2fcc Mon Sep 17 00:00:00 2001
+From ca0f44f780d93ffa03eb8e7471ecdc4efa4db4f3 Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Mon, 11 Oct 2021 05:31:45 +0800
-Subject: [PATCH 022/175] erofs: lzma compression support
+Subject: [PATCH 022/174] erofs: lzma compression support
 
 Add MicroLZMA support in order to maximize compression ratios for
 specific scenarios. For example, it's useful for low-end embedded
@@ -4555,10 +4555,10 @@ index 85d0289429b3..660489a7fb64 100644
 2.38.1
 
 
-From 2e7512fa8950338168bad9c6e8ebec735bd61f6d Mon Sep 17 00:00:00 2001
+From 4283ed49ea1a123144fc27916fb6994694b2d185 Mon Sep 17 00:00:00 2001
 From: Gao Xiang <hsiangkao@linux.alibaba.com>
 Date: Fri, 22 Oct 2021 17:01:20 +0800
-Subject: [PATCH 023/175] erofs: get rid of ->lru usage
+Subject: [PATCH 023/174] erofs: get rid of ->lru usage
 
 Currently, ->lru is a way to arrange non-LRU pages and has some
 in-kernel users. In order to minimize noticable issues of page
@@ -4931,10 +4931,10 @@ index 7489d86157c1..c798574d8321 100644
 2.38.1
 
 
-From f00536cf5da07ef0d76bfff52265ca7ce02a1f16 Mon Sep 17 00:00:00 2001
+From ffcfa927ed39bb7e0cad3c8674aab191e0326d29 Mon Sep 17 00:00:00 2001
 From: Yue Hu <huyue2@yulong.com>
 Date: Sat, 6 Nov 2021 16:23:15 +0800
-Subject: [PATCH 024/175] erofs: remove useless cache strategy of DELAYEDALLOC
+Subject: [PATCH 024/174] erofs: remove useless cache strategy of DELAYEDALLOC
 
 After commit 1825c8d7ce93 ("erofs: force inplace I/O under low
 memory scenario") and TRYALLOC is widely used, DELAYEDALLOC won't
@@ -5011,10 +5011,10 @@ index 879df5362777..4a69515dea75 100644
 2.38.1
 
 
-From f98f5446da3c3351c2baba88906b2ef14fefbfd2 Mon Sep 17 00:00:00 2001
+From 8cc61315301c9c12d967e944f8c11aebd768f343 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Mon, 29 Nov 2021 10:36:12 -0800
-Subject: [PATCH 025/175] f2fs: show number of pending discard commands
+Subject: [PATCH 025/174] f2fs: show number of pending discard commands
 
 This information can be used to check how much time we need to give to issue
 all the discard commands.
@@ -5082,10 +5082,10 @@ index 8885c7383472..a8dada3be06b 100644
 2.38.1
 
 
-From 2bcf5aa6b6f14e1e2e0061c71640fcdac29df0b9 Mon Sep 17 00:00:00 2001
+From 3ce661173182ba39507e8b837344f15a40df1690 Mon Sep 17 00:00:00 2001
 From: Fengnan Chang <changfengnan@vivo.com>
 Date: Wed, 10 Nov 2021 10:37:13 +0800
-Subject: [PATCH 026/175] f2fs: compress: reduce one page array alloc and free
+Subject: [PATCH 026/174] f2fs: compress: reduce one page array alloc and free
  when write compressed page
 
 Don't alloc new page pointers array to replace old, just use old, introduce
@@ -5242,10 +5242,10 @@ index 8e3d39893e7a..008f91dae467 100644
 2.38.1
 
 
-From 781cb9dff37380e89ee6ccf86c620033d40d5ddc Mon Sep 17 00:00:00 2001
+From f3b32f98c22e63feeb7b2cb11b7733496b55c18b Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 16 Jul 2021 09:39:13 -0500
-Subject: [PATCH 027/175] f2fs: rework write preallocations
+Subject: [PATCH 027/174] f2fs: rework write preallocations
 
 f2fs_write_begin() assumes that all blocks were preallocated by
 default unless FI_NO_PREALLOC is explicitly set.  This invites data
@@ -5551,10 +5551,10 @@ index 758048a885d2..fa938346f67d 100644
 2.38.1
 
 
-From 06bab77c3c0e3fe75d3aba989f9130ec56811511 Mon Sep 17 00:00:00 2001
+From 6cc57da8a5cf01acbc2bd351b40907c2122f52d0 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 16 Jul 2021 09:39:14 -0500
-Subject: [PATCH 028/175] f2fs: reduce indentation in f2fs_file_write_iter()
+Subject: [PATCH 028/174] f2fs: reduce indentation in f2fs_file_write_iter()
 
 Replace 'if (ret > 0)' with 'if (ret <= 0) goto out_unlock;'.
 No change in behavior.
@@ -5653,10 +5653,10 @@ index fa938346f67d..93d4ac3a7668 100644
 2.38.1
 
 
-From 8034c31c43c187d4c4ad3640e8bbe898d837b8fd Mon Sep 17 00:00:00 2001
+From 01f7505b455fb37d63af0d71c8a769daa3a9604d Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 12 Nov 2021 14:31:16 -0800
-Subject: [PATCH 029/175] f2fs: do not expose unwritten blocks to user by DIO
+Subject: [PATCH 029/174] f2fs: do not expose unwritten blocks to user by DIO
 
 DIO preallocates physical blocks before writing data, but if an error occurrs
 or power-cut happens, we can see block contents from the disk. This patch tries
@@ -5800,10 +5800,10 @@ index bd8960f4966b..4e633e0fefc0 100644
 2.38.1
 
 
-From 7c654cd874c1d3b982c737ad602572015251f2b2 Mon Sep 17 00:00:00 2001
+From 9c8157c8e56d4b24a7f1f71168ff27d966b4ac1a Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 16 Jul 2021 09:39:15 -0500
-Subject: [PATCH 030/175] f2fs: fix the f2fs_file_write_iter tracepoint
+Subject: [PATCH 030/174] f2fs: fix the f2fs_file_write_iter tracepoint
 
 Pass in the original position and count rather than the position and
 count that were updated by the write.  Also use the correct types for
@@ -5881,10 +5881,10 @@ index f8cb916f3595..dcb94d740e12 100644
 2.38.1
 
 
-From a31467018d53facd87f4e598acd974b95b5d5e58 Mon Sep 17 00:00:00 2001
+From 93a00df53602e7529525c3976448772d0992ffc3 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 23 Jul 2021 00:59:20 -0700
-Subject: [PATCH 031/175] f2fs: implement iomap operations
+Subject: [PATCH 031/174] f2fs: implement iomap operations
 
 Implement 'struct iomap_ops' for f2fs, in preparation for making f2fs
 use iomap for direct I/O.
@@ -5999,10 +5999,10 @@ index 47420645f7b1..9ee89d06747f 100644
 2.38.1
 
 
-From faa0c623560cebde6b08fe7f78a2f0aaa67ed4c7 Mon Sep 17 00:00:00 2001
+From 4b60688ed022c2108e5435e2afb8ab6748e5c06b Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 23 Jul 2021 00:59:21 -0700
-Subject: [PATCH 032/175] f2fs: use iomap for direct I/O
+Subject: [PATCH 032/174] f2fs: use iomap for direct I/O
 
 Make f2fs_file_read_iter() and f2fs_file_write_iter() use the iomap
 direct I/O implementation instead of the fs/direct-io.c one.
@@ -6847,10 +6847,10 @@ index cdcf54ae0db8..be599f31d3c4 100644
 2.38.1
 
 
-From bee6636cffee9725359a9bf27ca1323c9292548f Mon Sep 17 00:00:00 2001
+From 7012166c6a4461f75f42fd3c4eda1a17eecb74a1 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 19 Nov 2021 11:20:33 -0800
-Subject: [PATCH 033/175] f2fs: show more DIO information in tracepoint
+Subject: [PATCH 033/174] f2fs: show more DIO information in tracepoint
 
 This prints more information of DIO in tracepoint.
 
@@ -6931,10 +6931,10 @@ index dcb94d740e12..f701bb23f83c 100644
 2.38.1
 
 
-From 536113718cbe7e4e8f6e39c944ae8dfde1da7c81 Mon Sep 17 00:00:00 2001
+From ca28a1a40e94960632be7253f72064e2520a4f65 Mon Sep 17 00:00:00 2001
 From: Fengnan Chang <changfengnan@vivo.com>
 Date: Mon, 29 Nov 2021 10:13:41 +0800
-Subject: [PATCH 034/175] f2fs: support POSIX_FADV_DONTNEED drop compressed
+Subject: [PATCH 034/174] f2fs: support POSIX_FADV_DONTNEED drop compressed
  page cache
 
 Previously, compressed page cache drop when clean page cache, but
@@ -6988,10 +6988,10 @@ index d1fcf5520a0f..20f7e129c929 100644
 2.38.1
 
 
-From 51120ddf12c29adce4043859a0a97df623ebaa58 Mon Sep 17 00:00:00 2001
+From 66479535aebcd98962e62df1a1ed8365b41f87d8 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Sat, 4 Dec 2021 09:55:35 -0800
-Subject: [PATCH 035/175] f2fs: avoid duplicate call of mark_inode_dirty
+Subject: [PATCH 035/174] f2fs: avoid duplicate call of mark_inode_dirty
 
 Let's check the condition first before set|clear bit.
 
@@ -7025,10 +7025,10 @@ index 397689b0bb06..39a82bd12cee 100644
 2.38.1
 
 
-From 9749e2c88346f8a2a94ae6854aa36a67e4197438 Mon Sep 17 00:00:00 2001
+From 74b816bc30da84137431c1a61a97860cfb228c46 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Wed, 8 Dec 2021 16:41:51 -0800
-Subject: [PATCH 036/175] f2fs: add gc_urgent_high_remaining sysfs node
+Subject: [PATCH 036/174] f2fs: add gc_urgent_high_remaining sysfs node
 
 Added a new sysfs node called gc_urgent_high_remaining. The user can
 set the trial count limit for GC urgent high mode with this value. If
@@ -7149,10 +7149,10 @@ index a8dada3be06b..dce956eab938 100644
 2.38.1
 
 
-From cf7a210eb8be252dcec9678d1d55f97a53655a23 Mon Sep 17 00:00:00 2001
+From 79f655d3be8230091bac8915542037596579a829 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Mon, 13 Dec 2021 13:28:40 -0800
-Subject: [PATCH 037/175] f2fs: avoid down_write on nat_tree_lock during
+Subject: [PATCH 037/174] f2fs: avoid down_write on nat_tree_lock during
  checkpoint
 
 Let's cache nat entry if there's no lock contention only.
@@ -7181,10 +7181,10 @@ index 0e6e73bc42d4..ebfd0f92b195 100644
 2.38.1
 
 
-From a5dc9b02360f67a877f9cdeab6b3b9c701acd233 Mon Sep 17 00:00:00 2001
+From 5dcf43794279ca857331aac4f0534089036309fc Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Mon, 13 Dec 2021 14:16:32 -0800
-Subject: [PATCH 038/175] f2fs: do not bother checkpoint by f2fs_get_node_info
+Subject: [PATCH 038/174] f2fs: do not bother checkpoint by f2fs_get_node_info
 
 This patch tries to mitigate lock contention between f2fs_write_checkpoint and
 f2fs_get_node_info along with nat_tree_lock.
@@ -7475,10 +7475,10 @@ index 4b0fc4cf3213..7545d6c9f0ff 100644
 2.38.1
 
 
-From 3d4f610fccf9fcf5f37ff3ee26a202f9d4189ec5 Mon Sep 17 00:00:00 2001
+From fffd015726905aa63a41220487464f08f5d5d6a3 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 12 Dec 2021 17:16:56 +0800
-Subject: [PATCH 039/175] f2fs: clean up __find_inline_xattr() with
+Subject: [PATCH 039/174] f2fs: clean up __find_inline_xattr() with
  __find_xattr()
 
 Just cleanup, no logic change.
@@ -7560,10 +7560,10 @@ index 797ac505a075..8e5cd9c916ff 100644
 2.38.1
 
 
-From 05974d38abc13c699f512bc580b5fc04cd6d7ee2 Mon Sep 17 00:00:00 2001
+From 9d4ef9c10e43531af987ac7099f51d23ac3d49ef Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 12 Dec 2021 17:17:51 +0800
-Subject: [PATCH 040/175] f2fs: support fault injection to f2fs_trylock_op()
+Subject: [PATCH 040/174] f2fs: support fault injection to f2fs_trylock_op()
 
 f2fs: support fault injection for f2fs_trylock_op()
 
@@ -7632,10 +7632,10 @@ index 997413817100..e58500e704a6 100644
 2.38.1
 
 
-From 60a7726bb56a70d44e719dffd6e8216715dd5de0 Mon Sep 17 00:00:00 2001
+From cb8117539dd152f06885f68ae0771396c3ccc214 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Thu, 16 Dec 2021 17:13:56 +0800
-Subject: [PATCH 041/175] f2fs: don't drop compressed page cache in
+Subject: [PATCH 041/174] f2fs: don't drop compressed page cache in
  .{invalidate,release}page
 
 For compressed inode, in .{invalidate,release}page, we will call
@@ -7698,10 +7698,10 @@ index 37526b02a760..62012a1e8fd4 100644
 2.38.1
 
 
-From 3a8f6cd37b09398821c34128d73f39e4b981dd72 Mon Sep 17 00:00:00 2001
+From f60975cc4a8c6141fd4d627398fb9e9a071ade29 Mon Sep 17 00:00:00 2001
 From: Yang Li <yang.lee@linux.alibaba.com>
 Date: Wed, 15 Dec 2021 10:38:58 +0800
-Subject: [PATCH 042/175] f2fs: Simplify bool conversion
+Subject: [PATCH 042/174] f2fs: Simplify bool conversion
 
 Fix the following coccicheck warning:
 ./fs/f2fs/sysfs.c:491:41-46: WARNING: conversion to bool not needed here
@@ -7730,10 +7730,10 @@ index dce956eab938..699f97610e8a 100644
 2.38.1
 
 
-From 23957ef90e7c49d45e8af6b7b2b094c83bcd953b Mon Sep 17 00:00:00 2001
+From 1498837126b9e1e61c649eb340fa5a8e66b7a093 Mon Sep 17 00:00:00 2001
 From: Fengnan Chang <changfengnan@vivo.com>
 Date: Wed, 29 Dec 2021 17:47:00 +0800
-Subject: [PATCH 043/175] f2fs: remove redunant invalidate compress pages
+Subject: [PATCH 043/174] f2fs: remove redunant invalidate compress pages
 
 Compress page will invalidate in truncate block process too, so remove
 redunant invalidate compress pages in f2fs_evict_inode.
@@ -7763,10 +7763,10 @@ index ee0b73909f16..8c38b7711f70 100644
 2.38.1
 
 
-From 4df271429ce9899a80691531df68327e00b13a58 Mon Sep 17 00:00:00 2001
+From 68d599521411c9ea0e837d5435540770cf9aecfa Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 7 Jan 2022 20:08:45 -0800
-Subject: [PATCH 044/175] f2fs: do not allow partial truncation on pinned file
+Subject: [PATCH 044/174] f2fs: do not allow partial truncation on pinned file
 
 If the pinned file has a hole by partial truncation, application that has
 the block map will be broken.
@@ -7798,10 +7798,10 @@ index a85308f2d12f..606d4d72c70f 100644
 2.38.1
 
 
-From b590c154fafd78e00381d808e43710ac19a024aa Mon Sep 17 00:00:00 2001
+From 4ad65451c644f99374856dc17cbf78cc5bf6e023 Mon Sep 17 00:00:00 2001
 From: Tim Murray <timmurray@google.com>
 Date: Fri, 7 Jan 2022 12:48:44 -0800
-Subject: [PATCH 045/175] f2fs: move f2fs to use reader-unfair rwsems
+Subject: [PATCH 045/174] f2fs: move f2fs to use reader-unfair rwsems
 
 f2fs rw_semaphores work better if writers can starve readers,
 especially for the checkpoint thread, because writers are strictly
@@ -9982,7 +9982,7 @@ index 699f97610e8a..778868e4a2fb 100644
  	}
  
 diff --git a/fs/f2fs/verity.c b/fs/f2fs/verity.c
-index fe5acdccaae1..3d793202cc9f 100644
+index a28968bb56e6..cc11b85e437e 100644
 --- a/fs/f2fs/verity.c
 +++ b/fs/f2fs/verity.c
 @@ -208,7 +208,7 @@ static int f2fs_end_enable_verity(struct file *filp, const void *desc,
@@ -10048,10 +10048,10 @@ index 8e5cd9c916ff..c76c15086e5f 100644
 2.38.1
 
 
-From b519f79e1181f653ed9fa0593d377aece572afb6 Mon Sep 17 00:00:00 2001
+From 5f81c8a2d736facc7aebd44ddbb9aa0670feb7d7 Mon Sep 17 00:00:00 2001
 From: Konstantin Vyshetsky <vkon@google.com>
 Date: Mon, 13 Dec 2021 17:12:03 -0800
-Subject: [PATCH 046/175] f2fs: move discard parameters into
+Subject: [PATCH 046/174] f2fs: move discard parameters into
  discard_cmd_control
 
 This patch unifies parameters related to how often discard is issued and
@@ -10146,10 +10146,10 @@ index 6e35c1812696..003a155962e3 100644
 2.38.1
 
 
-From bfb1eb2b4e5a84efd6e198e075b7ebcb60b12bda Mon Sep 17 00:00:00 2001
+From 429bfcca57ad92e1a833d905ea0cd1bb0875100f Mon Sep 17 00:00:00 2001
 From: Konstantin Vyshetsky <vkon@google.com>
 Date: Mon, 13 Dec 2021 17:12:43 -0800
-Subject: [PATCH 047/175] f2fs: expose discard related parameters in sysfs
+Subject: [PATCH 047/174] f2fs: expose discard related parameters in sysfs
 
 This patch exposes max_discard_request, min_discard_issue_time,
 mid_discard_issue_time, and max_discard_issue_time in sysfs. This will
@@ -10231,10 +10231,10 @@ index 778868e4a2fb..ccb807a36b08 100644
 2.38.1
 
 
-From 9b9c135f18370c78eda40bbe22bd45a8d3924594 Mon Sep 17 00:00:00 2001
+From efb7590bc80d658653afd1926c48ce15019311e1 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Fri, 4 Feb 2022 08:34:10 +0800
-Subject: [PATCH 048/175] f2fs: adjust readahead block number during recovery
+Subject: [PATCH 048/174] f2fs: adjust readahead block number during recovery
 
 In a fragmented image, entries in dnode block list may locate in
 incontiguous physical block address space, however, in recovery flow,
@@ -10387,10 +10387,10 @@ index e7b0a6e0c4cf..3e632a516ab9 100644
 2.38.1
 
 
-From ab09210487441006a6498bb2c7fa5f85a6116e73 Mon Sep 17 00:00:00 2001
+From c7d58329f1fdbe030d66a15d76142a2e89a82bf1 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Fri, 4 Feb 2022 15:19:46 +0800
-Subject: [PATCH 049/175] f2fs: introduce F2FS_IPU_HONOR_OPU_WRITE ipu policy
+Subject: [PATCH 049/174] f2fs: introduce F2FS_IPU_HONOR_OPU_WRITE ipu policy
 
 Once F2FS_IPU_FORCE policy is enabled in some cases:
 a) f2fs forces to use F2FS_IPU_FORCE in a small-sized volume
@@ -10612,10 +10612,10 @@ index 8fa09e030f36..db9ae5a687de 100644
 2.38.1
 
 
-From c9baf0327ff171f4b203fa3ca8225c122a5d8f96 Mon Sep 17 00:00:00 2001
+From b2d03d4231d6a10ce914616dc6f7f5c7db715d3d Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Thu, 27 Jan 2022 13:31:43 -0800
-Subject: [PATCH 050/175] f2fs: add a way to limit roll forward recovery time
+Subject: [PATCH 050/174] f2fs: add a way to limit roll forward recovery time
 
 This adds a sysfs entry to call checkpoint during fsync() in order to avoid
 long elapsed time to run roll-forward recovery when booting the device.
@@ -10806,10 +10806,10 @@ index ccb807a36b08..b6218f42f110 100644
 2.38.1
 
 
-From 8eb3902914b948d1d7bb9366b4903c74d694dd86 Mon Sep 17 00:00:00 2001
+From 8c01452af2e5579ce19c2a49b4972b73ade01006 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Fri, 4 Feb 2022 13:24:56 +0800
-Subject: [PATCH 051/175] f2fs: support idmapped mounts
+Subject: [PATCH 051/174] f2fs: support idmapped mounts
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -11167,10 +11167,10 @@ index ba9e15001e5e..2ec80ecee6c4 100644
 2.38.1
 
 
-From 6b16ed4d58f8546bfe93c794aeb08244791d6805 Mon Sep 17 00:00:00 2001
+From 877df403b8df564c08d0d7d2090aead791897a34 Mon Sep 17 00:00:00 2001
 From: Bart Van Assche <bvanassche@acm.org>
 Date: Tue, 22 Feb 2022 10:43:13 -0800
-Subject: [PATCH 052/175] f2fs: Restore rwsem lockdep support
+Subject: [PATCH 052/174] f2fs: Restore rwsem lockdep support
 
 Lockdep uses lock class keys in its analysis. init_rwsem() instantiates
 one lock class key with each init_rwsem() user as follows:
@@ -11226,10 +11226,10 @@ index cb6dbfb76eb5..cec6bcf33f98 100644
 2.38.1
 
 
-From c47e15a202174ff946f0d4dffa3fbc369b76341e Mon Sep 17 00:00:00 2001
+From e4778b0830ddf0ec94c553448b6792d086379660 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Wed, 2 Mar 2022 11:39:08 -0800
-Subject: [PATCH 053/175] f2fs: avoid an infinite loop in
+Subject: [PATCH 053/174] f2fs: avoid an infinite loop in
  f2fs_sync_dirty_inodes
 
 If one read IO is always failing, we can fall into an infinite loop in
@@ -11320,10 +11320,10 @@ index cec6bcf33f98..1decfd29af1b 100644
 2.38.1
 
 
-From d07dba7a600ce214261cbb9477394b43f5cc40bb Mon Sep 17 00:00:00 2001
+From f3772a7f20bb12d5ca2f0b5ebaf55e15e730b0f6 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Thu, 3 Mar 2022 13:21:27 -0800
-Subject: [PATCH 054/175] f2fs: introduce F2FS_UNFAIR_RWSEM to support unfair
+Subject: [PATCH 054/174] f2fs: introduce F2FS_UNFAIR_RWSEM to support unfair
  rwsem
 
 Unfair rwsem should be used when blk-cg is on. Otherwise, there is regression.
@@ -11420,10 +11420,10 @@ index 1decfd29af1b..5473d1ed4386 100644
 2.38.1
 
 
-From 74b8536d5a99b90ff4c64a7e92600d5551b08720 Mon Sep 17 00:00:00 2001
+From a58a91b20adfbecb9f5245f41661917cb34ed8c8 Mon Sep 17 00:00:00 2001
 From: Jia Yang <jiayang5@huawei.com>
 Date: Wed, 9 Mar 2022 19:09:35 +0800
-Subject: [PATCH 055/175] f2fs: remove unnecessary read for F2FS_FITS_IN_INODE
+Subject: [PATCH 055/174] f2fs: remove unnecessary read for F2FS_FITS_IN_INODE
 
 F2FS_FITS_IN_INODE only cares the type of f2fs inode, so there
 is no need to read node page of f2fs inode.
@@ -11481,10 +11481,10 @@ index 192d747891de..3892de310457 100644
 2.38.1
 
 
-From 475b208e9af09549a40920dee56c42c6a5b2fe31 Mon Sep 17 00:00:00 2001
+From 32be7de49affef946ae2d7f53dba35f99ac03f29 Mon Sep 17 00:00:00 2001
 From: Wang Xiaojun <wangxiaojun11@huawei.com>
 Date: Mon, 14 Mar 2022 15:15:15 +0800
-Subject: [PATCH 056/175] f2fs: remove redundant parameter judgment
+Subject: [PATCH 056/174] f2fs: remove redundant parameter judgment
 
 iput() has already judged the incoming parameter, so there is
 no need to repeat the judgment here.
@@ -11514,10 +11514,10 @@ index a77ac0cccbe8..be27dc697ef2 100644
 2.38.1
 
 
-From 5b6a0f8ceb9476e7e2583cf2984d02741f7ebcb1 Mon Sep 17 00:00:00 2001
+From 566fe765018a135457774c660b39de2c9b5adf29 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Tue, 15 Mar 2022 21:14:14 -0700
-Subject: [PATCH 057/175] f2fs: introduce gc_urgent_mid mode
+Subject: [PATCH 057/174] f2fs: introduce gc_urgent_mid mode
 
 We need a mid level of gc urgent mode to do GC forcibly in a period
 of given gc_urgent_sleep_time, but not like using greedy GC approach
@@ -11648,10 +11648,10 @@ index b6218f42f110..d6ecd710216d 100644
 2.38.1
 
 
-From 0f2d56a6cf5f9660481009b12403e8e9297ec699 Mon Sep 17 00:00:00 2001
+From 1f5c492acb44af1534e44c31fb48fc14f0eda868 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Thu, 17 Mar 2022 16:33:15 +0800
-Subject: [PATCH 058/175] f2fs: initialize sbi->gc_mode explicitly
+Subject: [PATCH 058/174] f2fs: initialize sbi->gc_mode explicitly
 
 It needs to initialized sbi->gc_mode to GC_NORMAL explicitly.
 
@@ -11677,10 +11677,10 @@ index 2ec80ecee6c4..916c8335e602 100644
 2.38.1
 
 
-From 36c513b7a721b674b8931adf079a1ec4b7a4b254 Mon Sep 17 00:00:00 2001
+From 5190854ce4289d90a6a9d96c68167b96faa285f9 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Fri, 18 Mar 2022 17:02:30 +0800
-Subject: [PATCH 059/175] f2fs: use aggressive GC policy during
+Subject: [PATCH 059/174] f2fs: use aggressive GC policy during
  f2fs_disable_checkpoint()
 
 Let's enable GC_URGENT_HIGH mode during f2fs_disable_checkpoint(),
@@ -11728,10 +11728,10 @@ index 916c8335e602..7953d73530b9 100644
 2.38.1
 
 
-From 7a8d0a039a1b8a77b7268d8dd3cdd5579528a7ab Mon Sep 17 00:00:00 2001
+From 75ee1940dded6f4b006c1124a3878fe60ffc4ba4 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Fri, 18 Mar 2022 12:13:23 -0700
-Subject: [PATCH 060/175] f2fs: make gc_urgent and gc_segment_mode sysfs node
+Subject: [PATCH 060/174] f2fs: make gc_urgent and gc_segment_mode sysfs node
  readable
 
 Changed a way of showing values of them to use strings.
@@ -11783,10 +11783,10 @@ index d6ecd710216d..cec6dd492974 100644
 2.38.1
 
 
-From 9f09acebe3edd042225d45b2cb49a572e4d99821 Mon Sep 17 00:00:00 2001
+From c438a310ad49c462dd037f7df35b6d0d5d520998 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 28 Jan 2022 15:39:36 -0800
-Subject: [PATCH 061/175] fscrypt: add functions for direct I/O support
+Subject: [PATCH 061/174] fscrypt: add functions for direct I/O support
 
 Encrypted files traditionally haven't supported DIO, due to the need to
 encrypt/decrypt the data.  However, when the encryption is implemented
@@ -11953,7 +11953,7 @@ index c57bebfa48fe..93c2ca858092 100644
 +}
 +EXPORT_SYMBOL_GPL(fscrypt_limit_io_blocks);
 diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
-index 91ea9477e9bd..50d92d805bd8 100644
+index c14292cc5dd3..bca93778e475 100644
 --- a/include/linux/fscrypt.h
 +++ b/include/linux/fscrypt.h
 @@ -714,6 +714,10 @@ bool fscrypt_mergeable_bio(struct bio *bio, const struct inode *inode,
@@ -11992,10 +11992,10 @@ index 91ea9477e9bd..50d92d805bd8 100644
 2.38.1
 
 
-From ca6633c154dc151e626208b7a8ff9bf782651aa0 Mon Sep 17 00:00:00 2001
+From db9dbfb54342a93de5488a62671162c23767bcfa Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 28 Jan 2022 15:39:37 -0800
-Subject: [PATCH 062/175] iomap: support direct I/O with fscrypt using
+Subject: [PATCH 062/174] iomap: support direct I/O with fscrypt using
  blk-crypto
 
 Encrypted files traditionally haven't supported DIO, due to the need to
@@ -12061,10 +12061,10 @@ index 468dcbba45bc..b50785429962 100644
 2.38.1
 
 
-From 6c90e753498b895f72828c5ac9a38aa9cfa828c0 Mon Sep 17 00:00:00 2001
+From 1a23cf3a18e3e864552d209b00dfafd144e656c8 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 28 Jan 2022 15:39:38 -0800
-Subject: [PATCH 063/175] ext4: support direct I/O with fscrypt using
+Subject: [PATCH 063/174] ext4: support direct I/O with fscrypt using
  blk-crypto
 
 Encrypted files traditionally haven't supported DIO, due to the need to
@@ -12154,10 +12154,10 @@ index bdadbe57ea80..5f99e92159c4 100644
 2.38.1
 
 
-From f593442c8dcb34c1b602bcabdbeebc1923f1caa8 Mon Sep 17 00:00:00 2001
+From 3d1d06edb5ae8c066c531d9e43597550f9113f37 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 28 Jan 2022 15:39:39 -0800
-Subject: [PATCH 064/175] f2fs: support direct I/O with fscrypt using
+Subject: [PATCH 064/174] f2fs: support direct I/O with fscrypt using
  blk-crypto
 
 Encrypted files traditionally haven't supported DIO, due to the need to
@@ -12227,10 +12227,10 @@ index 4873a24cd495..1619a88be8bc 100644
 2.38.1
 
 
-From 497f3c0ce50e814f112b1d15e3d258075cc23ecb Mon Sep 17 00:00:00 2001
+From b5db294ac8f963155500ac173f8255006e91ec2e Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 28 Jan 2022 15:39:40 -0800
-Subject: [PATCH 065/175] fscrypt: update documentation for direct I/O support
+Subject: [PATCH 065/174] fscrypt: update documentation for direct I/O support
 
 Now that direct I/O is supported on encrypted files in some cases,
 document what these cases are.
@@ -12289,10 +12289,10 @@ index 4d5d50dca65c..6ccd5efb25b7 100644
 2.38.1
 
 
-From ebd6b152eee5ed9c5736951af1a3b5a6b41835be Mon Sep 17 00:00:00 2001
+From 3d0956c4cd29b52adb410d4b690b48795ba1176d Mon Sep 17 00:00:00 2001
 From: Bart Van Assche <bvanassche@acm.org>
 Date: Thu, 21 Apr 2022 11:30:15 -0700
-Subject: [PATCH 066/175] FROMGIT: scsi: sd: sd_zbc: Improve source code
+Subject: [PATCH 066/174] FROMGIT: scsi: sd: sd_zbc: Improve source code
  documentation
 
 Add several kernel-doc headers. Declare input arrays const. Specify the
@@ -12448,10 +12448,10 @@ index ed06798983f8..ddd752e728ac 100644
 2.38.1
 
 
-From 27f79cd5294a66b4ad7fabab8b2bdc4598ff580b Mon Sep 17 00:00:00 2001
+From c510d4c321e986600be34d0086879a8d08f62b31 Mon Sep 17 00:00:00 2001
 From: Bart Van Assche <bvanassche@acm.org>
 Date: Thu, 21 Apr 2022 11:30:16 -0700
-Subject: [PATCH 067/175] FROMGIT: scsi: sd: sd_zbc: Verify that the zone size
+Subject: [PATCH 067/174] FROMGIT: scsi: sd: sd_zbc: Verify that the zone size
  is a power of two
 
 The following check in sd_zbc_cmnd_checks() can only work correctly if the
@@ -12499,10 +12499,10 @@ index ddd752e728ac..bc2bd6d64340 100644
 2.38.1
 
 
-From efae39ec6db829813018df440a58f0982ee53f35 Mon Sep 17 00:00:00 2001
+From e6f332c8a4148327d5b396e1691c1c4b8bd25b67 Mon Sep 17 00:00:00 2001
 From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Date: Thu, 21 Apr 2022 11:30:17 -0700
-Subject: [PATCH 068/175] FROMGIT: scsi: sd: sd_zbc: Use logical blocks as unit
+Subject: [PATCH 068/174] FROMGIT: scsi: sd: sd_zbc: Use logical blocks as unit
  when querying zones
 
 When querying zones, track the position in logical blocks instead of in
@@ -12570,10 +12570,10 @@ index bc2bd6d64340..f40633ac8f4b 100644
 2.38.1
 
 
-From b7843a6d32e542078b80fd58bab0229a129a4fa8 Mon Sep 17 00:00:00 2001
+From b6a78f3378323e3e7f6c70a6d018e59b56cb96fb Mon Sep 17 00:00:00 2001
 From: Bart Van Assche <bvanassche@acm.org>
 Date: Thu, 21 Apr 2022 11:30:18 -0700
-Subject: [PATCH 069/175] FROMGIT: scsi: sd: sd_zbc: Introduce struct
+Subject: [PATCH 069/174] FROMGIT: scsi: sd: sd_zbc: Introduce struct
  zoned_disk_info
 
 Deriving the meaning of the nr_zones, rev_nr_zones, zone_blocks and
@@ -12792,10 +12792,10 @@ index f40633ac8f4b..1b31e623ba31 100644
 2.38.1
 
 
-From 7cb39d84a4a8c8961bf9328a31484ee3e1c5bfeb Mon Sep 17 00:00:00 2001
+From cca828aa398b98b0a8c9b90bc4c4f24ea48dbc85 Mon Sep 17 00:00:00 2001
 From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Date: Thu, 21 Apr 2022 11:30:19 -0700
-Subject: [PATCH 070/175] FROMGIT: scsi: sd: sd_zbc: Return early in
+Subject: [PATCH 070/174] FROMGIT: scsi: sd: sd_zbc: Return early in
  sd_zbc_check_zoned_characteristics()
 
 Return early in sd_zbc_check_zoned_characteristics() for host-aware
@@ -12847,10 +12847,10 @@ index 1b31e623ba31..592b279b1d88 100644
 2.38.1
 
 
-From 18383e14bc339f9fde039e80ccc5ad6c11dc7f78 Mon Sep 17 00:00:00 2001
+From 6ae6663109719a227248846fcf2ee9b5ab2d69d1 Mon Sep 17 00:00:00 2001
 From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Date: Thu, 21 Apr 2022 11:30:20 -0700
-Subject: [PATCH 071/175] FROMGIT: scsi: sd: sd_zbc: Hide gap zones
+Subject: [PATCH 071/174] FROMGIT: scsi: sd: sd_zbc: Hide gap zones
 
 ZBC-2 allows host-managed disks to report gap zones. This allow zoned disks
 to report an offset between data zone starts that is a power of two even if
@@ -13105,10 +13105,10 @@ index f017843a8124..c03e35fc382c 100644
 2.38.1
 
 
-From df20123ed60b3122e462baa954c58d5de9593007 Mon Sep 17 00:00:00 2001
+From 3078a9d367cfaf90a657b6f01431ab61f1b0bf1b Mon Sep 17 00:00:00 2001
 From: Bart Van Assche <bvanassche@acm.org>
 Date: Thu, 21 Apr 2022 11:30:21 -0700
-Subject: [PATCH 072/175] FROMGIT: scsi: scsi_debug: Fix a typo
+Subject: [PATCH 072/174] FROMGIT: scsi: scsi_debug: Fix a typo
 
 Change a single occurrence of "nad" into "and".
 
@@ -13128,10 +13128,10 @@ Change-Id: I6181e5a9a3a1d20e6d71c99aef6c1a2e9d3ac053
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/scsi/scsi_debug.c b/drivers/scsi/scsi_debug.c
-index 747e1cbb7ec9..68969d5c520b 100644
+index 0b16061d8da8..438b6988e985 100644
 --- a/drivers/scsi/scsi_debug.c
 +++ b/drivers/scsi/scsi_debug.c
-@@ -4325,7 +4325,7 @@ static int resp_verify(struct scsi_cmnd *scp, struct sdebug_dev_info *devip)
+@@ -4332,7 +4332,7 @@ static int resp_verify(struct scsi_cmnd *scp, struct sdebug_dev_info *devip)
  
  #define RZONES_DESC_HD 64
  
@@ -13144,10 +13144,10 @@ index 747e1cbb7ec9..68969d5c520b 100644
 2.38.1
 
 
-From cea828b6d121487a9769e67c2904f0ab240063dd Mon Sep 17 00:00:00 2001
+From 286a0ceb8f2136b06d8c0774bf708e6dce8123e1 Mon Sep 17 00:00:00 2001
 From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Date: Thu, 21 Apr 2022 11:30:22 -0700
-Subject: [PATCH 073/175] FROMGIT: scsi: scsi_debug: Rename zone type constants
+Subject: [PATCH 073/174] FROMGIT: scsi: scsi_debug: Rename zone type constants
 
 Rename the scsi_debug zone type constants to prevent a conflict with the
 ZBC_ZONE_TYPE_GAP constant from include/scsi/scsi_proto.h.
@@ -13168,7 +13168,7 @@ Change-Id: Ibd71fb99c22839188b66649c948afe1a600f8c03
  1 file changed, 9 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/scsi/scsi_debug.c b/drivers/scsi/scsi_debug.c
-index 68969d5c520b..7607bee99251 100644
+index 438b6988e985..db5f90f21ef2 100644
 --- a/drivers/scsi/scsi_debug.c
 +++ b/drivers/scsi/scsi_debug.c
 @@ -250,9 +250,9 @@ static const char *sdebug_version_date = "20200710";
@@ -13184,7 +13184,7 @@ index 68969d5c520b..7607bee99251 100644
  };
  
  /* enumeration names taken from table 26, zbcr05 */
-@@ -2675,7 +2675,7 @@ static struct sdeb_zone_state *zbc_zone(struct sdebug_dev_info *devip,
+@@ -2682,7 +2682,7 @@ static struct sdeb_zone_state *zbc_zone(struct sdebug_dev_info *devip,
  
  static inline bool zbc_zone_is_conv(struct sdeb_zone_state *zsp)
  {
@@ -13193,7 +13193,7 @@ index 68969d5c520b..7607bee99251 100644
  }
  
  static void zbc_close_zone(struct sdebug_dev_info *devip,
-@@ -2774,7 +2774,7 @@ static void zbc_inc_wp(struct sdebug_dev_info *devip,
+@@ -2781,7 +2781,7 @@ static void zbc_inc_wp(struct sdebug_dev_info *devip,
  	if (zbc_zone_is_conv(zsp))
  		return;
  
@@ -13202,7 +13202,7 @@ index 68969d5c520b..7607bee99251 100644
  		zsp->z_wp += num;
  		if (zsp->z_wp >= zend)
  			zbc_set_zone_full(devip, zsp);
-@@ -2841,7 +2841,7 @@ static int check_zbc_access_params(struct scsi_cmnd *scp,
+@@ -2848,7 +2848,7 @@ static int check_zbc_access_params(struct scsi_cmnd *scp,
  		return 0;
  	}
  
@@ -13211,7 +13211,7 @@ index 68969d5c520b..7607bee99251 100644
  		/* Writes cannot cross sequential zone boundaries */
  		if (zsp_end != zsp) {
  			mk_sense_buffer(scp, ILLEGAL_REQUEST,
-@@ -4927,14 +4927,14 @@ static int sdebug_device_create_zones(struct sdebug_dev_info *devip)
+@@ -4934,14 +4934,14 @@ static int sdebug_device_create_zones(struct sdebug_dev_info *devip)
  		zsp->z_start = zstart;
  
  		if (i < devip->nr_conv_zones) {
@@ -13233,10 +13233,10 @@ index 68969d5c520b..7607bee99251 100644
 2.38.1
 
 
-From 67856fccf0167212afa81d0bffe085f6cddd6b20 Mon Sep 17 00:00:00 2001
+From f06e02fe7e54b4a1ab45bfe27dde49cd3c6cf4eb Mon Sep 17 00:00:00 2001
 From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Date: Thu, 21 Apr 2022 11:30:23 -0700
-Subject: [PATCH 074/175] FROMGIT: scsi: scsi_debug: Add gap zone support
+Subject: [PATCH 074/174] FROMGIT: scsi: scsi_debug: Add gap zone support
 
 Add the 'zone_cap_mb' kernel module parameter. This parameter defines the
 zone capacity. The zone capacity must be less than or equal to the zone
@@ -13269,7 +13269,7 @@ Change-Id: Ie8010a82a0070123cd56fcd0bf70ffa81d397d66
  1 file changed, 104 insertions(+), 25 deletions(-)
 
 diff --git a/drivers/scsi/scsi_debug.c b/drivers/scsi/scsi_debug.c
-index 7607bee99251..6353476a6377 100644
+index db5f90f21ef2..511b3aa77ae6 100644
 --- a/drivers/scsi/scsi_debug.c
 +++ b/drivers/scsi/scsi_debug.c
 @@ -16,7 +16,7 @@
@@ -13332,7 +13332,7 @@ index 7607bee99251..6353476a6377 100644
  	return 0x3c;
  }
  
-@@ -2670,7 +2682,23 @@ static inline bool sdebug_dev_is_zoned(struct sdebug_dev_info *devip)
+@@ -2677,7 +2689,23 @@ static inline bool sdebug_dev_is_zoned(struct sdebug_dev_info *devip)
  static struct sdeb_zone_state *zbc_zone(struct sdebug_dev_info *devip,
  					unsigned long long lba)
  {
@@ -13357,7 +13357,7 @@ index 7607bee99251..6353476a6377 100644
  }
  
  static inline bool zbc_zone_is_conv(struct sdeb_zone_state *zsp)
-@@ -2678,12 +2706,22 @@ static inline bool zbc_zone_is_conv(struct sdeb_zone_state *zsp)
+@@ -2685,12 +2713,22 @@ static inline bool zbc_zone_is_conv(struct sdeb_zone_state *zsp)
  	return zsp->z_type == ZBC_ZTYPE_CNV;
  }
  
@@ -13381,7 +13381,7 @@ index 7607bee99251..6353476a6377 100644
  		return;
  
  	zc = zsp->z_cond;
-@@ -2721,7 +2759,7 @@ static void zbc_open_zone(struct sdebug_dev_info *devip,
+@@ -2728,7 +2766,7 @@ static void zbc_open_zone(struct sdebug_dev_info *devip,
  {
  	enum sdebug_z_cond zc;
  
@@ -13390,7 +13390,7 @@ index 7607bee99251..6353476a6377 100644
  		return;
  
  	zc = zsp->z_cond;
-@@ -2771,7 +2809,7 @@ static void zbc_inc_wp(struct sdebug_dev_info *devip,
+@@ -2778,7 +2816,7 @@ static void zbc_inc_wp(struct sdebug_dev_info *devip,
  	struct sdeb_zone_state *zsp = zbc_zone(devip, lba);
  	unsigned long long n, end, zend = zsp->z_start + zsp->z_size;
  
@@ -13399,7 +13399,7 @@ index 7607bee99251..6353476a6377 100644
  		return;
  
  	if (zsp->z_type == ZBC_ZTYPE_SWR) {
-@@ -2819,9 +2857,7 @@ static int check_zbc_access_params(struct scsi_cmnd *scp,
+@@ -2826,9 +2864,7 @@ static int check_zbc_access_params(struct scsi_cmnd *scp,
  		if (devip->zmodel == BLK_ZONED_HA)
  			return 0;
  		/* For host-managed, reads cannot cross zone types boundaries */
@@ -13410,7 +13410,7 @@ index 7607bee99251..6353476a6377 100644
  			mk_sense_buffer(scp, ILLEGAL_REQUEST,
  					LBA_OUT_OF_RANGE,
  					READ_INVDATA_ASCQ);
-@@ -2830,6 +2866,13 @@ static int check_zbc_access_params(struct scsi_cmnd *scp,
+@@ -2837,6 +2873,13 @@ static int check_zbc_access_params(struct scsi_cmnd *scp,
  		return 0;
  	}
  
@@ -13424,7 +13424,7 @@ index 7607bee99251..6353476a6377 100644
  	/* No restrictions for writes within conventional zones */
  	if (zbc_zone_is_conv(zsp)) {
  		if (!zbc_zone_is_conv(zsp_end)) {
-@@ -4329,14 +4372,14 @@ static int resp_verify(struct scsi_cmnd *scp, struct sdebug_dev_info *devip)
+@@ -4336,14 +4379,14 @@ static int resp_verify(struct scsi_cmnd *scp, struct sdebug_dev_info *devip)
  static int resp_report_zones(struct scsi_cmnd *scp,
  			     struct sdebug_dev_info *devip)
  {
@@ -13441,7 +13441,7 @@ index 7607bee99251..6353476a6377 100644
  	struct sdeb_store_info *sip = devip2sip(devip, false);
  	rwlock_t *macc_lckp = sip ? &sip->macc_lck : &sdeb_fake_rw_lck;
  
-@@ -4356,9 +4399,7 @@ static int resp_report_zones(struct scsi_cmnd *scp,
+@@ -4363,9 +4406,7 @@ static int resp_report_zones(struct scsi_cmnd *scp,
  		return check_condition_result;
  	}
  
@@ -13452,7 +13452,7 @@ index 7607bee99251..6353476a6377 100644
  
  	arr = kzalloc(alloc_len, GFP_ATOMIC);
  	if (!arr) {
-@@ -4370,9 +4411,9 @@ static int resp_report_zones(struct scsi_cmnd *scp,
+@@ -4377,9 +4418,9 @@ static int resp_report_zones(struct scsi_cmnd *scp,
  	read_lock(macc_lckp);
  
  	desc = arr + 64;
@@ -13465,7 +13465,7 @@ index 7607bee99251..6353476a6377 100644
  			break;
  		zsp = zbc_zone(devip, lba);
  		switch (rep_opts) {
-@@ -4417,9 +4458,14 @@ static int resp_report_zones(struct scsi_cmnd *scp,
+@@ -4424,9 +4465,14 @@ static int resp_report_zones(struct scsi_cmnd *scp,
  			if (!zsp->z_non_seq_resource)
  				continue;
  			break;
@@ -13481,7 +13481,7 @@ index 7607bee99251..6353476a6377 100644
  				continue;
  			break;
  		default:
-@@ -4448,8 +4494,13 @@ static int resp_report_zones(struct scsi_cmnd *scp,
+@@ -4455,8 +4501,13 @@ static int resp_report_zones(struct scsi_cmnd *scp,
  	}
  
  	/* Report header */
@@ -13495,7 +13495,7 @@ index 7607bee99251..6353476a6377 100644
  
  	rep_len = (unsigned long)desc - (unsigned long)arr;
  	ret = fill_from_dev_buffer(scp, arr, min_t(u32, alloc_len, rep_len));
-@@ -4677,7 +4728,7 @@ static void zbc_rwp_zone(struct sdebug_dev_info *devip,
+@@ -4684,7 +4735,7 @@ static void zbc_rwp_zone(struct sdebug_dev_info *devip,
  	enum sdebug_z_cond zc;
  	struct sdeb_store_info *sip = devip2sip(devip, false);
  
@@ -13504,7 +13504,7 @@ index 7607bee99251..6353476a6377 100644
  		return;
  
  	zc = zsp->z_cond;
-@@ -4868,6 +4919,7 @@ static int sdebug_device_create_zones(struct sdebug_dev_info *devip)
+@@ -4875,6 +4926,7 @@ static int sdebug_device_create_zones(struct sdebug_dev_info *devip)
  {
  	struct sdeb_zone_state *zsp;
  	sector_t capacity = get_sdebug_capacity();
@@ -13512,7 +13512,7 @@ index 7607bee99251..6353476a6377 100644
  	sector_t zstart = 0;
  	unsigned int i;
  
-@@ -4902,11 +4954,30 @@ static int sdebug_device_create_zones(struct sdebug_dev_info *devip)
+@@ -4909,11 +4961,30 @@ static int sdebug_device_create_zones(struct sdebug_dev_info *devip)
  	devip->zsize_shift = ilog2(devip->zsize);
  	devip->nr_zones = (capacity + devip->zsize - 1) >> devip->zsize_shift;
  
@@ -13544,7 +13544,7 @@ index 7607bee99251..6353476a6377 100644
  
  	if (devip->zmodel == BLK_ZONED_HM) {
  		/* zbc_max_open_zones can be 0, meaning "not reported" */
-@@ -4930,20 +5001,26 @@ static int sdebug_device_create_zones(struct sdebug_dev_info *devip)
+@@ -4937,20 +5008,26 @@ static int sdebug_device_create_zones(struct sdebug_dev_info *devip)
  			zsp->z_type = ZBC_ZTYPE_CNV;
  			zsp->z_cond = ZBC_NOT_WRITE_POINTER;
  			zsp->z_wp = (sector_t)-1;
@@ -13577,7 +13577,7 @@ index 7607bee99251..6353476a6377 100644
  		zstart += zsp->z_size;
  	}
  
-@@ -5711,6 +5788,7 @@ module_param_named(wp, sdebug_wp, bool, S_IRUGO | S_IWUSR);
+@@ -5718,6 +5795,7 @@ module_param_named(wp, sdebug_wp, bool, S_IRUGO | S_IWUSR);
  module_param_named(write_same_length, sdebug_write_same_length, int,
  		   S_IRUGO | S_IWUSR);
  module_param_named(zbc, sdeb_zbc_model_s, charp, S_IRUGO);
@@ -13585,7 +13585,7 @@ index 7607bee99251..6353476a6377 100644
  module_param_named(zone_max_open, sdeb_zbc_max_open, int, S_IRUGO);
  module_param_named(zone_nr_conv, sdeb_zbc_nr_conv, int, S_IRUGO);
  module_param_named(zone_size_mb, sdeb_zbc_zone_size_mb, int, S_IRUGO);
-@@ -5781,6 +5859,7 @@ MODULE_PARM_DESC(vpd_use_hostno, "0 -> dev ids ignore hostno (def=1 -> unique de
+@@ -5788,6 +5866,7 @@ MODULE_PARM_DESC(vpd_use_hostno, "0 -> dev ids ignore hostno (def=1 -> unique de
  MODULE_PARM_DESC(wp, "Write Protect (def=0)");
  MODULE_PARM_DESC(write_same_length, "Maximum blocks per WRITE SAME cmd (def=0xffff)");
  MODULE_PARM_DESC(zbc, "'none' [0]; 'aware' [1]; 'managed' [2] (def=0). Can have 'host-' prefix");
@@ -13597,10 +13597,10 @@ index 7607bee99251..6353476a6377 100644
 2.38.1
 
 
-From 50e890653a29b5c357f78ce4d222243e02a3f691 Mon Sep 17 00:00:00 2001
+From 770f12edfaac9cdd048fca4d62461ea634d69d9d Mon Sep 17 00:00:00 2001
 From: NeilBrown <neilb@suse.de>
 Date: Tue, 22 Mar 2022 14:39:13 -0700
-Subject: [PATCH 075/175] f2fs: replace congestion_wait() calls with
+Subject: [PATCH 075/174] f2fs: replace congestion_wait() calls with
  io_schedule_timeout()
 
 As congestion is no longer tracked, congestion_wait() is effectively
@@ -13743,10 +13743,10 @@ index 7953d73530b9..167d93f5fae6 100644
 2.38.1
 
 
-From 9aa3586accb12d658e46f7f8bbd46a23848130b3 Mon Sep 17 00:00:00 2001
+From 40793c3397b8489b7a981a78ff248890bcba7779 Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Mon, 28 Feb 2022 14:41:22 +0200
-Subject: [PATCH 076/175] f2fs: don't pass a bio to f2fs_target_device
+Subject: [PATCH 076/174] f2fs: don't pass a bio to f2fs_target_device
 
 Set the bdev at bio allocation time by changing the f2fs_target_device
 calling conventions, so that no bio needs to be passed in.
@@ -13841,10 +13841,10 @@ index aecccf6ed11d..1c455d240f78 100644
 2.38.1
 
 
-From 0d0944be60edd3d5d4804e9ca43a779dfe139c4f Mon Sep 17 00:00:00 2001
+From 05909af793266791719e814bc6eca7cfb51ea077 Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Mon, 28 Feb 2022 14:41:23 +0200
-Subject: [PATCH 077/175] f2fs: pass the bio operation to bio_alloc_bioset
+Subject: [PATCH 077/174] f2fs: pass the bio operation to bio_alloc_bioset
 
 Refactor block I/O code so that the bio operation and known flags are set
 at bio allocation time.  Only the later updated flags are updated on the
@@ -14000,10 +14000,10 @@ index c39b064fc2d7..e7caf303bb58 100644
 2.38.1
 
 
-From 44759f0dfd5cf11cc2c3a712634917639e1dbd1b Mon Sep 17 00:00:00 2001
+From e6b79487b13014cef49b920e74755e590560506a Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 12 Apr 2022 14:45:50 -0700
-Subject: [PATCH 078/175] f2fs: remove obsolete whint_mode
+Subject: [PATCH 078/174] f2fs: remove obsolete whint_mode
 
 This patch removes obsolete whint_mode.
 
@@ -14382,10 +14382,10 @@ index 167d93f5fae6..bc3701a2a93e 100644
 2.38.1
 
 
-From aa7c6e195229d25bc1f12fe502805bb150b6d5e3 Mon Sep 17 00:00:00 2001
+From 48bfaf3d41e8d8fd90c2cf6d265b6e806fb5746d Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 12 Apr 2022 15:01:58 -0700
-Subject: [PATCH 079/175] f2fs: keep io_flags to avoid IO split due to
+Subject: [PATCH 079/174] f2fs: keep io_flags to avoid IO split due to
  different op_flags in two fio holders
 
 Let's attach io_flags to bio only, so that we can merge IOs given original
@@ -14462,10 +14462,10 @@ index c2e91029520b..dcd6d9b9681b 100644
 2.38.1
 
 
-From 713a2ffe2446f23e6547b41bbf3e6435d5280f1d Mon Sep 17 00:00:00 2001
+From 97990b7056e3e8a2315828ca4d7cd61472d69bd4 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 29 Mar 2022 11:28:07 -0700
-Subject: [PATCH 080/175] f2fs: fix wrong condition check when failing metapage
+Subject: [PATCH 080/174] f2fs: fix wrong condition check when failing metapage
  read
 
 This patch fixes wrong initialization.
@@ -14497,10 +14497,10 @@ index 367417621c38..50a04b965655 100644
 2.38.1
 
 
-From 679ff4d3cd9361e488d018a349c457f215c909b0 Mon Sep 17 00:00:00 2001
+From ccb18e7d802438281eb7ed9f36e8f4523ac75aeb Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Thu, 21 Apr 2022 16:47:02 -0700
-Subject: [PATCH 081/175] f2fs: should not truncate blocks during roll-forward
+Subject: [PATCH 081/174] f2fs: should not truncate blocks during roll-forward
  recovery
 
 If the file preallocated blocks and fsync'ed, we should not truncate them during
@@ -14531,10 +14531,10 @@ index 8c38b7711f70..2849eb9d18dd 100644
 2.38.1
 
 
-From c4995baefbb54ce3ff1ed48e64d506f373212c4a Mon Sep 17 00:00:00 2001
+From d68a8bfad92ec5d4e08fe63d08c3f80392f01f61 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 20 Mar 2022 23:11:17 +0800
-Subject: [PATCH 082/175] f2fs: check pinfile in gc_data_segment() in advance
+Subject: [PATCH 082/174] f2fs: check pinfile in gc_data_segment() in advance
 
 In order to skip migrating section which contains data of pinned
 file in advance.
@@ -14567,10 +14567,10 @@ index 5dead56220cc..a6f6529bc5ca 100644
 2.38.1
 
 
-From d7aeb9796c6ef467b504c192367c0436d84878c3 Mon Sep 17 00:00:00 2001
+From d2d569687a1530ae5a0eac458b5532b4d819dff1 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 20 Mar 2022 23:11:18 +0800
-Subject: [PATCH 083/175] f2fs: don't set GC_FAILURE_PIN for background GC
+Subject: [PATCH 083/174] f2fs: don't set GC_FAILURE_PIN for background GC
 
 So that it can reduce the possibility that file be unpinned forcely by
 foreground GC due to .i_gc_failures[GC_FAILURE_PIN] exceeds threshold.
@@ -14599,10 +14599,10 @@ index a6f6529bc5ca..f4a150836482 100644
 2.38.1
 
 
-From 7c6e769db69965eb1cb2bc44ee2ad9d7e4314ce7 Mon Sep 17 00:00:00 2001
+From 28ece091712c6c7f7532fd78f0d9ac74dfbc96f7 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Wed, 23 Mar 2022 13:30:04 -0700
-Subject: [PATCH 084/175] f2fs: remove unnecessary f2fs_lock_op in
+Subject: [PATCH 084/174] f2fs: remove unnecessary f2fs_lock_op in
  f2fs_new_inode
 
 This can be removed, since f2fs_alloc_nid() actually doesn't require to block
@@ -14637,10 +14637,10 @@ index be27dc697ef2..501d12f81ec8 100644
 2.38.1
 
 
-From 977f15b0da13dc71f522b4d4e1ca848f81f8f88b Mon Sep 17 00:00:00 2001
+From e23208d9271aca1e35f7874afe1729e8f2d3f478 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Mon, 21 Mar 2022 15:13:06 -0700
-Subject: [PATCH 085/175] f2fs: introduce data read/write showing path info
+Subject: [PATCH 085/174] f2fs: introduce data read/write showing path info
 
 This was used in Android for a long time. Let's upstream it.
 
@@ -14848,10 +14848,10 @@ index f701bb23f83c..11f6b7147be2 100644
 2.38.1
 
 
-From 7fb3e5084bc747dbd13630e082d992157382debc Mon Sep 17 00:00:00 2001
+From e88cd1162b0f6a799e59174229713ea00be1e4fa Mon Sep 17 00:00:00 2001
 From: Jakob Koschel <jakobkoschel@gmail.com>
 Date: Tue, 12 Apr 2022 14:20:39 +0200
-Subject: [PATCH 086/175] f2fs: Remove usage of list iterator pas the loop for
+Subject: [PATCH 086/174] f2fs: Remove usage of list iterator pas the loop for
  list_move_tail()
 
 In preparation to limit the scope of a list iterator to the list
@@ -14894,10 +14894,10 @@ index b8bf39006b58..d1b20273fa50 100644
 2.38.1
 
 
-From f8158d15650e34c8fb2fcc1b242772a153d1e9a0 Mon Sep 17 00:00:00 2001
+From 0ca9863d422741c6ebe144c88b9a3bffbdea7a62 Mon Sep 17 00:00:00 2001
 From: Jakob Koschel <jakobkoschel@gmail.com>
 Date: Tue, 12 Apr 2022 14:20:40 +0200
-Subject: [PATCH 087/175] f2fs: replace usage of found with dedicated list
+Subject: [PATCH 087/174] f2fs: replace usage of found with dedicated list
  iterator variable
 
 To move the list iterator variable into the list_for_each_entry_*()
@@ -14974,10 +14974,10 @@ index d1b20273fa50..36db064b660e 100644
 2.38.1
 
 
-From 68959d7a786ea2c120fc483945eda006c1934745 Mon Sep 17 00:00:00 2001
+From 1853f38287203a7b46609224bb0a4c55ba2d5a4d Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Mon, 18 Apr 2022 16:57:44 -0700
-Subject: [PATCH 088/175] f2fs: use flush command instead of FUA for zoned
+Subject: [PATCH 088/174] f2fs: use flush command instead of FUA for zoned
  device
 
 The block layer for zoned disk can reorder the FUA'ed IOs. Let's use flush
@@ -15020,10 +15020,10 @@ index 966d6144fca2..144e01e706b5 100644
 2.38.1
 
 
-From 3a68c9d113cce62e6dd9aca8986c6c35a9aa1a31 Mon Sep 17 00:00:00 2001
+From 321e8e7328f98a2d4d8a9176a33893a293704f86 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 29 Mar 2022 16:25:54 -0700
-Subject: [PATCH 089/175] f2fs: avoid infinite loop to flush node pages
+Subject: [PATCH 089/174] f2fs: avoid infinite loop to flush node pages
 
 xfstests/generic/475 can give EIO all the time which give an infinite loop
 to flush node page like below. Let's avoid it.
@@ -15195,10 +15195,10 @@ index 144e01e706b5..961ea46effc7 100644
 2.38.1
 
 
-From 377733bf537a0548e21b76d80f50ae000c79cdab Mon Sep 17 00:00:00 2001
+From 85177d46be09a4302dbfddddb3ad68a9262eeb0a Mon Sep 17 00:00:00 2001
 From: Niels Dossche <dossche.niels@gmail.com>
 Date: Fri, 22 Apr 2022 20:05:04 +0200
-Subject: [PATCH 090/175] f2fs: extend stat_lock to avoid potential race in
+Subject: [PATCH 090/174] f2fs: extend stat_lock to avoid potential race in
  statfs
 
 There are multiple calculations and reads of fields of sbi that should
@@ -15269,10 +15269,10 @@ index bc3701a2a93e..145965d6f5b6 100644
 2.38.1
 
 
-From 28b2f4ff920f3c2a4f8581b5094e1fdc57d338f1 Mon Sep 17 00:00:00 2001
+From a4be01eb93a296c6eb9b23d6f064f6f97f26452f Mon Sep 17 00:00:00 2001
 From: Luis Chamberlain <mcgrof@kernel.org>
 Date: Wed, 27 Apr 2022 18:02:53 +0200
-Subject: [PATCH 091/175] f2fs: call bdev_zone_sectors() only once on
+Subject: [PATCH 091/174] f2fs: call bdev_zone_sectors() only once on
  init_blkz_info()
 
 Instead of calling bdev_zone_sectors() multiple times, call
@@ -15323,10 +15323,10 @@ index 145965d6f5b6..24e763d35836 100644
 2.38.1
 
 
-From 6037791763b79df40a5f534fb04330172bd60e81 Mon Sep 17 00:00:00 2001
+From 96d39b00e204ae5404902b94fe44bf2ebd6cf783 Mon Sep 17 00:00:00 2001
 From: Luis Chamberlain <mcgrof@kernel.org>
 Date: Wed, 27 Apr 2022 18:02:54 +0200
-Subject: [PATCH 092/175] f2fs: ensure only power of 2 zone sizes are allowed
+Subject: [PATCH 092/174] f2fs: ensure only power of 2 zone sizes are allowed
 
 F2FS zoned support has power of 2 zone size assumption in many places
 such as in __f2fs_issue_discard_zone, init_blkz_info. As the power of 2
@@ -15362,10 +15362,10 @@ index 24e763d35836..76e3a2b3aa97 100644
 2.38.1
 
 
-From 1c225007fdffa13f673be3a769d9a3d2937b706a Mon Sep 17 00:00:00 2001
+From 1df7ff45540a454291951605da90866da196af42 Mon Sep 17 00:00:00 2001
 From: Byungki Lee <dominicus79@gmail.com>
 Date: Fri, 29 Apr 2022 13:29:53 -0700
-Subject: [PATCH 093/175] f2fs: write checkpoint during FG_GC
+Subject: [PATCH 093/174] f2fs: write checkpoint during FG_GC
 
 If there's not enough free sections each of which consistis of large segments,
 we can hit no free section for upcoming section allocation. Let's reclaim some
@@ -15432,10 +15432,10 @@ index f4a150836482..38ee42267c89 100644
 2.38.1
 
 
-From 375dacd42f94591a07b821b7132413c31611327f Mon Sep 17 00:00:00 2001
+From e97fbcf1313cae84aa313b7773a45ecb531168d0 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Fri, 6 May 2022 18:30:31 +0800
-Subject: [PATCH 094/175] f2fs: give priority to select unpinned section for
+Subject: [PATCH 094/174] f2fs: give priority to select unpinned section for
  foreground GC
 
 Previously, during foreground GC, if victims contain data of pinned file,
@@ -15645,10 +15645,10 @@ index 1fa26a9603cb..8fbc9f6afa55 100644
 2.38.1
 
 
-From 27de19de217239c4d3ba65387c878125768df09d Mon Sep 17 00:00:00 2001
+From ef1565fe027206cf486d853a3bf15ae224454013 Mon Sep 17 00:00:00 2001
 From: Weichao Guo <guoweichao@oppo.com>
 Date: Sat, 7 May 2022 00:28:14 +0800
-Subject: [PATCH 095/175] f2fs: skip GC if possible when checkpoint disabling
+Subject: [PATCH 095/174] f2fs: skip GC if possible when checkpoint disabling
 
 If the number of unusable blocks is not larger than
 unusable capacity, we can skip GC when checkpoint
@@ -15702,10 +15702,10 @@ index 76e3a2b3aa97..67a75f9ee17d 100644
 2.38.1
 
 
-From 8e959cef303f0233743e35755cda57da4eb46f08 Mon Sep 17 00:00:00 2001
+From 58eb50056973cb5dc9e80da366272e9a8272232f Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 6 May 2022 14:17:32 -0700
-Subject: [PATCH 096/175] f2fs: stop allocating pinned sections if EAGAIN
+Subject: [PATCH 096/174] f2fs: stop allocating pinned sections if EAGAIN
  happens
 
 EAGAIN doesn't guarantee to have a free section. Let's report it.
@@ -15732,10 +15732,10 @@ index 074b088edd5b..b1e067d2a6d9 100644
 2.38.1
 
 
-From 00ed1f85cd30250735625d0c75918b2a833b6b26 Mon Sep 17 00:00:00 2001
+From cc87b71915ceb695a9f56b8f06ad4db9124efefe Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Thu, 28 Apr 2022 11:18:09 -0700
-Subject: [PATCH 097/175] f2fs: change the current atomic write way
+Subject: [PATCH 097/174] f2fs: change the current atomic write way
 
 Current atomic write has three major issues like below.
  - keeps the updates in non-reclaimable memory space and they are even
@@ -17106,10 +17106,10 @@ index 11f6b7147be2..eb33eb18ae69 100644
 2.38.1
 
 
-From d98dbf938a6ce3b5d122d73cc85693fab739d881 Mon Sep 17 00:00:00 2001
+From be71aa9f0b056f24ecb0a190a33f7b4503353cf8 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Thu, 5 May 2022 17:49:18 -0700
-Subject: [PATCH 098/175] f2fs: kill volatile write support
+Subject: [PATCH 098/174] f2fs: kill volatile write support
 
 There's no user, since all can use atomic writes simply.
 Let's kill it.
@@ -17447,7 +17447,7 @@ index c81476e4d894..a529b33b959c 100644
  		return f2fs_rw_hint_to_seg_type(inode->i_write_hint);
  	} else {
 diff --git a/fs/f2fs/verity.c b/fs/f2fs/verity.c
-index 3d793202cc9f..5ac7e756a1bb 100644
+index cc11b85e437e..5c450d5cad16 100644
 --- a/fs/f2fs/verity.c
 +++ b/fs/f2fs/verity.c
 @@ -128,7 +128,7 @@ static int f2fs_begin_enable_verity(struct file *filp)
@@ -17463,10 +17463,10 @@ index 3d793202cc9f..5ac7e756a1bb 100644
 2.38.1
 
 
-From 3dbb5e6a8e29cf1a51b4c5354cf9280bd8c93c92 Mon Sep 17 00:00:00 2001
+From 0ae4202554c0517afd8d9e84e08a81d9af9bbe2e Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Sat, 30 Apr 2022 22:08:52 -0700
-Subject: [PATCH 099/175] f2fs: reject test_dummy_encryption when
+Subject: [PATCH 099/174] f2fs: reject test_dummy_encryption when
  !CONFIG_FS_ENCRYPTION
 
 There is no good reason to allow this mount option when the kernel isn't
@@ -17502,10 +17502,10 @@ index 981a2e9b415e..a5a7c820df4d 100644
 2.38.1
 
 
-From f9f46a4d02dadd7c1468c2a5306279abbba69032 Mon Sep 17 00:00:00 2001
+From 0bca9300b8101bceb0639dbda8e44087a91cb681 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 6 May 2022 11:40:33 -0700
-Subject: [PATCH 100/175] f2fs: introduce f2fs_gc_control to consolidate
+Subject: [PATCH 100/174] f2fs: introduce f2fs_gc_control to consolidate
  f2fs_gc parameters
 
 No functional change.
@@ -17896,10 +17896,10 @@ index eb33eb18ae69..1de200beea50 100644
 2.38.1
 
 
-From 93f540c9aab014c110a8dc5b301dd13898575226 Mon Sep 17 00:00:00 2001
+From 0ecbdffbfe86cdabd85a666002c4b8fa869b88fa Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 6 May 2022 14:23:27 -0700
-Subject: [PATCH 101/175] f2fs: keep wait_ms if EAGAIN happens
+Subject: [PATCH 101/174] f2fs: keep wait_ms if EAGAIN happens
 
 In f2fs_gc thread, let's keep wait_ms when sec_freed was zero.
 
@@ -17935,10 +17935,10 @@ index 6361e1ecc7f5..e3d6d963f0b6 100644
 2.38.1
 
 
-From 1ee2332c514d19007a2645a5e10bd01de137041c Mon Sep 17 00:00:00 2001
+From 890c744d73943a5772ed7b50d61b5a709d225ba7 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 6 May 2022 13:34:41 -0700
-Subject: [PATCH 102/175] f2fs: do not stop GC when requiring a free section
+Subject: [PATCH 102/174] f2fs: do not stop GC when requiring a free section
 
 The f2fs_gc uses a bitmap to indicate pinned sections, but when disabling
 chckpoint, we call f2fs_gc() with NULL_SEGNO which selects the same dirty
@@ -18142,10 +18142,10 @@ index 1de200beea50..0edcd4e11638 100644
 2.38.1
 
 
-From 9b13be8e0559ed0f0088c894e54abfff69ab47c1 Mon Sep 17 00:00:00 2001
+From 86043721fa4dfdc0afa90f68444b2251ed0a446c Mon Sep 17 00:00:00 2001
 From: Chao Liu <liuchao@coolpad.com>
 Date: Thu, 19 May 2022 18:40:10 +0800
-Subject: [PATCH 103/175] f2fs: make f2fs_read_inline_data() more readable
+Subject: [PATCH 103/174] f2fs: make f2fs_read_inline_data() more readable
 
 In f2fs_read_inline_data(), it is confused with checking of
 inline_data flag, as we checked it before calling. So this
@@ -18177,10 +18177,10 @@ index 1a6c6007d423..3dfc3644e868 100644
 2.38.1
 
 
-From b9e36808204b3428a78bbd76f6a2a594929d2c00 Mon Sep 17 00:00:00 2001
+From 32e7d7116ea5eaf4eb2b035ffce86cc575131484 Mon Sep 17 00:00:00 2001
 From: Julia Lawall <Julia.Lawall@inria.fr>
 Date: Sat, 21 May 2022 13:11:43 +0200
-Subject: [PATCH 104/175] f2fs: fix typo in comment
+Subject: [PATCH 104/174] f2fs: fix typo in comment
 
 Spelling mistake (triple letters) in comment.
 Detected with the help of Coccinelle.
@@ -18208,10 +18208,10 @@ index 3dfc3644e868..047d5033ebfc 100644
 2.38.1
 
 
-From 3048867518719a38bdba4f2d2386cdf04de186a8 Mon Sep 17 00:00:00 2001
+From c496ab7574d6c633b98bb1a80b72fb471b10c675 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 25 May 2022 09:56:34 +0800
-Subject: [PATCH 105/175] f2fs: avoid unneeded error handling for
+Subject: [PATCH 105/174] f2fs: avoid unneeded error handling for
  revoke_entry_slab allocation
 
 In __f2fs_commit_atomic_write(), we will guarantee success of
@@ -18243,10 +18243,10 @@ index 13af08d9089b..ccd2d3ac353f 100644
 2.38.1
 
 
-From 95a925b1049a0bdf15176804ca3d7636e700a681 Mon Sep 17 00:00:00 2001
+From 05a7ce9627c165187b986e0b5e987354849fb56e Mon Sep 17 00:00:00 2001
 From: Yufen Yu <yuyufen@huawei.com>
 Date: Wed, 25 May 2022 17:43:36 +0800
-Subject: [PATCH 106/175] f2fs: add f2fs_init_write_merge_io function
+Subject: [PATCH 106/174] f2fs: add f2fs_init_write_merge_io function
 
 Almost all other initialization of variables in f2fs_fill_super are
 extraced to a single function. Also do it for write_io[], which can
@@ -18357,10 +18357,10 @@ index d9d5347f33df..320ac32a210d 100644
 2.38.1
 
 
-From 63e21284e0259cdc90b7eac1f0a019ae0c7b3c0c Mon Sep 17 00:00:00 2001
+From 5c97ba1a7bdb0a7f0a1a343792d3cf223465bd23 Mon Sep 17 00:00:00 2001
 From: Yufen Yu <yuyufen@huawei.com>
 Date: Thu, 26 May 2022 10:21:06 +0800
-Subject: [PATCH 107/175] f2fs: replace F2FS_I(inode) and sbi by the local
+Subject: [PATCH 107/174] f2fs: replace F2FS_I(inode) and sbi by the local
  variable
 
 We have define 'fi' at the begin of the functions, just use it,
@@ -18508,10 +18508,10 @@ index c5ea1f7fea26..02a0005aac77 100644
 2.38.1
 
 
-From 4ccde8b6484b2da4f9ac61c2b44691ae05668805 Mon Sep 17 00:00:00 2001
+From fb5dd656e0da2d2a0ecd4a9c459e22808be334dc Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 4 Apr 2022 18:09:14 -0700
-Subject: [PATCH 108/175] fscrypt: split up FS_CRYPTO_BLOCK_SIZE
+Subject: [PATCH 108/174] fscrypt: split up FS_CRYPTO_BLOCK_SIZE
 
 FS_CRYPTO_BLOCK_SIZE is neither the filesystem block size nor the
 granularity of encryption.  Rather, it defines two logically separate
@@ -18619,7 +18619,7 @@ index c38066ce9ab0..b3c20d49b056 100644
  #define UBIFS_CIPHER_BLOCK_SIZE 0
  #endif
 diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
-index 50d92d805bd8..efc7f96e5e26 100644
+index bca93778e475..54c54af951dd 100644
 --- a/include/linux/fscrypt.h
 +++ b/include/linux/fscrypt.h
 @@ -18,7 +18,17 @@
@@ -18645,10 +18645,10 @@ index 50d92d805bd8..efc7f96e5e26 100644
 2.38.1
 
 
-From 54e23eec7001789d5b9d32f8dd853fcec80e1930 Mon Sep 17 00:00:00 2001
+From adf07d69cf271bec8ddeb5bfae222fae0ba23a6f Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Wed, 13 Apr 2022 22:34:15 -0700
-Subject: [PATCH 109/175] fscrypt: log when starting to use inline encryption
+Subject: [PATCH 109/174] fscrypt: log when starting to use inline encryption
 
 When inline encryption is used, the usual message "fscrypt: AES-256-XTS
 using implementation <impl>" doesn't appear in the kernel log.  Add a
@@ -18665,10 +18665,10 @@ Link: https://lore.kernel.org/r/20220414053415.158986-1-ebiggers@kernel.org
  3 files changed, 36 insertions(+), 3 deletions(-)
 
 diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
-index 5b0a9e6478b5..33f08f1b1974 100644
+index e5bf6f5cca53..373d8cf93681 100644
 --- a/fs/crypto/fscrypt_private.h
 +++ b/fs/crypto/fscrypt_private.h
-@@ -561,7 +561,9 @@ struct fscrypt_mode {
+@@ -592,7 +592,9 @@ struct fscrypt_mode {
  	int keysize;		/* key size in bytes */
  	int security_strength;	/* security strength in bytes */
  	int ivsize;		/* IV size in bytes */
@@ -18738,10 +18738,10 @@ index 93c2ca858092..90f3e68f166e 100644
  out_free_devs:
  	kfree(devs);
 diff --git a/fs/crypto/keysetup.c b/fs/crypto/keysetup.c
-index eede186b04ce..6b509af13e0d 100644
+index ad1278aff1bc..7e4a946478fa 100644
 --- a/fs/crypto/keysetup.c
 +++ b/fs/crypto/keysetup.c
-@@ -94,7 +94,7 @@ fscrypt_allocate_skcipher(struct fscrypt_mode *mode, const u8 *raw_key,
+@@ -93,7 +93,7 @@ fscrypt_allocate_skcipher(struct fscrypt_mode *mode, const u8 *raw_key,
  			    mode->cipher_str, PTR_ERR(tfm));
  		return tfm;
  	}
@@ -18754,10 +18754,10 @@ index eede186b04ce..6b509af13e0d 100644
 2.38.1
 
 
-From c58ccf698188274cd60d89c038e5df06727bc67a Mon Sep 17 00:00:00 2001
+From 07a65b533ba0097812e4cf6debb4291489dbba99 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Sat, 30 Apr 2022 22:08:53 -0700
-Subject: [PATCH 110/175] fscrypt: factor out fscrypt_policy_to_key_spec()
+Subject: [PATCH 110/174] fscrypt: factor out fscrypt_policy_to_key_spec()
 
 Factor out a function that builds the fscrypt_key_specifier for an
 fscrypt_policy.  Before this was only needed when finding the key for a
@@ -18772,10 +18772,10 @@ Link: https://lore.kernel.org/r/20220501050857.538984-4-ebiggers@kernel.org
  3 files changed, 25 insertions(+), 17 deletions(-)
 
 diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
-index 33f08f1b1974..7c93325161b0 100644
+index 373d8cf93681..a5082164f7bb 100644
 --- a/fs/crypto/fscrypt_private.h
 +++ b/fs/crypto/fscrypt_private.h
-@@ -623,6 +623,8 @@ int fscrypt_setup_v1_file_key_via_subscribed_keyrings(struct fscrypt_info *ci);
+@@ -654,6 +654,8 @@ int fscrypt_setup_v1_file_key_via_subscribed_keyrings(struct fscrypt_info *ci);
  
  bool fscrypt_policies_equal(const union fscrypt_policy *policy1,
  			    const union fscrypt_policy *policy2);
@@ -18785,10 +18785,10 @@ index 33f08f1b1974..7c93325161b0 100644
  			      const struct inode *inode);
  int fscrypt_policy_from_context(union fscrypt_policy *policy_u,
 diff --git a/fs/crypto/keysetup.c b/fs/crypto/keysetup.c
-index 6b509af13e0d..c35711896bd4 100644
+index 7e4a946478fa..f8f8f41c1de9 100644
 --- a/fs/crypto/keysetup.c
 +++ b/fs/crypto/keysetup.c
-@@ -425,23 +425,9 @@ static int setup_file_encryption_key(struct fscrypt_info *ci,
+@@ -423,23 +423,9 @@ static int setup_file_encryption_key(struct fscrypt_info *ci,
  	if (err)
  		return err;
  
@@ -18813,10 +18813,10 @@ index 6b509af13e0d..c35711896bd4 100644
 +	if (err)
 +		return err;
  
- 	key = fscrypt_find_master_key(ci->ci_inode->i_sb, &mk_spec);
- 	if (IS_ERR(key)) {
+ 	mk = fscrypt_find_master_key(ci->ci_inode->i_sb, &mk_spec);
+ 	if (!mk) {
 diff --git a/fs/crypto/policy.c b/fs/crypto/policy.c
-index ed3d623724cd..2a11276913a9 100644
+index cad34dbe8e29..5502fa634798 100644
 --- a/fs/crypto/policy.c
 +++ b/fs/crypto/policy.c
 @@ -32,6 +32,26 @@ bool fscrypt_policies_equal(const union fscrypt_policy *policy1,
@@ -18850,10 +18850,10 @@ index ed3d623724cd..2a11276913a9 100644
 2.38.1
 
 
-From f5a53fbc35eeb4b8186f5d9c440cf8e61a3c2208 Mon Sep 17 00:00:00 2001
+From c91da16d639fefc8671fac3fb4912590bc1dd043 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Sat, 30 Apr 2022 22:08:54 -0700
-Subject: [PATCH 111/175] fscrypt: add new helper functions for
+Subject: [PATCH 111/174] fscrypt: add new helper functions for
  test_dummy_encryption
 
 Unfortunately the design of fscrypt_set_test_dummy_encryption() doesn't
@@ -18886,10 +18886,10 @@ Link: https://lore.kernel.org/r/20220501050857.538984-5-ebiggers@kernel.org
  4 files changed, 151 insertions(+), 68 deletions(-)
 
 diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
-index 7c93325161b0..6b4c8094cc7b 100644
+index a5082164f7bb..731a9a34ec21 100644
 --- a/fs/crypto/fscrypt_private.h
 +++ b/fs/crypto/fscrypt_private.h
-@@ -545,8 +545,8 @@ struct key *
+@@ -576,8 +576,8 @@ struct fscrypt_master_key *
  fscrypt_find_master_key(struct super_block *sb,
  			const struct fscrypt_key_specifier *mk_spec);
  
@@ -18901,10 +18901,10 @@ index 7c93325161b0..6b4c8094cc7b 100644
  int fscrypt_verify_key_added(struct super_block *sb,
  			     const u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE]);
 diff --git a/fs/crypto/keyring.c b/fs/crypto/keyring.c
-index 0b3ffbb4faf4..caee9f8620dd 100644
+index 02f8bf8bd54d..f10ace12c05f 100644
 --- a/fs/crypto/keyring.c
 +++ b/fs/crypto/keyring.c
-@@ -688,28 +688,68 @@ int fscrypt_ioctl_add_key(struct file *filp, void __user *_uarg)
+@@ -743,28 +743,68 @@ int fscrypt_ioctl_add_key(struct file *filp, void __user *_uarg)
  }
  EXPORT_SYMBOL_GPL(fscrypt_ioctl_add_key);
  
@@ -18986,7 +18986,7 @@ index 0b3ffbb4faf4..caee9f8620dd 100644
  /*
   * Verify that the current user has added a master key with the given identifier
 diff --git a/fs/crypto/policy.c b/fs/crypto/policy.c
-index 2a11276913a9..5f858cee1e3b 100644
+index 5502fa634798..ad21498f77bb 100644
 --- a/fs/crypto/policy.c
 +++ b/fs/crypto/policy.c
 @@ -10,6 +10,7 @@
@@ -18997,7 +18997,7 @@ index 2a11276913a9..5f858cee1e3b 100644
  #include <linux/random.h>
  #include <linux/seq_file.h>
  #include <linux/string.h>
-@@ -724,73 +725,45 @@ int fscrypt_set_context(struct inode *inode, void *fs_data)
+@@ -720,73 +721,45 @@ int fscrypt_set_context(struct inode *inode, void *fs_data)
  EXPORT_SYMBOL_GPL(fscrypt_set_context);
  
  /**
@@ -19097,7 +19097,7 @@ index 2a11276913a9..5f858cee1e3b 100644
  		err = -EINVAL;
  		goto out;
  	}
-@@ -809,6 +782,37 @@ int fscrypt_set_test_dummy_encryption(struct super_block *sb, const char *arg,
+@@ -805,6 +778,37 @@ int fscrypt_set_test_dummy_encryption(struct super_block *sb, const char *arg,
  	kfree(policy);
  	return err;
  }
@@ -19136,7 +19136,7 @@ index 2a11276913a9..5f858cee1e3b 100644
  
  /**
 diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
-index efc7f96e5e26..e60d57c99cb6 100644
+index 54c54af951dd..6d144f33842f 100644
 --- a/include/linux/fscrypt.h
 +++ b/include/linux/fscrypt.h
 @@ -32,6 +32,7 @@
@@ -19169,7 +19169,7 @@ index efc7f96e5e26..e60d57c99cb6 100644
  {
 @@ -303,6 +313,8 @@ fscrypt_free_dummy_policy(struct fscrypt_dummy_policy *dummy_policy)
  /* keyring.c */
- void fscrypt_sb_free(struct super_block *sb);
+ void fscrypt_destroy_keyring(struct super_block *sb);
  int fscrypt_ioctl_add_key(struct file *filp, void __user *arg);
 +int fscrypt_add_test_dummy_key(struct super_block *sb,
 +			       const struct fscrypt_dummy_policy *dummy_policy);
@@ -19227,10 +19227,10 @@ index efc7f96e5e26..e60d57c99cb6 100644
 2.38.1
 
 
-From a8a6cd6af8e838ad2f56948c7b22b07f989541bc Mon Sep 17 00:00:00 2001
+From bb1bfa481d2f827b09171d4e7832a11461b17024 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 18 Oct 2021 11:04:50 -0700
-Subject: [PATCH 112/175] UPSTREAM: blk-crypto-fallback: properly prefix
+Subject: [PATCH 112/174] UPSTREAM: blk-crypto-fallback: properly prefix
  function and struct names
 
 For clarity, avoid using just the "blk_crypto_" prefix for functions and
@@ -19442,10 +19442,10 @@ index c322176a1e09..82b302597b47 100644
 2.38.1
 
 
-From 8b7c77cbedc86011f741b5300291041fabc35241 Mon Sep 17 00:00:00 2001
+From 71291857b6b062564635f7163efc4dcd5c1d1500 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 18 Oct 2021 11:04:51 -0700
-Subject: [PATCH 113/175] UPSTREAM: blk-crypto: rename keyslot-manager files to
+Subject: [PATCH 113/174] UPSTREAM: blk-crypto: rename keyslot-manager files to
  blk-crypto-profile
 
 In preparation for renaming struct blk_keyslot_manager to struct
@@ -19613,10 +19613,10 @@ index 0c0c9a0fdf57..725b1de41767 100644
 2.38.1
 
 
-From b3c2eab3723edb351c7797013d2f951c74b6abb7 Mon Sep 17 00:00:00 2001
+From 78974035bd3507b4389ec8c0fe4c776fec19af55 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 18 Oct 2021 11:04:52 -0700
-Subject: [PATCH 114/175] BACKPORT: blk-crypto: rename blk_keyslot_manager to
+Subject: [PATCH 114/174] BACKPORT: blk-crypto: rename blk_keyslot_manager to
  blk_crypto_profile
 
 blk_keyslot_manager is misnamed because it doesn't necessarily manage
@@ -21771,10 +21771,10 @@ index 725b1de41767..52eae8c45b8d 100644
 2.38.1
 
 
-From 920c9893da46e4fb486a4ef64f6115d32028dcc9 Mon Sep 17 00:00:00 2001
+From 27590ed897874ac4f439cf4d87bc77c9207ed525 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 18 Oct 2021 11:04:53 -0700
-Subject: [PATCH 115/175] UPSTREAM: blk-crypto: update inline encryption
+Subject: [PATCH 115/174] UPSTREAM: blk-crypto: update inline encryption
  documentation
 
 Rework most of inline-encryption.rst to be easier to follow, to correct
@@ -22291,10 +22291,10 @@ index 2e2a2c627096..4d151fbe2058 100644
 2.38.1
 
 
-From 2f4bd8ad3e35e7dede7f3e23e70c8c1cab9b6277 Mon Sep 17 00:00:00 2001
+From e6a9075ede8a22738175f36162a3e1ab4cc72c31 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Tue, 23 Nov 2021 17:37:33 -0800
-Subject: [PATCH 116/175] UPSTREAM: blk-crypto: remove blk_crypto_unregister()
+Subject: [PATCH 116/174] UPSTREAM: blk-crypto: remove blk_crypto_unregister()
 
 This function is trivial and is only used in one place.  Having this
 function is misleading because it implies that blk_crypto_register()
@@ -22368,10 +22368,10 @@ index 6ad3ac94b7bf..755dc59177d6 100644
 2.38.1
 
 
-From 492a2968a32f59b5c207ea5f370c5a6706d682f2 Mon Sep 17 00:00:00 2001
+From 8fa8b5f3786fb7eb93d8f04d6b39ff804d65d8f1 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 24 Jan 2022 13:59:36 -0800
-Subject: [PATCH 117/175] BACKPORT: block: simplify calling convention of
+Subject: [PATCH 117/174] BACKPORT: block: simplify calling convention of
  elv_unregister_queue()
 
 Make elv_unregister_queue() a no-op if q->elevator is NULL or is not
@@ -22448,10 +22448,10 @@ index 1b5e57f6115f..ca84e2b53575 100644
 2.38.1
 
 
-From cc6a2377a53fabb7be125778872ae9c98e65169e Mon Sep 17 00:00:00 2001
+From c40c4d06614b40a0f2bcdc661d45724244139d6b Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Fri, 10 Jun 2022 11:32:40 -0700
-Subject: [PATCH 118/175] f2fs: fix iostat related lock protection
+Subject: [PATCH 118/174] f2fs: fix iostat related lock protection
 
 Made iostat related locks safe to be called from irq context again.
 
@@ -22586,10 +22586,10 @@ index be599f31d3c4..d84c5f6cc09d 100644
 2.38.1
 
 
-From 7a3271d2d69290a529b8e278d00297e2fcc90bb5 Mon Sep 17 00:00:00 2001
+From 1b4c375d7af742156237ada23afb0bde6041a5ea Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Sat, 18 Jun 2022 00:42:24 -0700
-Subject: [PATCH 119/175] f2fs: do not count ENOENT for error case
+Subject: [PATCH 119/174] f2fs: do not count ENOENT for error case
 
 Otherwise, we can get a wrong cp_error mark.
 
@@ -22619,10 +22619,10 @@ index 76d3f90b07f0..c1b2f0c36db3 100644
 2.38.1
 
 
-From bdfae1b33f75f56bd0ba68257d299b9194bf56e8 Mon Sep 17 00:00:00 2001
+From f39921f61974a11f375031da76b727b095532373 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 6 Jun 2022 15:32:41 -0700
-Subject: [PATCH 120/175] f2fs: use the updated test_dummy_encryption helper
+Subject: [PATCH 120/174] f2fs: use the updated test_dummy_encryption helper
  functions
 
 Switch f2fs over to the functions that are replacing
@@ -22711,10 +22711,10 @@ index 320ac32a210d..eac995ef5891 100644
 2.38.1
 
 
-From d74f7e3402a1688146d8fbd87a99a6b81a7703a2 Mon Sep 17 00:00:00 2001
+From 338dcf52b5a131fe5bc4545665e33df70de9d267 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Sat, 11 Jun 2022 10:55:43 -0700
-Subject: [PATCH 121/175] f2fs: do not skip updating inode when retrying to
+Subject: [PATCH 121/174] f2fs: do not skip updating inode when retrying to
  flush node page
 
 Let's try to flush dirty inode again to improve subtle i_blocks mismatch.
@@ -22755,10 +22755,10 @@ index c1b2f0c36db3..631c5c9db74f 100644
 2.38.1
 
 
-From e37a5de9c3fb96e4fe7e480af3dc1e045f57cdea Mon Sep 17 00:00:00 2001
+From 53604af898511a84744aab8f3708d7d5fbe7feaa Mon Sep 17 00:00:00 2001
 From: Jack Qiu <jack.qiu@huawei.com>
 Date: Tue, 31 May 2022 09:16:56 +0800
-Subject: [PATCH 122/175] f2fs: optimize error handling in redirty_blocks
+Subject: [PATCH 122/174] f2fs: optimize error handling in redirty_blocks
 
 Current error handling is at risk of page leaks. However, we dot't seek
 any failure scenarios, just use f2fs_bug_on.
@@ -22793,10 +22793,10 @@ index a41baf264470..5a8b251a755c 100644
 2.38.1
 
 
-From 8c55ceef656b18f2a26fd0c86f387da113eb0202 Mon Sep 17 00:00:00 2001
+From 5203a0c42a082aa8e1d98da869d51d96e789d410 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 19 Jun 2022 01:51:55 +0800
-Subject: [PATCH 123/175] f2fs: initialize page_array_entry slab only if
+Subject: [PATCH 123/174] f2fs: initialize page_array_entry slab only if
  compression feature is on
 
 Otherwise, in image which doesn't support compression feature,
@@ -22826,10 +22826,10 @@ index e98a0ef71941..d0f17dd18895 100644
 2.38.1
 
 
-From ca310719730a746873b293c46bd8e084d46c6a8e Mon Sep 17 00:00:00 2001
+From 34f5abe157de272a845e2eaf2b4100968c5eac95 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Mon, 20 Jun 2022 10:38:42 -0700
-Subject: [PATCH 124/175] f2fs: introduce memory mode
+Subject: [PATCH 124/174] f2fs: introduce memory mode
 
 Introduce memory mode to supports "normal" and "low" memory modes.
 "low" mode is to support low memory devices. Because of the nature of
@@ -22966,10 +22966,10 @@ index eac995ef5891..47b8319498df 100644
 2.38.1
 
 
-From 45faf76b8c50d76b79aa0605a4e452797de200ef Mon Sep 17 00:00:00 2001
+From 97f888aa12b86ab4cf8a8f715381225a97e4a2ad Mon Sep 17 00:00:00 2001
 From: duguowei <duguowei@xiaomi.com>
 Date: Mon, 20 Jun 2022 21:39:45 +0800
-Subject: [PATCH 125/175] f2fs: remove redundant code for gc condition
+Subject: [PATCH 125/174] f2fs: remove redundant code for gc condition
 
 Remove the redundant code and use local variant as the
 argument directly. Make it more human-readable.
@@ -23031,10 +23031,10 @@ index 3fe145e8e594..19b956c2d697 100644
 2.38.1
 
 
-From 0187cef8e42913d97e6043024a8e3a045281cde4 Mon Sep 17 00:00:00 2001
+From 4b2ce14a68ffadbfe39623478f94b6906fb97e3f Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 28 Jun 2022 10:57:24 -0700
-Subject: [PATCH 126/175] f2fs: enforce single zone capacity
+Subject: [PATCH 126/174] f2fs: enforce single zone capacity
 
 In order to simplify the complicated per-zone capacity, let's support
 only one capacity for entire zoned device.
@@ -23211,10 +23211,10 @@ index 47b8319498df..3f8efd83611e 100644
 2.38.1
 
 
-From 75d33787d77ab984e2675f2f748c336a2a58daf4 Mon Sep 17 00:00:00 2001
+From 16ab7ee6b280d935858e12e08f1db60ef7c1eacb Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 28 Jun 2022 11:03:57 -0700
-Subject: [PATCH 127/175] f2fs: adjust zone capacity when considering valid
+Subject: [PATCH 127/174] f2fs: adjust zone capacity when considering valid
  block count
 
 This patch fixes counting unusable blocks set by zone capacity when
@@ -23357,10 +23357,10 @@ index 813a892cd979..d1d63766f2c7 100644
 2.38.1
 
 
-From fadf1d28436b98ea7a2e5fb78ae70a262550bc3c Mon Sep 17 00:00:00 2001
+From 24db7f2ce37dc1bb355f36a4315cdf5c19ed724b Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 28 Jun 2022 15:49:47 -0700
-Subject: [PATCH 128/175] f2fs: add a sysfs entry to show zone capacity
+Subject: [PATCH 128/174] f2fs: add a sysfs entry to show zone capacity
 
 This patch adds a sysfs entry showing the unusable space in a section
 made by zone capacity.
@@ -23424,10 +23424,10 @@ index cec6dd492974..f09fe66b0a31 100644
 2.38.1
 
 
-From aa408cf198c70948a51bb2bd0f6e47b5bfdbdc02 Mon Sep 17 00:00:00 2001
+From 636c7f6e7a0f4cd423930ba17e9b564b6998725b Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 6 Jul 2022 14:30:15 +0800
-Subject: [PATCH 129/175] f2fs: fix to invalidate META_MAPPING before DIO write
+Subject: [PATCH 129/174] f2fs: fix to invalidate META_MAPPING before DIO write
 
 Quoted from commit e3b49ea36802 ("f2fs: invalidate META_MAPPING before
 IPU/DIO write")
@@ -23508,10 +23508,10 @@ index 56cb08292ed9..80ef8f2408ca 100644
 2.38.1
 
 
-From 9959fde7e03dd0297f83a42314d4683b0b700855 Mon Sep 17 00:00:00 2001
+From 97a1c00966535ec4d397ee30461fe62ae588f00b Mon Sep 17 00:00:00 2001
 From: "Fabio M. De Francesco" <fmdefrancesco@gmail.com>
 Date: Sun, 17 Jul 2022 10:36:13 +0200
-Subject: [PATCH 130/175] f2fs: Delete f2fs_copy_page() and replace with
+Subject: [PATCH 130/174] f2fs: Delete f2fs_copy_page() and replace with
  memcpy_page()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -23584,10 +23584,10 @@ index aa73ef54142e..ea9aca493c38 100644
 2.38.1
 
 
-From f12c15241530c83fe5f77ef287a1ba269a12fbe6 Mon Sep 17 00:00:00 2001
+From 5a234e1c5848c4feb802318882a1b2c89164c7a4 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Tue, 12 Jul 2022 11:17:15 +0800
-Subject: [PATCH 131/175] f2fs: fix to check inline_data during compressed
+Subject: [PATCH 131/174] f2fs: fix to check inline_data during compressed
  inode conversion
 
 When converting inode to compressed one via ioctl, it needs to check
@@ -23617,10 +23617,10 @@ index 6958987ec94a..1c2fc8ec5cae 100644
 2.38.1
 
 
-From adb9f250766bed446a5e5e7f14e8df7acc0db503 Mon Sep 17 00:00:00 2001
+From 9d1f0879b781006afbf0a3d445fbb2ecceffaec0 Mon Sep 17 00:00:00 2001
 From: Chao Liu <liuchao@coolpad.com>
 Date: Thu, 7 Jul 2022 17:09:24 +0800
-Subject: [PATCH 132/175] f2fs: allow compression of files without blocks
+Subject: [PATCH 132/174] f2fs: allow compression of files without blocks
 
 Files created by truncate(1) have a size but no blocks, so
 they can be allowed to enable compression.
@@ -23649,10 +23649,10 @@ index ea9aca493c38..ef58a38a53e4 100644
 2.38.1
 
 
-From c621695b4868c8fd78554f5c752a0ea492de5b57 Mon Sep 17 00:00:00 2001
+From d3b144af9d1c53376fdad775f140c6bb6f74558c Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Tue, 12 Jul 2022 23:26:43 +0800
-Subject: [PATCH 133/175] f2fs: invalidate meta pages only for post_read
+Subject: [PATCH 133/174] f2fs: invalidate meta pages only for post_read
  required inode
 
 After commit e3b49ea36802 ("f2fs: invalidate META_MAPPING before
@@ -23753,10 +23753,10 @@ index 960b62a2581d..20dfd9b94dc1 100644
 2.38.1
 
 
-From 167618f1029e3db1ad296fe736ab94244835b929 Mon Sep 17 00:00:00 2001
+From f5a41ab1d8b26c67be0655320e3cd1bb2d94b008 Mon Sep 17 00:00:00 2001
 From: qixiaoyu1 <qxy65535@gmail.com>
 Date: Mon, 18 Jul 2022 11:28:40 +0800
-Subject: [PATCH 134/175] f2fs: don't bother wait_ms by foreground gc
+Subject: [PATCH 134/174] f2fs: don't bother wait_ms by foreground gc
 
 f2fs_gc returns -EINVAL via f2fs_balance_fs when there is enough free
 secs after write checkpoint, but with gc_merge enabled, it will cause
@@ -23791,10 +23791,10 @@ index f54bd85c0dc4..5a1dafb426ae 100644
 2.38.1
 
 
-From 743cccacf7bc3a7463e6393fb27010bbb3c14cd3 Mon Sep 17 00:00:00 2001
+From 5335f2f7696eaad47fc8e3b386ed11507a29928b Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Mon, 18 Jul 2022 16:02:48 -0700
-Subject: [PATCH 135/175] f2fs: introduce sysfs atomic write statistics
+Subject: [PATCH 135/174] f2fs: introduce sysfs atomic write statistics
 
 introduce the below 4 new sysfs node for atomic write statistics.
 - current_atomic_write: the total current atomic write block count,
@@ -24067,10 +24067,10 @@ index f09fe66b0a31..3183c44d44c5 100644
 2.38.1
 
 
-From 8f0ab4f6ebb479119ee50387f4fb2034ed91e7bc Mon Sep 17 00:00:00 2001
+From 103f0d0e59ab3c6ee10273b2dce4eba90a377f38 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao.yu@oppo.com>
 Date: Mon, 25 Jul 2022 00:04:17 +0800
-Subject: [PATCH 136/175] f2fs: obsolete unused MAX_DISCARD_BLOCKS
+Subject: [PATCH 136/174] f2fs: obsolete unused MAX_DISCARD_BLOCKS
 
 After commit a7eeb823854c ("f2fs: use bitmap in discard_entry"),
 MAX_DISCARD_BLOCKS became obsolete, remove it.
@@ -24097,10 +24097,10 @@ index c7afd9c2cbc5..38b877432e30 100644
 2.38.1
 
 
-From 7af1aa90039edb3e5d352a42c7587be08b269232 Mon Sep 17 00:00:00 2001
+From 0877710d99ad07b6c0e5faf96cb3357fda83d16c Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Mon, 1 Aug 2022 10:08:08 -0700
-Subject: [PATCH 137/175] f2fs: revive F2FS_IOC_ABORT_VOLATILE_WRITE
+Subject: [PATCH 137/174] f2fs: revive F2FS_IOC_ABORT_VOLATILE_WRITE
 
 F2FS_IOC_ABORT_VOLATILE_WRITE was used to abort a atomic write before.
 However it was removed accidentally. So revive it by changing the name,
@@ -24188,10 +24188,10 @@ index 352a822d4370..3121d127d5aa 100644
 2.38.1
 
 
-From 635f5a226d8b809c2c5b66e57efe9cc92b618a65 Mon Sep 17 00:00:00 2001
+From 04440f423c69705cb5a39c7448a749cc04836265 Mon Sep 17 00:00:00 2001
 From: Ye Bin <yebin10@huawei.com>
 Date: Mon, 1 Aug 2022 19:26:04 +0800
-Subject: [PATCH 138/175] f2fs: fix null-ptr-deref in f2fs_get_dnode_of_data
+Subject: [PATCH 138/174] f2fs: fix null-ptr-deref in f2fs_get_dnode_of_data
 
 There is issue as follows when test f2fs atomic write:
 F2FS-fs (loop0): Can't find valid F2FS filesystem in 2th superblock
@@ -24308,10 +24308,10 @@ index f728544e873b..197830a0a4cb 100644
 2.38.1
 
 
-From b375920838576b30e82616e28695a4ad66975887 Mon Sep 17 00:00:00 2001
+From 26a335648a25da470f7e4914eba8242f904736e1 Mon Sep 17 00:00:00 2001
 From: Eunhee Rho <eunhee83.rho@samsung.com>
 Date: Mon, 1 Aug 2022 13:40:02 +0900
-Subject: [PATCH 139/175] f2fs: remove device type check for direct IO
+Subject: [PATCH 139/174] f2fs: remove device type check for direct IO
 
 To ensure serialized IOs, f2fs allows only LFS mode for zoned
 device. Remove redundant check for direct IO.
@@ -24344,10 +24344,10 @@ index 9d63040e595d..e1fbda67c8e5 100644
 2.38.1
 
 
-From 40f7e27a4739ab59e1e1c21bf8616be7eb3588b7 Mon Sep 17 00:00:00 2001
+From 6f43d5bb1e2410742ad253b02422cb8ce246f0dd Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Wed, 3 Aug 2022 20:33:54 -0700
-Subject: [PATCH 140/175] f2fs: do not set compression bit if kernel doesn't
+Subject: [PATCH 140/174] f2fs: do not set compression bit if kernel doesn't
  support
 
 If kernel doesn't have CONFIG_F2FS_FS_COMPRESSION, a file having FS_COMPR_FL via
@@ -24405,10 +24405,10 @@ index 73c9d2b48886..06a152ff4d20 100644
 2.38.1
 
 
-From fdd6dd0776e088e5d2f6fae1fc6bb595c31baf48 Mon Sep 17 00:00:00 2001
+From fd507d9645a11a00d2d335d5f985118cf040c19d Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Tue, 2 Aug 2022 12:24:37 -0700
-Subject: [PATCH 141/175] f2fs: handle decompress only post processing in
+Subject: [PATCH 141/174] f2fs: handle decompress only post processing in
  softirq
 
 Now decompression is being handled in workqueue and it makes read I/O
@@ -24983,10 +24983,10 @@ index c1f418f9828a..650a6a210675 100644
 2.38.1
 
 
-From 8eed1ea39d60e3420e32f5e9f836f11dfba3823e Mon Sep 17 00:00:00 2001
+From 9c8be85a625740bcfe1ae03ec4f9cfc017378be5 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao.yu@oppo.com>
 Date: Thu, 4 Aug 2022 21:38:21 +0800
-Subject: [PATCH 142/175] f2fs: clean up f2fs_abort_atomic_write()
+Subject: [PATCH 142/174] f2fs: clean up f2fs_abort_atomic_write()
 
 f2fs_abort_atomic_write() has checked whether current inode is
 atomic_write one or not, it's redundant to check in its caller,
@@ -25105,10 +25105,10 @@ index 088698c56822..b6dffd285856 100644
 2.38.1
 
 
-From f90a622ab83e4d51925b6ace5b686d9a65a291b1 Mon Sep 17 00:00:00 2001
+From 9f153c22b5649ac1c6fc9b0a879be28aead6a9cf Mon Sep 17 00:00:00 2001
 From: Fengnan Chang <changfengnan@vivo.com>
 Date: Sun, 31 Jul 2022 11:33:45 +0800
-Subject: [PATCH 143/175] f2fs: intorduce f2fs_all_cluster_page_ready
+Subject: [PATCH 143/174] f2fs: intorduce f2fs_all_cluster_page_ready
 
 When write total cluster, all pages is uptodate, there is not need to call
 f2fs_prepare_compress_overwrite, intorduce f2fs_all_cluster_page_ready
@@ -25207,10 +25207,10 @@ index 650a6a210675..2219aa8b72d3 100644
 2.38.1
 
 
-From 7e16548a2ead219c7306bdd74a72125543f05d47 Mon Sep 17 00:00:00 2001
+From 850caf562bc6f5c09261c71bd5493d1f24732a54 Mon Sep 17 00:00:00 2001
 From: Fengnan Chang <fengnanchang@gmail.com>
 Date: Sun, 31 Jul 2022 11:33:46 +0800
-Subject: [PATCH 144/175] f2fs: use onstack pages instead of pvec
+Subject: [PATCH 144/174] f2fs: use onstack pages instead of pvec
 
 Since pvec have 15 pages, it not a multiple of 4, when write compressed
 pages, write in 64K as a unit, it will call pagevec_lookup_range_tag
@@ -25347,10 +25347,10 @@ index 2219aa8b72d3..3f96dd741ac4 100644
 2.38.1
 
 
-From 9c5146dd2b4503e5f653a77707340616dbdcbe6d Mon Sep 17 00:00:00 2001
+From d441214f0b918cb056348702f199635ec8aedd9b Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Thu, 11 Aug 2022 15:53:34 -0700
-Subject: [PATCH 145/175] f2fs: LFS mode does not support ATGC
+Subject: [PATCH 145/174] f2fs: LFS mode does not support ATGC
 
 ATGC is using SSR which violates LFS mode used by zoned device.
 
@@ -25380,10 +25380,10 @@ index b6dffd285856..e6ec3fd187e2 100644
 2.38.1
 
 
-From 45990088848a3e9c8ca5e4368b17bcb2aaa19ef4 Mon Sep 17 00:00:00 2001
+From a5e1e9ccb099194b4833b857455c49f09bb9e7d2 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 12 Aug 2022 22:49:50 -0700
-Subject: [PATCH 146/175] f2fs: fix wrong continue condition in GC
+Subject: [PATCH 146/174] f2fs: fix wrong continue condition in GC
 
 We should decrease the frozen counter.
 
@@ -25422,10 +25422,10 @@ index 5a1dafb426ae..6109aab24040 100644
 2.38.1
 
 
-From 74ef5cbff84982384480bb32991c52a896e89734 Mon Sep 17 00:00:00 2001
+From e3e25eaabcd2675c3f6bb3b45032f7d6d9983edd Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 19 Aug 2022 15:33:00 -0700
-Subject: [PATCH 147/175] f2fs: use memcpy_{to,from}_page() where possible
+Subject: [PATCH 147/174] f2fs: use memcpy_{to,from}_page() where possible
 
 This is simpler, and as a side effect it replaces several uses of
 kmap_atomic() with its recommended replacement kmap_local_page().
@@ -25531,7 +25531,7 @@ index e6ec3fd187e2..91f5f26db6a3 100644
  		a_ops->write_end(NULL, mapping, off, tocopy, tocopy,
  						page, fsdata);
 diff --git a/fs/f2fs/verity.c b/fs/f2fs/verity.c
-index 5ac7e756a1bb..b40746a88fbf 100644
+index 5c450d5cad16..bb87542d0c52 100644
 --- a/fs/f2fs/verity.c
 +++ b/fs/f2fs/verity.c
 @@ -47,16 +47,13 @@ static int pagecache_read(struct inode *inode, void *buf, size_t count,
@@ -25575,10 +25575,10 @@ index 5ac7e756a1bb..b40746a88fbf 100644
 2.38.1
 
 
-From 56d6b298beabe10d535bef9b2de61fdffa0d639d Mon Sep 17 00:00:00 2001
+From 225ebed8676bc15ad0fa80a721bf4dc49aa4c05e Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao.yu@oppo.com>
 Date: Sat, 20 Aug 2022 11:04:41 +0800
-Subject: [PATCH 148/175] f2fs: iostat: support accounting compressed IO
+Subject: [PATCH 148/174] f2fs: iostat: support accounting compressed IO
 
 Previously, we supported to account FS_CDATA_READ_IO type IO only,
 in this patch, it adds to account more type IO for compressed file:
@@ -26073,10 +26073,10 @@ index 0edcd4e11638..613733348c81 100644
 2.38.1
 
 
-From a27fb7fc3d19e1337b1f1422e69bbed47746c629 Mon Sep 17 00:00:00 2001
+From 46248a29f1a3cb21672ce176dfd56f48b006f4ce Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao.yu@oppo.com>
 Date: Sat, 20 Aug 2022 11:06:00 +0800
-Subject: [PATCH 149/175] f2fs: remove gc_urgent_high_limited for cleanup
+Subject: [PATCH 149/174] f2fs: remove gc_urgent_high_limited for cleanup
 
 Remove redundant sbi->gc_urgent_high_limited.
 
@@ -26135,10 +26135,10 @@ index 3183c44d44c5..70806f8b1185 100644
 2.38.1
 
 
-From b675e9cf492230063020991924277d3086c3b541 Mon Sep 17 00:00:00 2001
+From 527cdb7fee3b800104fe681af8c893b082cc331f Mon Sep 17 00:00:00 2001
 From: Zhang Qilong <zhangqilong3@huawei.com>
 Date: Mon, 29 Aug 2022 21:31:20 +0800
-Subject: [PATCH 150/175] f2fs: replace logical value "true" with a int number
+Subject: [PATCH 150/174] f2fs: replace logical value "true" with a int number
 
 The "true" is not match the parametera type "int", and
 we modify it.
@@ -26166,10 +26166,10 @@ index b44288972ffe..3e195641e0b1 100644
 2.38.1
 
 
-From b65b7e8eee9a194380f1b6215f84ea6f3319b585 Mon Sep 17 00:00:00 2001
+From aaff048061a2cdc44740a6454fca03bba77bcf4b Mon Sep 17 00:00:00 2001
 From: Zhang Qilong <zhangqilong3@huawei.com>
 Date: Tue, 23 Aug 2022 19:20:22 +0800
-Subject: [PATCH 151/175] f2fs: simplify code in f2fs_prepare_decomp_mem
+Subject: [PATCH 151/174] f2fs: simplify code in f2fs_prepare_decomp_mem
 
 It could return directly after init_decompress_ctx.
 
@@ -26202,10 +26202,10 @@ index 24f3a8807195..f3ff86eaa6a1 100644
 2.38.1
 
 
-From e0a2be41788ebc7e6df95dadfebbfac32fdd1e88 Mon Sep 17 00:00:00 2001
+From 443301e2909334a5e609be1eed43bffedda2ef7d Mon Sep 17 00:00:00 2001
 From: Zhang Qilong <zhangqilong3@huawei.com>
 Date: Tue, 30 Aug 2022 20:13:23 +0800
-Subject: [PATCH 152/175] f2fs: return the tmp_ptr directly in __bitmap_ptr
+Subject: [PATCH 152/174] f2fs: return the tmp_ptr directly in __bitmap_ptr
 
 Just return tmp_ptr here, it's no need to dereference
 checkpoint pointer again.
@@ -26233,10 +26233,10 @@ index 91ea41f8026e..0b9eb92970f3 100644
 2.38.1
 
 
-From b48d611f3d4d3d5473b7f1a86d3bfbe91a767997 Mon Sep 17 00:00:00 2001
+From 9f2d4aec89ad44cf280572841ca89672e7d5da0f Mon Sep 17 00:00:00 2001
 From: Zhang Qilong <zhangqilong3@huawei.com>
 Date: Tue, 30 Aug 2022 14:55:15 +0800
-Subject: [PATCH 153/175] f2fs: use COMPRESS_MAPPING to get compress cache
+Subject: [PATCH 153/174] f2fs: use COMPRESS_MAPPING to get compress cache
  mapping
 
 Just use the defined COMPRESS_MAPPING to get compress cache
@@ -26265,10 +26265,10 @@ index f3ff86eaa6a1..2fdc1d244b9a 100644
 2.38.1
 
 
-From dca1133c0dde554f4c2ea40be1d7f85f54834363 Mon Sep 17 00:00:00 2001
+From d1258f6c08c47faa5472433b8dda2d32b4a83195 Mon Sep 17 00:00:00 2001
 From: Shuqi Zhang <zhangshuqi3@huawei.com>
 Date: Wed, 31 Aug 2022 10:24:40 +0800
-Subject: [PATCH 154/175] f2fs: fix wrong dirty page count when race between
+Subject: [PATCH 154/174] f2fs: fix wrong dirty page count when race between
  mmap and fallocate.
 
 This is a BUG_ON issue as follows when running xfstest-generic-503:
@@ -26404,10 +26404,10 @@ index ebd24126bee4..1a4f5c7154db 100644
 2.38.1
 
 
-From 609167a661212c57389da0c57078ddd8865d557b Mon Sep 17 00:00:00 2001
+From 5c6542d8b64bc4e3f37bd8657863c34eaa2b3515 Mon Sep 17 00:00:00 2001
 From: Yonggil Song <yonggil.song@samsung.com>
 Date: Fri, 2 Sep 2022 11:07:49 +0900
-Subject: [PATCH 155/175] f2fs: fix typo
+Subject: [PATCH 155/174] f2fs: fix typo
 
 Fix typo in f2fs.h
 Detected by Jaeyoon Choi
@@ -26435,10 +26435,10 @@ index 0b9eb92970f3..2737a1d7be2c 100644
 2.38.1
 
 
-From 2faff0a1b1673640fdad626bea263aa483980c4e Mon Sep 17 00:00:00 2001
+From dab93a60d2138f36b29007211730ade6b5d33bf5 Mon Sep 17 00:00:00 2001
 From: Zhang Qilong <zhangqilong3@huawei.com>
 Date: Wed, 31 Aug 2022 17:48:15 +0800
-Subject: [PATCH 156/175] f2fs: add static init_idisk_time function to reduce
+Subject: [PATCH 156/174] f2fs: add static init_idisk_time function to reduce
  the code
 
 We can use a inner function to init the disk time
@@ -26501,10 +26501,10 @@ index 94239ffadced..fd121992a18a 100644
 2.38.1
 
 
-From e3a0d2b36d759bf151dedad34bb90b3b34b6bb96 Mon Sep 17 00:00:00 2001
+From e128114b1088e6d6f145321e1263bf99e066351c Mon Sep 17 00:00:00 2001
 From: Zhang Qilong <zhangqilong3@huawei.com>
 Date: Thu, 1 Sep 2022 15:19:37 +0800
-Subject: [PATCH 157/175] f2fs: remove redundant check in
+Subject: [PATCH 157/174] f2fs: remove redundant check in
  f2fs_sanity_check_cluster
 
 It have checked "compressed" at the entry of
@@ -26553,10 +26553,10 @@ index 2fdc1d244b9a..5a717ee672b2 100644
 2.38.1
 
 
-From d7dafa5669e3760984a143d291ffaeaeaafd4194 Mon Sep 17 00:00:00 2001
+From 411adbee0cf71f295ac2da34689ea771a07af7a6 Mon Sep 17 00:00:00 2001
 From: Weichao Guo <guoweichao@oppo.com>
 Date: Wed, 7 Sep 2022 10:38:48 +0800
-Subject: [PATCH 158/175] f2fs: let FI_OPU_WRITE override FADVISE_COLD_BIT
+Subject: [PATCH 158/174] f2fs: let FI_OPU_WRITE override FADVISE_COLD_BIT
 
 Cold files may be fragmented due to SSR, defragment is needed as
 sequential reads are dominant scenarios of these files. FI_OPU_WRITE
@@ -26586,10 +26586,10 @@ index 9d61b984c66e..6aac335566b4 100644
 2.38.1
 
 
-From 588e1edebb9f77d9aaffab269a25ba1101b39cce Mon Sep 17 00:00:00 2001
+From 561a3ebf55cda47c578e1efb17cf64a2a2fd9f2f Mon Sep 17 00:00:00 2001
 From: Zhang Qilong <zhangqilong3@huawei.com>
 Date: Mon, 19 Sep 2022 19:57:09 +0800
-Subject: [PATCH 159/175] f2fs: add "c_len" into
+Subject: [PATCH 159/174] f2fs: add "c_len" into
  trace_f2fs_update_extent_tree_range for compressed file
 
 The trace_f2fs_update_extent_tree_range could not record compressed
@@ -26674,10 +26674,10 @@ index 613733348c81..3605ab3fd0f3 100644
 2.38.1
 
 
-From b5c5f60e7d68352ce40c56e4d0221fab0f39bfa0 Mon Sep 17 00:00:00 2001
+From 95682aa92cf1917c0b7553db341b9ad95ec404bc Mon Sep 17 00:00:00 2001
 From: Zhang Qilong <zhangqilong3@huawei.com>
 Date: Wed, 14 Sep 2022 09:33:22 +0800
-Subject: [PATCH 160/175] f2fs: code clean and fix a type error
+Subject: [PATCH 160/174] f2fs: code clean and fix a type error
 
 ERROR: code indent should use tabs where possible
 ERROR: spaces required around that ':'
@@ -26766,10 +26766,10 @@ index 1a4f5c7154db..262712fdca13 100644
 2.38.1
 
 
-From b1069ac85f610e87fc28f51a4689392813f9bc5a Mon Sep 17 00:00:00 2001
+From ad38856f10e9ed5fdc005e0aeabec70876c672e0 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Tue, 13 Sep 2022 15:48:12 +0800
-Subject: [PATCH 161/175] f2fs: fix to detect corrupted meta ino
+Subject: [PATCH 161/174] f2fs: fix to detect corrupted meta ino
 
 It is possible that ino of dirent or orphan inode is corrupted in a
 fuzzed image, occasionally, if corrupted ino is equal to meta ino:
@@ -26840,10 +26840,10 @@ index fd121992a18a..f999b54aba14 100644
 2.38.1
 
 
-From 2450902b0a4818117cbc09912132ebad8f458001 Mon Sep 17 00:00:00 2001
+From 6298f0cfb15239447a5a6ee06ec92017bfec7159 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Tue, 27 Sep 2022 10:44:47 +0800
-Subject: [PATCH 162/175] f2fs: introduce cp_status sysfs entry
+Subject: [PATCH 162/174] f2fs: introduce cp_status sysfs entry
 
 This patch adds a new sysfs entry named cp_status, it can output
 checkpoint flags in real time.
@@ -26922,10 +26922,10 @@ index 70806f8b1185..f03254dcd7bf 100644
 2.38.1
 
 
-From f80d1cdfefb85ed5fde2285f96ddd392b803e5cc Mon Sep 17 00:00:00 2001
+From 0d7313f238c3ecded8a0c9fbd892dda9f153a39a Mon Sep 17 00:00:00 2001
 From: Zhang Qilong <zhangqilong3@huawei.com>
 Date: Fri, 23 Sep 2022 15:17:55 +0800
-Subject: [PATCH 163/175] f2fs: remove the unnecessary check in
+Subject: [PATCH 163/174] f2fs: remove the unnecessary check in
  f2fs_xattr_fiemap
 
 Whehter or not error occurs, checking "err == 1" is unnecessary
@@ -26955,10 +26955,10 @@ index 65719d23a93c..17a055e3dece 100644
 2.38.1
 
 
-From 27fe0f27c30290a8ca6e96c11307e7516c6758a4 Mon Sep 17 00:00:00 2001
+From 711141b9ecdf5b31d8bf14f983e27a77ba6904be Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 28 Sep 2022 23:38:53 +0800
-Subject: [PATCH 164/175] f2fs: support recording stop_checkpoint reason into
+Subject: [PATCH 164/174] f2fs: support recording stop_checkpoint reason into
  super_block
 
 This patch supports to record stop_checkpoint error into
@@ -27230,10 +27230,10 @@ index d445150c5350..5dd1e52b8997 100644
 2.38.1
 
 
-From c039a8fb7a7c33bad46a3c67798239e5d5be5b09 Mon Sep 17 00:00:00 2001
+From 8406998631a29a2bd96a2e07bb8ead5eb9c6e586 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 28 Sep 2022 23:38:54 +0800
-Subject: [PATCH 165/175] f2fs: support recording errors into superblock
+Subject: [PATCH 165/174] f2fs: support recording errors into superblock
 
 This patch supports to record detail reason of FSCORRUPTED error into
 f2fs_super_block.s_errors[].
@@ -27778,7 +27778,7 @@ index 1a7784c3914c..930a11bd37e5 100644
  				le32_to_cpu(sbi->ckpt->valid_node_count);
  	percpu_counter_set(&sbi->total_valid_inode_count,
 diff --git a/fs/f2fs/verity.c b/fs/f2fs/verity.c
-index b40746a88fbf..95bec0854cd2 100644
+index bb87542d0c52..a2719326382d 100644
 --- a/fs/f2fs/verity.c
 +++ b/fs/f2fs/verity.c
 @@ -239,6 +239,8 @@ static int f2fs_get_verity_descriptor(struct inode *inode, void *buf,
@@ -27877,10 +27877,10 @@ index 5dd1e52b8997..ee0d75d9a302 100644
 2.38.1
 
 
-From eba8e2d1cf61d68c740b4cf9707add8d1c6e34c1 Mon Sep 17 00:00:00 2001
+From 0b1af968e9ded2a8df489930951dde4d550d0248 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 30 Sep 2022 15:48:24 -0700
-Subject: [PATCH 166/175] f2fs: allow direct read for zoned device
+Subject: [PATCH 166/174] f2fs: allow direct read for zoned device
 
 This reverts dbf8e63f48af ("f2fs: remove device type check for direct IO"),
 and apply the below first version, since it contributed out-of-order DIO writes.
@@ -27920,10 +27920,10 @@ index 2a8a703a683d..d6eadfdbd500 100644
 2.38.1
 
 
-From 8e831d2559e950daa74b8658380f3c4334426c45 Mon Sep 17 00:00:00 2001
+From af85b2f19f52016af3f5b12ade280f98ff97e991 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao.yu@oppo.com>
 Date: Tue, 4 Oct 2022 09:11:33 +0800
-Subject: [PATCH 167/175] f2fs: account swapfile inodes
+Subject: [PATCH 167/174] f2fs: account swapfile inodes
 
 In order to check count of opened swapfile inodes.
 
@@ -28029,10 +28029,10 @@ index d6eadfdbd500..56815b731927 100644
 2.38.1
 
 
-From de00911d20bd209aabbef0589ed6775b74a49c97 Mon Sep 17 00:00:00 2001
+From eb646856dd1d6fca4e292fa034a194adbb586518 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Tue, 4 Oct 2022 09:41:02 +0800
-Subject: [PATCH 168/175] f2fs: change to use atomic_t type form
+Subject: [PATCH 168/174] f2fs: change to use atomic_t type form
  sbi.atomic_files
 
 inode_lock[ATOMIC_FILE] was used for protecting sbi->atomic_files,
@@ -28169,10 +28169,10 @@ index 98e65c738ec8..fbb2a00e9ca4 100644
 2.38.1
 
 
-From b7c3ea91ca1f5379bd25fa985cecc23483906114 Mon Sep 17 00:00:00 2001
+From b5b83cb0ee4c4b0a71e3c61709d800ac486a7746 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 15 Aug 2022 16:50:51 -0700
-Subject: [PATCH 169/175] fscrypt: stop using PG_error to track error status
+Subject: [PATCH 169/174] fscrypt: stop using PG_error to track error status
 
 As a step towards freeing the PG_error flag for other uses, change ext4
 and f2fs to stop using PG_error to track decryption errors.  Instead, if
@@ -28313,7 +28313,7 @@ index 4852b9a7c88a..5873a091ac3a 100644
  
  static void f2fs_read_end_io(struct bio *bio)
 diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
-index e60d57c99cb6..e9a3a51f2963 100644
+index 6d144f33842f..f72c777f34c5 100644
 --- a/include/linux/fscrypt.h
 +++ b/include/linux/fscrypt.h
 @@ -348,7 +348,7 @@ u64 fscrypt_fname_siphash(const struct inode *dir, const struct qstr *name);
@@ -28340,1311 +28340,10 @@ index e60d57c99cb6..e9a3a51f2963 100644
 2.38.1
 
 
-From 4eb805bccec30ed0ef217415b856646e4195d448 Mon Sep 17 00:00:00 2001
-From: Eric Biggers <ebiggers@google.com>
-Date: Thu, 1 Sep 2022 12:32:06 -0700
-Subject: [PATCH 170/175] fscrypt: stop using keyrings subsystem for
- fscrypt_master_key
-
-The approach of fs/crypto/ internally managing the fscrypt_master_key
-structs as the payloads of "struct key" objects contained in a
-"struct key" keyring has outlived its usefulness.  The original idea was
-to simplify the code by reusing code from the keyrings subsystem.
-However, several issues have arisen that can't easily be resolved:
-
-- When a master key struct is destroyed, blk_crypto_evict_key() must be
-  called on any per-mode keys embedded in it.  (This started being the
-  case when inline encryption support was added.)  Yet, the keyrings
-  subsystem can arbitrarily delay the destruction of keys, even past the
-  time the filesystem was unmounted.  Therefore, currently there is no
-  easy way to call blk_crypto_evict_key() when a master key is
-  destroyed.  Currently, this is worked around by holding an extra
-  reference to the filesystem's request_queue(s).  But it was overlooked
-  that the request_queue reference is *not* guaranteed to pin the
-  corresponding blk_crypto_profile too; for device-mapper devices that
-  support inline crypto, it doesn't.  This can cause a use-after-free.
-
-- When the last inode that was using an incompletely-removed master key
-  is evicted, the master key removal is completed by removing the key
-  struct from the keyring.  Currently this is done via key_invalidate().
-  Yet, key_invalidate() takes the key semaphore.  This can deadlock when
-  called from the shrinker, since in fscrypt_ioctl_add_key(), memory is
-  allocated with GFP_KERNEL under the same semaphore.
-
-- More generally, the fact that the keyrings subsystem can arbitrarily
-  delay the destruction of keys (via garbage collection delay, or via
-  random processes getting temporary key references) is undesirable, as
-  it means we can't strictly guarantee that all secrets are ever wiped.
-
-- Doing the master key lookups via the keyrings subsystem results in the
-  key_permission LSM hook being called.  fscrypt doesn't want this, as
-  all access control for encrypted files is designed to happen via the
-  files themselves, like any other files.  The workaround which SELinux
-  users are using is to change their SELinux policy to grant key search
-  access to all domains.  This works, but it is an odd extra step that
-  shouldn't really have to be done.
-
-The fix for all these issues is to change the implementation to what I
-should have done originally: don't use the keyrings subsystem to keep
-track of the filesystem's fscrypt_master_key structs.  Instead, just
-store them in a regular kernel data structure, and rework the reference
-counting, locking, and lifetime accordingly.  Retain support for
-RCU-mode key lookups by using a hash table.  Replace fscrypt_sb_free()
-with fscrypt_sb_delete(), which releases the keys synchronously and runs
-a bit earlier during unmount, so that block devices are still available.
-
-A side effect of this patch is that neither the master keys themselves
-nor the filesystem keyrings will be listed in /proc/keys anymore.
-("Master key users" and the master key users keyrings will still be
-listed.)  However, this was mostly an implementation detail, and it was
-intended just for debugging purposes.  I don't know of anyone using it.
-
-This patch does *not* change how "master key users" (->mk_users) works;
-that still uses the keyrings subsystem.  That is still needed for key
-quotas, and changing that isn't necessary to solve the issues listed
-above.  If we decide to change that too, it would be a separate patch.
-
-I've marked this as fixing the original commit that added the fscrypt
-keyring, but as noted above the most important issue that this patch
-fixes wasn't introduced until the addition of inline encryption support.
-
-Fixes: 22d94f493bfb ("fscrypt: add FS_IOC_ADD_ENCRYPTION_KEY ioctl")
-Signed-off-by: Eric Biggers <ebiggers@google.com>
-Link: https://lore.kernel.org/r/20220901193208.138056-2-ebiggers@kernel.org
----
- fs/crypto/fscrypt_private.h |  71 ++++--
- fs/crypto/hooks.c           |  10 +-
- fs/crypto/keyring.c         | 486 +++++++++++++++++++-----------------
- fs/crypto/keysetup.c        |  81 +++---
- fs/crypto/policy.c          |   8 +-
- fs/super.c                  |   2 +-
- include/linux/fs.h          |   2 +-
- include/linux/fscrypt.h     |   4 +-
- 8 files changed, 353 insertions(+), 311 deletions(-)
-
-diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
-index 6b4c8094cc7b..731a9a34ec21 100644
---- a/fs/crypto/fscrypt_private.h
-+++ b/fs/crypto/fscrypt_private.h
-@@ -225,7 +225,7 @@ struct fscrypt_info {
- 	 * will be NULL if the master key was found in a process-subscribed
- 	 * keyring rather than in the filesystem-level keyring.
- 	 */
--	struct key *ci_master_key;
-+	struct fscrypt_master_key *ci_master_key;
- 
- 	/*
- 	 * Link in list of inodes that were unlocked with the master key.
-@@ -439,6 +439,40 @@ struct fscrypt_master_key_secret {
-  */
- struct fscrypt_master_key {
- 
-+	/*
-+	 * Back-pointer to the super_block of the filesystem to which this
-+	 * master key has been added.  Only valid if ->mk_active_refs > 0.
-+	 */
-+	struct super_block			*mk_sb;
-+
-+	/*
-+	 * Link in ->mk_sb->s_master_keys->key_hashtable.
-+	 * Only valid if ->mk_active_refs > 0.
-+	 */
-+	struct hlist_node			mk_node;
-+
-+	/* Semaphore that protects ->mk_secret and ->mk_users */
-+	struct rw_semaphore			mk_sem;
-+
-+	/*
-+	 * Active and structural reference counts.  An active ref guarantees
-+	 * that the struct continues to exist, continues to be in the keyring
-+	 * ->mk_sb->s_master_keys, and that any embedded subkeys (e.g.
-+	 * ->mk_direct_keys) that have been prepared continue to exist.
-+	 * A structural ref only guarantees that the struct continues to exist.
-+	 *
-+	 * There is one active ref associated with ->mk_secret being present,
-+	 * and one active ref for each inode in ->mk_decrypted_inodes.
-+	 *
-+	 * There is one structural ref associated with the active refcount being
-+	 * nonzero.  Finding a key in the keyring also takes a structural ref,
-+	 * which is then held temporarily while the key is operated on.
-+	 */
-+	refcount_t				mk_active_refs;
-+	refcount_t				mk_struct_refs;
-+
-+	struct rcu_head				mk_rcu_head;
-+
- 	/*
- 	 * The secret key material.  After FS_IOC_REMOVE_ENCRYPTION_KEY is
- 	 * executed, this is wiped and no new inodes can be unlocked with this
-@@ -447,7 +481,10 @@ struct fscrypt_master_key {
- 	 * FS_IOC_REMOVE_ENCRYPTION_KEY can be retried, or
- 	 * FS_IOC_ADD_ENCRYPTION_KEY can add the secret again.
- 	 *
--	 * Locking: protected by this master key's key->sem.
-+	 * While ->mk_secret is present, one ref in ->mk_active_refs is held.
-+	 *
-+	 * Locking: protected by ->mk_sem.  The manipulation of ->mk_active_refs
-+	 *	    associated with this field is protected by ->mk_sem as well.
- 	 */
- 	struct fscrypt_master_key_secret	mk_secret;
- 
-@@ -468,22 +505,12 @@ struct fscrypt_master_key {
- 	 *
- 	 * This is NULL for v1 policy keys; those can only be added by root.
- 	 *
--	 * Locking: in addition to this keyring's own semaphore, this is
--	 * protected by this master key's key->sem, so we can do atomic
--	 * search+insert.  It can also be searched without taking any locks, but
--	 * in that case the returned key may have already been removed.
-+	 * Locking: protected by ->mk_sem.  (We don't just rely on the keyrings
-+	 * subsystem semaphore ->mk_users->sem, as we need support for atomic
-+	 * search+insert along with proper synchronization with ->mk_secret.)
- 	 */
- 	struct key		*mk_users;
- 
--	/*
--	 * Length of ->mk_decrypted_inodes, plus one if mk_secret is present.
--	 * Once this goes to 0, the master key is removed from ->s_master_keys.
--	 * The 'struct fscrypt_master_key' will continue to live as long as the
--	 * 'struct key' whose payload it is, but we won't let this reference
--	 * count rise again.
--	 */
--	refcount_t		mk_refcount;
--
- 	/*
- 	 * List of inodes that were unlocked using this key.  This allows the
- 	 * inodes to be evicted efficiently if the key is removed.
-@@ -509,10 +536,10 @@ static inline bool
- is_master_key_secret_present(const struct fscrypt_master_key_secret *secret)
- {
- 	/*
--	 * The READ_ONCE() is only necessary for fscrypt_drop_inode() and
--	 * fscrypt_key_describe().  These run in atomic context, so they can't
--	 * take the key semaphore and thus 'secret' can change concurrently
--	 * which would be a data race.  But they only need to know whether the
-+	 * The READ_ONCE() is only necessary for fscrypt_drop_inode().
-+	 * fscrypt_drop_inode() runs in atomic context, so it can't take the key
-+	 * semaphore and thus 'secret' can change concurrently which would be a
-+	 * data race.  But fscrypt_drop_inode() only need to know whether the
- 	 * secret *was* present at the time of check, so READ_ONCE() suffices.
- 	 */
- 	return READ_ONCE(secret->size) != 0;
-@@ -541,7 +568,11 @@ static inline int master_key_spec_len(const struct fscrypt_key_specifier *spec)
- 	return 0;
- }
- 
--struct key *
-+void fscrypt_put_master_key(struct fscrypt_master_key *mk);
-+
-+void fscrypt_put_master_key_activeref(struct fscrypt_master_key *mk);
-+
-+struct fscrypt_master_key *
- fscrypt_find_master_key(struct super_block *sb,
- 			const struct fscrypt_key_specifier *mk_spec);
- 
-diff --git a/fs/crypto/hooks.c b/fs/crypto/hooks.c
-index af74599ae1cf..be5c650e4957 100644
---- a/fs/crypto/hooks.c
-+++ b/fs/crypto/hooks.c
-@@ -5,8 +5,6 @@
-  * Encryption hooks for higher-level filesystem operations.
-  */
- 
--#include <linux/key.h>
--
- #include "fscrypt_private.h"
- 
- /**
-@@ -142,7 +140,6 @@ int fscrypt_prepare_setflags(struct inode *inode,
- 			     unsigned int oldflags, unsigned int flags)
- {
- 	struct fscrypt_info *ci;
--	struct key *key;
- 	struct fscrypt_master_key *mk;
- 	int err;
- 
-@@ -158,14 +155,13 @@ int fscrypt_prepare_setflags(struct inode *inode,
- 		ci = inode->i_crypt_info;
- 		if (ci->ci_policy.version != FSCRYPT_POLICY_V2)
- 			return -EINVAL;
--		key = ci->ci_master_key;
--		mk = key->payload.data[0];
--		down_read(&key->sem);
-+		mk = ci->ci_master_key;
-+		down_read(&mk->mk_sem);
- 		if (is_master_key_secret_present(&mk->mk_secret))
- 			err = fscrypt_derive_dirhash_key(ci, mk);
- 		else
- 			err = -ENOKEY;
--		up_read(&key->sem);
-+		up_read(&mk->mk_sem);
- 		return err;
- 	}
- 	return 0;
-diff --git a/fs/crypto/keyring.c b/fs/crypto/keyring.c
-index caee9f8620dd..9b98d6a576e6 100644
---- a/fs/crypto/keyring.c
-+++ b/fs/crypto/keyring.c
-@@ -18,6 +18,7 @@
-  * information about these ioctls.
-  */
- 
-+#include <asm/unaligned.h>
- #include <crypto/skcipher.h>
- #include <linux/key-type.h>
- #include <linux/random.h>
-@@ -25,6 +26,18 @@
- 
- #include "fscrypt_private.h"
- 
-+/* The master encryption keys for a filesystem (->s_master_keys) */
-+struct fscrypt_keyring {
-+	/*
-+	 * Lock that protects ->key_hashtable.  It does *not* protect the
-+	 * fscrypt_master_key structs themselves.
-+	 */
-+	spinlock_t lock;
-+
-+	/* Hash table that maps fscrypt_key_specifier to fscrypt_master_key */
-+	struct hlist_head key_hashtable[128];
-+};
-+
- static void wipe_master_key_secret(struct fscrypt_master_key_secret *secret)
- {
- 	fscrypt_destroy_hkdf(&secret->hkdf);
-@@ -38,20 +51,70 @@ static void move_master_key_secret(struct fscrypt_master_key_secret *dst,
- 	memzero_explicit(src, sizeof(*src));
- }
- 
--static void free_master_key(struct fscrypt_master_key *mk)
-+static void fscrypt_free_master_key(struct rcu_head *head)
-+{
-+	struct fscrypt_master_key *mk =
-+		container_of(head, struct fscrypt_master_key, mk_rcu_head);
-+	/*
-+	 * The master key secret and any embedded subkeys should have already
-+	 * been wiped when the last active reference to the fscrypt_master_key
-+	 * struct was dropped; doing it here would be unnecessarily late.
-+	 * Nevertheless, use kfree_sensitive() in case anything was missed.
-+	 */
-+	kfree_sensitive(mk);
-+}
-+
-+void fscrypt_put_master_key(struct fscrypt_master_key *mk)
-+{
-+	if (!refcount_dec_and_test(&mk->mk_struct_refs))
-+		return;
-+	/*
-+	 * No structural references left, so free ->mk_users, and also free the
-+	 * fscrypt_master_key struct itself after an RCU grace period ensures
-+	 * that concurrent keyring lookups can no longer find it.
-+	 */
-+	WARN_ON(refcount_read(&mk->mk_active_refs) != 0);
-+	key_put(mk->mk_users);
-+	mk->mk_users = NULL;
-+	call_rcu(&mk->mk_rcu_head, fscrypt_free_master_key);
-+}
-+
-+void fscrypt_put_master_key_activeref(struct fscrypt_master_key *mk)
- {
-+	struct super_block *sb = mk->mk_sb;
-+	struct fscrypt_keyring *keyring = sb->s_master_keys;
- 	size_t i;
- 
--	wipe_master_key_secret(&mk->mk_secret);
-+	if (!refcount_dec_and_test(&mk->mk_active_refs))
-+		return;
-+	/*
-+	 * No active references left, so complete the full removal of this
-+	 * fscrypt_master_key struct by removing it from the keyring and
-+	 * destroying any subkeys embedded in it.
-+	 */
-+
-+	spin_lock(&keyring->lock);
-+	hlist_del_rcu(&mk->mk_node);
-+	spin_unlock(&keyring->lock);
-+
-+	/*
-+	 * ->mk_active_refs == 0 implies that ->mk_secret is not present and
-+	 * that ->mk_decrypted_inodes is empty.
-+	 */
-+	WARN_ON(is_master_key_secret_present(&mk->mk_secret));
-+	WARN_ON(!list_empty(&mk->mk_decrypted_inodes));
- 
- 	for (i = 0; i <= FSCRYPT_MODE_MAX; i++) {
- 		fscrypt_destroy_prepared_key(&mk->mk_direct_keys[i]);
- 		fscrypt_destroy_prepared_key(&mk->mk_iv_ino_lblk_64_keys[i]);
- 		fscrypt_destroy_prepared_key(&mk->mk_iv_ino_lblk_32_keys[i]);
- 	}
-+	memzero_explicit(&mk->mk_ino_hash_key,
-+			 sizeof(mk->mk_ino_hash_key));
-+	mk->mk_ino_hash_key_initialized = false;
- 
--	key_put(mk->mk_users);
--	kfree_sensitive(mk);
-+	/* Drop the structural ref associated with the active refs. */
-+	fscrypt_put_master_key(mk);
- }
- 
- static inline bool valid_key_spec(const struct fscrypt_key_specifier *spec)
-@@ -61,44 +124,6 @@ static inline bool valid_key_spec(const struct fscrypt_key_specifier *spec)
- 	return master_key_spec_len(spec) != 0;
- }
- 
--static int fscrypt_key_instantiate(struct key *key,
--				   struct key_preparsed_payload *prep)
--{
--	key->payload.data[0] = (struct fscrypt_master_key *)prep->data;
--	return 0;
--}
--
--static void fscrypt_key_destroy(struct key *key)
--{
--	free_master_key(key->payload.data[0]);
--}
--
--static void fscrypt_key_describe(const struct key *key, struct seq_file *m)
--{
--	seq_puts(m, key->description);
--
--	if (key_is_positive(key)) {
--		const struct fscrypt_master_key *mk = key->payload.data[0];
--
--		if (!is_master_key_secret_present(&mk->mk_secret))
--			seq_puts(m, ": secret removed");
--	}
--}
--
--/*
-- * Type of key in ->s_master_keys.  Each key of this type represents a master
-- * key which has been added to the filesystem.  Its payload is a
-- * 'struct fscrypt_master_key'.  The "." prefix in the key type name prevents
-- * users from adding keys of this type via the keyrings syscalls rather than via
-- * the intended method of FS_IOC_ADD_ENCRYPTION_KEY.
-- */
--static struct key_type key_type_fscrypt = {
--	.name			= "._fscrypt",
--	.instantiate		= fscrypt_key_instantiate,
--	.destroy		= fscrypt_key_destroy,
--	.describe		= fscrypt_key_describe,
--};
--
- static int fscrypt_user_key_instantiate(struct key *key,
- 					struct key_preparsed_payload *prep)
- {
-@@ -131,32 +156,6 @@ static struct key_type key_type_fscrypt_user = {
- 	.describe		= fscrypt_user_key_describe,
- };
- 
--/* Search ->s_master_keys or ->mk_users */
--static struct key *search_fscrypt_keyring(struct key *keyring,
--					  struct key_type *type,
--					  const char *description)
--{
--	/*
--	 * We need to mark the keyring reference as "possessed" so that we
--	 * acquire permission to search it, via the KEY_POS_SEARCH permission.
--	 */
--	key_ref_t keyref = make_key_ref(keyring, true /* possessed */);
--
--	keyref = keyring_search(keyref, type, description, false);
--	if (IS_ERR(keyref)) {
--		if (PTR_ERR(keyref) == -EAGAIN || /* not found */
--		    PTR_ERR(keyref) == -EKEYREVOKED) /* recently invalidated */
--			keyref = ERR_PTR(-ENOKEY);
--		return ERR_CAST(keyref);
--	}
--	return key_ref_to_ptr(keyref);
--}
--
--#define FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE	\
--	(CONST_STRLEN("fscrypt-") + sizeof_field(struct super_block, s_id))
--
--#define FSCRYPT_MK_DESCRIPTION_SIZE	(2 * FSCRYPT_KEY_IDENTIFIER_SIZE + 1)
--
- #define FSCRYPT_MK_USERS_DESCRIPTION_SIZE	\
- 	(CONST_STRLEN("fscrypt-") + 2 * FSCRYPT_KEY_IDENTIFIER_SIZE + \
- 	 CONST_STRLEN("-users") + 1)
-@@ -164,21 +163,6 @@ static struct key *search_fscrypt_keyring(struct key *keyring,
- #define FSCRYPT_MK_USER_DESCRIPTION_SIZE	\
- 	(2 * FSCRYPT_KEY_IDENTIFIER_SIZE + CONST_STRLEN(".uid.") + 10 + 1)
- 
--static void format_fs_keyring_description(
--			char description[FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE],
--			const struct super_block *sb)
--{
--	sprintf(description, "fscrypt-%s", sb->s_id);
--}
--
--static void format_mk_description(
--			char description[FSCRYPT_MK_DESCRIPTION_SIZE],
--			const struct fscrypt_key_specifier *mk_spec)
--{
--	sprintf(description, "%*phN",
--		master_key_spec_len(mk_spec), (u8 *)&mk_spec->u);
--}
--
- static void format_mk_users_keyring_description(
- 			char description[FSCRYPT_MK_USERS_DESCRIPTION_SIZE],
- 			const u8 mk_identifier[FSCRYPT_KEY_IDENTIFIER_SIZE])
-@@ -199,20 +183,15 @@ static void format_mk_user_description(
- /* Create ->s_master_keys if needed.  Synchronized by fscrypt_add_key_mutex. */
- static int allocate_filesystem_keyring(struct super_block *sb)
- {
--	char description[FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE];
--	struct key *keyring;
-+	struct fscrypt_keyring *keyring;
- 
- 	if (sb->s_master_keys)
- 		return 0;
- 
--	format_fs_keyring_description(description, sb);
--	keyring = keyring_alloc(description, GLOBAL_ROOT_UID, GLOBAL_ROOT_GID,
--				current_cred(), KEY_POS_SEARCH |
--				  KEY_USR_SEARCH | KEY_USR_READ | KEY_USR_VIEW,
--				KEY_ALLOC_NOT_IN_QUOTA, NULL, NULL);
--	if (IS_ERR(keyring))
--		return PTR_ERR(keyring);
--
-+	keyring = kzalloc(sizeof(*keyring), GFP_KERNEL);
-+	if (!keyring)
-+		return -ENOMEM;
-+	spin_lock_init(&keyring->lock);
- 	/*
- 	 * Pairs with the smp_load_acquire() in fscrypt_find_master_key().
- 	 * I.e., here we publish ->s_master_keys with a RELEASE barrier so that
-@@ -222,21 +201,75 @@ static int allocate_filesystem_keyring(struct super_block *sb)
- 	return 0;
- }
- 
--void fscrypt_sb_free(struct super_block *sb)
-+/*
-+ * This is called at unmount time to release all encryption keys that have been
-+ * added to the filesystem, along with the keyring that contains them.
-+ *
-+ * Note that besides clearing and freeing memory, this might need to evict keys
-+ * from the keyslots of an inline crypto engine.  Therefore, this must be called
-+ * while the filesystem's underlying block device(s) are still available.
-+ */
-+void fscrypt_sb_delete(struct super_block *sb)
- {
--	key_put(sb->s_master_keys);
-+	struct fscrypt_keyring *keyring = sb->s_master_keys;
-+	size_t i;
-+
-+	if (!keyring)
-+		return;
-+
-+	for (i = 0; i < ARRAY_SIZE(keyring->key_hashtable); i++) {
-+		struct hlist_head *bucket = &keyring->key_hashtable[i];
-+		struct fscrypt_master_key *mk;
-+		struct hlist_node *tmp;
-+
-+		hlist_for_each_entry_safe(mk, tmp, bucket, mk_node) {
-+			/*
-+			 * Since all inodes were already evicted, every key
-+			 * remaining in the keyring should have an empty inode
-+			 * list, and should only still be in the keyring due to
-+			 * the single active ref associated with ->mk_secret.
-+			 * There should be no structural refs beyond the one
-+			 * associated with the active ref.
-+			 */
-+			WARN_ON(refcount_read(&mk->mk_active_refs) != 1);
-+			WARN_ON(refcount_read(&mk->mk_struct_refs) != 1);
-+			WARN_ON(!is_master_key_secret_present(&mk->mk_secret));
-+			wipe_master_key_secret(&mk->mk_secret);
-+			fscrypt_put_master_key_activeref(mk);
-+		}
-+	}
-+	kfree_sensitive(keyring);
- 	sb->s_master_keys = NULL;
- }
- 
-+static struct hlist_head *
-+fscrypt_mk_hash_bucket(struct fscrypt_keyring *keyring,
-+		       const struct fscrypt_key_specifier *mk_spec)
-+{
-+	/*
-+	 * Since key specifiers should be "random" values, it is sufficient to
-+	 * use a trivial hash function that just takes the first several bits of
-+	 * the key specifier.
-+	 */
-+	unsigned long i = get_unaligned((unsigned long *)&mk_spec->u);
-+
-+	return &keyring->key_hashtable[i % ARRAY_SIZE(keyring->key_hashtable)];
-+}
-+
- /*
-- * Find the specified master key in ->s_master_keys.
-- * Returns ERR_PTR(-ENOKEY) if not found.
-+ * Find the specified master key struct in ->s_master_keys and take a structural
-+ * ref to it.  The structural ref guarantees that the key struct continues to
-+ * exist, but it does *not* guarantee that ->s_master_keys continues to contain
-+ * the key struct.  The structural ref needs to be dropped by
-+ * fscrypt_put_master_key().  Returns NULL if the key struct is not found.
-  */
--struct key *fscrypt_find_master_key(struct super_block *sb,
--				    const struct fscrypt_key_specifier *mk_spec)
-+struct fscrypt_master_key *
-+fscrypt_find_master_key(struct super_block *sb,
-+			const struct fscrypt_key_specifier *mk_spec)
- {
--	struct key *keyring;
--	char description[FSCRYPT_MK_DESCRIPTION_SIZE];
-+	struct fscrypt_keyring *keyring;
-+	struct hlist_head *bucket;
-+	struct fscrypt_master_key *mk;
- 
- 	/*
- 	 * Pairs with the smp_store_release() in allocate_filesystem_keyring().
-@@ -246,10 +279,38 @@ struct key *fscrypt_find_master_key(struct super_block *sb,
- 	 */
- 	keyring = smp_load_acquire(&sb->s_master_keys);
- 	if (keyring == NULL)
--		return ERR_PTR(-ENOKEY); /* No keyring yet, so no keys yet. */
--
--	format_mk_description(description, mk_spec);
--	return search_fscrypt_keyring(keyring, &key_type_fscrypt, description);
-+		return NULL; /* No keyring yet, so no keys yet. */
-+
-+	bucket = fscrypt_mk_hash_bucket(keyring, mk_spec);
-+	rcu_read_lock();
-+	switch (mk_spec->type) {
-+	case FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR:
-+		hlist_for_each_entry_rcu(mk, bucket, mk_node) {
-+			if (mk->mk_spec.type ==
-+				FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR &&
-+			    memcmp(mk->mk_spec.u.descriptor,
-+				   mk_spec->u.descriptor,
-+				   FSCRYPT_KEY_DESCRIPTOR_SIZE) == 0 &&
-+			    refcount_inc_not_zero(&mk->mk_struct_refs))
-+				goto out;
-+		}
-+		break;
-+	case FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER:
-+		hlist_for_each_entry_rcu(mk, bucket, mk_node) {
-+			if (mk->mk_spec.type ==
-+				FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER &&
-+			    memcmp(mk->mk_spec.u.identifier,
-+				   mk_spec->u.identifier,
-+				   FSCRYPT_KEY_IDENTIFIER_SIZE) == 0 &&
-+			    refcount_inc_not_zero(&mk->mk_struct_refs))
-+				goto out;
-+		}
-+		break;
-+	}
-+	mk = NULL;
-+out:
-+	rcu_read_unlock();
-+	return mk;
- }
- 
- static int allocate_master_key_users_keyring(struct fscrypt_master_key *mk)
-@@ -277,17 +338,30 @@ static int allocate_master_key_users_keyring(struct fscrypt_master_key *mk)
- static struct key *find_master_key_user(struct fscrypt_master_key *mk)
- {
- 	char description[FSCRYPT_MK_USER_DESCRIPTION_SIZE];
-+	key_ref_t keyref;
- 
- 	format_mk_user_description(description, mk->mk_spec.u.identifier);
--	return search_fscrypt_keyring(mk->mk_users, &key_type_fscrypt_user,
--				      description);
-+
-+	/*
-+	 * We need to mark the keyring reference as "possessed" so that we
-+	 * acquire permission to search it, via the KEY_POS_SEARCH permission.
-+	 */
-+	keyref = keyring_search(make_key_ref(mk->mk_users, true /*possessed*/),
-+				&key_type_fscrypt_user, description, false);
-+	if (IS_ERR(keyref)) {
-+		if (PTR_ERR(keyref) == -EAGAIN || /* not found */
-+		    PTR_ERR(keyref) == -EKEYREVOKED) /* recently invalidated */
-+			keyref = ERR_PTR(-ENOKEY);
-+		return ERR_CAST(keyref);
-+	}
-+	return key_ref_to_ptr(keyref);
- }
- 
- /*
-  * Give the current user a "key" in ->mk_users.  This charges the user's quota
-  * and marks the master key as added by the current user, so that it cannot be
-- * removed by another user with the key.  Either the master key's key->sem must
-- * be held for write, or the master key must be still undergoing initialization.
-+ * removed by another user with the key.  Either ->mk_sem must be held for
-+ * write, or the master key must be still undergoing initialization.
-  */
- static int add_master_key_user(struct fscrypt_master_key *mk)
- {
-@@ -309,7 +383,7 @@ static int add_master_key_user(struct fscrypt_master_key *mk)
- 
- /*
-  * Remove the current user's "key" from ->mk_users.
-- * The master key's key->sem must be held for write.
-+ * ->mk_sem must be held for write.
-  *
-  * Returns 0 if removed, -ENOKEY if not found, or another -errno code.
-  */
-@@ -327,63 +401,49 @@ static int remove_master_key_user(struct fscrypt_master_key *mk)
- }
- 
- /*
-- * Allocate a new fscrypt_master_key which contains the given secret, set it as
-- * the payload of a new 'struct key' of type fscrypt, and link the 'struct key'
-- * into the given keyring.  Synchronized by fscrypt_add_key_mutex.
-+ * Allocate a new fscrypt_master_key, transfer the given secret over to it, and
-+ * insert it into sb->s_master_keys.
-  */
--static int add_new_master_key(struct fscrypt_master_key_secret *secret,
--			      const struct fscrypt_key_specifier *mk_spec,
--			      struct key *keyring)
-+static int add_new_master_key(struct super_block *sb,
-+			      struct fscrypt_master_key_secret *secret,
-+			      const struct fscrypt_key_specifier *mk_spec)
- {
-+	struct fscrypt_keyring *keyring = sb->s_master_keys;
- 	struct fscrypt_master_key *mk;
--	char description[FSCRYPT_MK_DESCRIPTION_SIZE];
--	struct key *key;
- 	int err;
- 
- 	mk = kzalloc(sizeof(*mk), GFP_KERNEL);
- 	if (!mk)
- 		return -ENOMEM;
- 
-+	mk->mk_sb = sb;
-+	init_rwsem(&mk->mk_sem);
-+	refcount_set(&mk->mk_struct_refs, 1);
- 	mk->mk_spec = *mk_spec;
- 
--	move_master_key_secret(&mk->mk_secret, secret);
--
--	refcount_set(&mk->mk_refcount, 1); /* secret is present */
- 	INIT_LIST_HEAD(&mk->mk_decrypted_inodes);
- 	spin_lock_init(&mk->mk_decrypted_inodes_lock);
- 
- 	if (mk_spec->type == FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER) {
- 		err = allocate_master_key_users_keyring(mk);
- 		if (err)
--			goto out_free_mk;
-+			goto out_put;
- 		err = add_master_key_user(mk);
- 		if (err)
--			goto out_free_mk;
-+			goto out_put;
- 	}
- 
--	/*
--	 * Note that we don't charge this key to anyone's quota, since when
--	 * ->mk_users is in use those keys are charged instead, and otherwise
--	 * (when ->mk_users isn't in use) only root can add these keys.
--	 */
--	format_mk_description(description, mk_spec);
--	key = key_alloc(&key_type_fscrypt, description,
--			GLOBAL_ROOT_UID, GLOBAL_ROOT_GID, current_cred(),
--			KEY_POS_SEARCH | KEY_USR_SEARCH | KEY_USR_VIEW,
--			KEY_ALLOC_NOT_IN_QUOTA, NULL);
--	if (IS_ERR(key)) {
--		err = PTR_ERR(key);
--		goto out_free_mk;
--	}
--	err = key_instantiate_and_link(key, mk, sizeof(*mk), keyring, NULL);
--	key_put(key);
--	if (err)
--		goto out_free_mk;
-+	move_master_key_secret(&mk->mk_secret, secret);
-+	refcount_set(&mk->mk_active_refs, 1); /* ->mk_secret is present */
- 
-+	spin_lock(&keyring->lock);
-+	hlist_add_head_rcu(&mk->mk_node,
-+			   fscrypt_mk_hash_bucket(keyring, mk_spec));
-+	spin_unlock(&keyring->lock);
- 	return 0;
- 
--out_free_mk:
--	free_master_key(mk);
-+out_put:
-+	fscrypt_put_master_key(mk);
- 	return err;
- }
- 
-@@ -392,42 +452,34 @@ static int add_new_master_key(struct fscrypt_master_key_secret *secret,
- static int add_existing_master_key(struct fscrypt_master_key *mk,
- 				   struct fscrypt_master_key_secret *secret)
- {
--	struct key *mk_user;
--	bool rekey;
- 	int err;
- 
- 	/*
- 	 * If the current user is already in ->mk_users, then there's nothing to
--	 * do.  (Not applicable for v1 policy keys, which have NULL ->mk_users.)
-+	 * do.  Otherwise, we need to add the user to ->mk_users.  (Neither is
-+	 * applicable for v1 policy keys, which have NULL ->mk_users.)
- 	 */
- 	if (mk->mk_users) {
--		mk_user = find_master_key_user(mk);
-+		struct key *mk_user = find_master_key_user(mk);
-+
- 		if (mk_user != ERR_PTR(-ENOKEY)) {
- 			if (IS_ERR(mk_user))
- 				return PTR_ERR(mk_user);
- 			key_put(mk_user);
- 			return 0;
- 		}
--	}
--
--	/* If we'll be re-adding ->mk_secret, try to take the reference. */
--	rekey = !is_master_key_secret_present(&mk->mk_secret);
--	if (rekey && !refcount_inc_not_zero(&mk->mk_refcount))
--		return KEY_DEAD;
--
--	/* Add the current user to ->mk_users, if applicable. */
--	if (mk->mk_users) {
- 		err = add_master_key_user(mk);
--		if (err) {
--			if (rekey && refcount_dec_and_test(&mk->mk_refcount))
--				return KEY_DEAD;
-+		if (err)
- 			return err;
--		}
- 	}
- 
- 	/* Re-add the secret if needed. */
--	if (rekey)
-+	if (!is_master_key_secret_present(&mk->mk_secret)) {
-+		if (!refcount_inc_not_zero(&mk->mk_active_refs))
-+			return KEY_DEAD;
- 		move_master_key_secret(&mk->mk_secret, secret);
-+	}
-+
- 	return 0;
- }
- 
-@@ -436,38 +488,36 @@ static int do_add_master_key(struct super_block *sb,
- 			     const struct fscrypt_key_specifier *mk_spec)
- {
- 	static DEFINE_MUTEX(fscrypt_add_key_mutex);
--	struct key *key;
-+	struct fscrypt_master_key *mk;
- 	int err;
- 
- 	mutex_lock(&fscrypt_add_key_mutex); /* serialize find + link */
--retry:
--	key = fscrypt_find_master_key(sb, mk_spec);
--	if (IS_ERR(key)) {
--		err = PTR_ERR(key);
--		if (err != -ENOKEY)
--			goto out_unlock;
-+
-+	mk = fscrypt_find_master_key(sb, mk_spec);
-+	if (!mk) {
- 		/* Didn't find the key in ->s_master_keys.  Add it. */
- 		err = allocate_filesystem_keyring(sb);
--		if (err)
--			goto out_unlock;
--		err = add_new_master_key(secret, mk_spec, sb->s_master_keys);
-+		if (!err)
-+			err = add_new_master_key(sb, secret, mk_spec);
- 	} else {
- 		/*
- 		 * Found the key in ->s_master_keys.  Re-add the secret if
- 		 * needed, and add the user to ->mk_users if needed.
- 		 */
--		down_write(&key->sem);
--		err = add_existing_master_key(key->payload.data[0], secret);
--		up_write(&key->sem);
-+		down_write(&mk->mk_sem);
-+		err = add_existing_master_key(mk, secret);
-+		up_write(&mk->mk_sem);
- 		if (err == KEY_DEAD) {
--			/* Key being removed or needs to be removed */
--			key_invalidate(key);
--			key_put(key);
--			goto retry;
-+			/*
-+			 * We found a key struct, but it's already been fully
-+			 * removed.  Ignore the old struct and add a new one.
-+			 * fscrypt_add_key_mutex means we don't need to worry
-+			 * about concurrent adds.
-+			 */
-+			err = add_new_master_key(sb, secret, mk_spec);
- 		}
--		key_put(key);
-+		fscrypt_put_master_key(mk);
- 	}
--out_unlock:
- 	mutex_unlock(&fscrypt_add_key_mutex);
- 	return err;
- }
-@@ -771,19 +821,19 @@ int fscrypt_verify_key_added(struct super_block *sb,
- 			     const u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE])
- {
- 	struct fscrypt_key_specifier mk_spec;
--	struct key *key, *mk_user;
- 	struct fscrypt_master_key *mk;
-+	struct key *mk_user;
- 	int err;
- 
- 	mk_spec.type = FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER;
- 	memcpy(mk_spec.u.identifier, identifier, FSCRYPT_KEY_IDENTIFIER_SIZE);
- 
--	key = fscrypt_find_master_key(sb, &mk_spec);
--	if (IS_ERR(key)) {
--		err = PTR_ERR(key);
-+	mk = fscrypt_find_master_key(sb, &mk_spec);
-+	if (!mk) {
-+		err = -ENOKEY;
- 		goto out;
- 	}
--	mk = key->payload.data[0];
-+	down_read(&mk->mk_sem);
- 	mk_user = find_master_key_user(mk);
- 	if (IS_ERR(mk_user)) {
- 		err = PTR_ERR(mk_user);
-@@ -791,7 +841,8 @@ int fscrypt_verify_key_added(struct super_block *sb,
- 		key_put(mk_user);
- 		err = 0;
- 	}
--	key_put(key);
-+	up_read(&mk->mk_sem);
-+	fscrypt_put_master_key(mk);
- out:
- 	if (err == -ENOKEY && capable(CAP_FOWNER))
- 		err = 0;
-@@ -953,11 +1004,10 @@ static int do_remove_key(struct file *filp, void __user *_uarg, bool all_users)
- 	struct super_block *sb = file_inode(filp)->i_sb;
- 	struct fscrypt_remove_key_arg __user *uarg = _uarg;
- 	struct fscrypt_remove_key_arg arg;
--	struct key *key;
- 	struct fscrypt_master_key *mk;
- 	u32 status_flags = 0;
- 	int err;
--	bool dead;
-+	bool inodes_remain;
- 
- 	if (copy_from_user(&arg, uarg, sizeof(arg)))
- 		return -EFAULT;
-@@ -977,12 +1027,10 @@ static int do_remove_key(struct file *filp, void __user *_uarg, bool all_users)
- 		return -EACCES;
- 
- 	/* Find the key being removed. */
--	key = fscrypt_find_master_key(sb, &arg.key_spec);
--	if (IS_ERR(key))
--		return PTR_ERR(key);
--	mk = key->payload.data[0];
--
--	down_write(&key->sem);
-+	mk = fscrypt_find_master_key(sb, &arg.key_spec);
-+	if (!mk)
-+		return -ENOKEY;
-+	down_write(&mk->mk_sem);
- 
- 	/* If relevant, remove current user's (or all users) claim to the key */
- 	if (mk->mk_users && mk->mk_users->keys.nr_leaves_on_tree != 0) {
-@@ -991,7 +1039,7 @@ static int do_remove_key(struct file *filp, void __user *_uarg, bool all_users)
- 		else
- 			err = remove_master_key_user(mk);
- 		if (err) {
--			up_write(&key->sem);
-+			up_write(&mk->mk_sem);
- 			goto out_put_key;
- 		}
- 		if (mk->mk_users->keys.nr_leaves_on_tree != 0) {
-@@ -1003,26 +1051,22 @@ static int do_remove_key(struct file *filp, void __user *_uarg, bool all_users)
- 			status_flags |=
- 				FSCRYPT_KEY_REMOVAL_STATUS_FLAG_OTHER_USERS;
- 			err = 0;
--			up_write(&key->sem);
-+			up_write(&mk->mk_sem);
- 			goto out_put_key;
- 		}
- 	}
- 
- 	/* No user claims remaining.  Go ahead and wipe the secret. */
--	dead = false;
-+	err = -ENOKEY;
- 	if (is_master_key_secret_present(&mk->mk_secret)) {
- 		wipe_master_key_secret(&mk->mk_secret);
--		dead = refcount_dec_and_test(&mk->mk_refcount);
--	}
--	up_write(&key->sem);
--	if (dead) {
--		/*
--		 * No inodes reference the key, and we wiped the secret, so the
--		 * key object is free to be removed from the keyring.
--		 */
--		key_invalidate(key);
-+		fscrypt_put_master_key_activeref(mk);
- 		err = 0;
--	} else {
-+	}
-+	inodes_remain = refcount_read(&mk->mk_active_refs) > 0;
-+	up_write(&mk->mk_sem);
-+
-+	if (inodes_remain) {
- 		/* Some inodes still reference this key; try to evict them. */
- 		err = try_to_lock_encrypted_files(sb, mk);
- 		if (err == -EBUSY) {
-@@ -1038,7 +1082,7 @@ static int do_remove_key(struct file *filp, void __user *_uarg, bool all_users)
- 	 * has been fully removed including all files locked.
- 	 */
- out_put_key:
--	key_put(key);
-+	fscrypt_put_master_key(mk);
- 	if (err == 0)
- 		err = put_user(status_flags, &uarg->removal_status_flags);
- 	return err;
-@@ -1085,7 +1129,6 @@ int fscrypt_ioctl_get_key_status(struct file *filp, void __user *uarg)
- {
- 	struct super_block *sb = file_inode(filp)->i_sb;
- 	struct fscrypt_get_key_status_arg arg;
--	struct key *key;
- 	struct fscrypt_master_key *mk;
- 	int err;
- 
-@@ -1102,19 +1145,18 @@ int fscrypt_ioctl_get_key_status(struct file *filp, void __user *uarg)
- 	arg.user_count = 0;
- 	memset(arg.__out_reserved, 0, sizeof(arg.__out_reserved));
- 
--	key = fscrypt_find_master_key(sb, &arg.key_spec);
--	if (IS_ERR(key)) {
--		if (key != ERR_PTR(-ENOKEY))
--			return PTR_ERR(key);
-+	mk = fscrypt_find_master_key(sb, &arg.key_spec);
-+	if (!mk) {
- 		arg.status = FSCRYPT_KEY_STATUS_ABSENT;
- 		err = 0;
- 		goto out;
- 	}
--	mk = key->payload.data[0];
--	down_read(&key->sem);
-+	down_read(&mk->mk_sem);
- 
- 	if (!is_master_key_secret_present(&mk->mk_secret)) {
--		arg.status = FSCRYPT_KEY_STATUS_INCOMPLETELY_REMOVED;
-+		arg.status = refcount_read(&mk->mk_active_refs) > 0 ?
-+			FSCRYPT_KEY_STATUS_INCOMPLETELY_REMOVED :
-+			FSCRYPT_KEY_STATUS_ABSENT /* raced with full removal */;
- 		err = 0;
- 		goto out_release_key;
- 	}
-@@ -1136,8 +1178,8 @@ int fscrypt_ioctl_get_key_status(struct file *filp, void __user *uarg)
- 	}
- 	err = 0;
- out_release_key:
--	up_read(&key->sem);
--	key_put(key);
-+	up_read(&mk->mk_sem);
-+	fscrypt_put_master_key(mk);
- out:
- 	if (!err && copy_to_user(uarg, &arg, sizeof(arg)))
- 		err = -EFAULT;
-@@ -1149,13 +1191,9 @@ int __init fscrypt_init_keyring(void)
- {
- 	int err;
- 
--	err = register_key_type(&key_type_fscrypt);
--	if (err)
--		return err;
--
- 	err = register_key_type(&key_type_fscrypt_user);
- 	if (err)
--		goto err_unregister_fscrypt;
-+		return err;
- 
- 	err = register_key_type(&key_type_fscrypt_provisioning);
- 	if (err)
-@@ -1165,7 +1203,5 @@ int __init fscrypt_init_keyring(void)
- 
- err_unregister_fscrypt_user:
- 	unregister_key_type(&key_type_fscrypt_user);
--err_unregister_fscrypt:
--	unregister_key_type(&key_type_fscrypt);
- 	return err;
- }
-diff --git a/fs/crypto/keysetup.c b/fs/crypto/keysetup.c
-index c35711896bd4..f8f8f41c1de9 100644
---- a/fs/crypto/keysetup.c
-+++ b/fs/crypto/keysetup.c
-@@ -9,7 +9,6 @@
-  */
- 
- #include <crypto/skcipher.h>
--#include <linux/key.h>
- #include <linux/random.h>
- 
- #include "fscrypt_private.h"
-@@ -152,6 +151,7 @@ void fscrypt_destroy_prepared_key(struct fscrypt_prepared_key *prep_key)
- {
- 	crypto_free_skcipher(prep_key->tfm);
- 	fscrypt_destroy_inline_crypt_key(prep_key);
-+	memzero_explicit(prep_key, sizeof(*prep_key));
- }
- 
- /* Given a per-file encryption key, set up the file's crypto transform object */
-@@ -405,20 +405,18 @@ static bool fscrypt_valid_master_key_size(const struct fscrypt_master_key *mk,
- /*
-  * Find the master key, then set up the inode's actual encryption key.
-  *
-- * If the master key is found in the filesystem-level keyring, then the
-- * corresponding 'struct key' is returned in *master_key_ret with its semaphore
-- * read-locked.  This is needed to ensure that only one task links the
-- * fscrypt_info into ->mk_decrypted_inodes (as multiple tasks may race to create
-- * an fscrypt_info for the same inode), and to synchronize the master key being
-- * removed with a new inode starting to use it.
-+ * If the master key is found in the filesystem-level keyring, then it is
-+ * returned in *mk_ret with its semaphore read-locked.  This is needed to ensure
-+ * that only one task links the fscrypt_info into ->mk_decrypted_inodes (as
-+ * multiple tasks may race to create an fscrypt_info for the same inode), and to
-+ * synchronize the master key being removed with a new inode starting to use it.
-  */
- static int setup_file_encryption_key(struct fscrypt_info *ci,
- 				     bool need_dirhash_key,
--				     struct key **master_key_ret)
-+				     struct fscrypt_master_key **mk_ret)
- {
--	struct key *key;
--	struct fscrypt_master_key *mk = NULL;
- 	struct fscrypt_key_specifier mk_spec;
-+	struct fscrypt_master_key *mk;
- 	int err;
- 
- 	err = fscrypt_select_encryption_impl(ci);
-@@ -429,11 +427,10 @@ static int setup_file_encryption_key(struct fscrypt_info *ci,
- 	if (err)
- 		return err;
- 
--	key = fscrypt_find_master_key(ci->ci_inode->i_sb, &mk_spec);
--	if (IS_ERR(key)) {
--		if (key != ERR_PTR(-ENOKEY) ||
--		    ci->ci_policy.version != FSCRYPT_POLICY_V1)
--			return PTR_ERR(key);
-+	mk = fscrypt_find_master_key(ci->ci_inode->i_sb, &mk_spec);
-+	if (!mk) {
-+		if (ci->ci_policy.version != FSCRYPT_POLICY_V1)
-+			return -ENOKEY;
- 
- 		/*
- 		 * As a legacy fallback for v1 policies, search for the key in
-@@ -443,9 +440,7 @@ static int setup_file_encryption_key(struct fscrypt_info *ci,
- 		 */
- 		return fscrypt_setup_v1_file_key_via_subscribed_keyrings(ci);
- 	}
--
--	mk = key->payload.data[0];
--	down_read(&key->sem);
-+	down_read(&mk->mk_sem);
- 
- 	/* Has the secret been removed (via FS_IOC_REMOVE_ENCRYPTION_KEY)? */
- 	if (!is_master_key_secret_present(&mk->mk_secret)) {
-@@ -473,18 +468,18 @@ static int setup_file_encryption_key(struct fscrypt_info *ci,
- 	if (err)
- 		goto out_release_key;
- 
--	*master_key_ret = key;
-+	*mk_ret = mk;
- 	return 0;
- 
- out_release_key:
--	up_read(&key->sem);
--	key_put(key);
-+	up_read(&mk->mk_sem);
-+	fscrypt_put_master_key(mk);
- 	return err;
- }
- 
- static void put_crypt_info(struct fscrypt_info *ci)
- {
--	struct key *key;
-+	struct fscrypt_master_key *mk;
- 
- 	if (!ci)
- 		return;
-@@ -494,24 +489,18 @@ static void put_crypt_info(struct fscrypt_info *ci)
- 	else if (ci->ci_owns_key)
- 		fscrypt_destroy_prepared_key(&ci->ci_enc_key);
- 
--	key = ci->ci_master_key;
--	if (key) {
--		struct fscrypt_master_key *mk = key->payload.data[0];
--
-+	mk = ci->ci_master_key;
-+	if (mk) {
- 		/*
- 		 * Remove this inode from the list of inodes that were unlocked
--		 * with the master key.
--		 *
--		 * In addition, if we're removing the last inode from a key that
--		 * already had its secret removed, invalidate the key so that it
--		 * gets removed from ->s_master_keys.
-+		 * with the master key.  In addition, if we're removing the last
-+		 * inode from a master key struct that already had its secret
-+		 * removed, then complete the full removal of the struct.
- 		 */
- 		spin_lock(&mk->mk_decrypted_inodes_lock);
- 		list_del(&ci->ci_master_key_link);
- 		spin_unlock(&mk->mk_decrypted_inodes_lock);
--		if (refcount_dec_and_test(&mk->mk_refcount))
--			key_invalidate(key);
--		key_put(key);
-+		fscrypt_put_master_key_activeref(mk);
- 	}
- 	memzero_explicit(ci, sizeof(*ci));
- 	kmem_cache_free(fscrypt_info_cachep, ci);
-@@ -525,7 +514,7 @@ fscrypt_setup_encryption_info(struct inode *inode,
- {
- 	struct fscrypt_info *crypt_info;
- 	struct fscrypt_mode *mode;
--	struct key *master_key = NULL;
-+	struct fscrypt_master_key *mk = NULL;
- 	int res;
- 
- 	res = fscrypt_initialize(inode->i_sb->s_cop->flags);
-@@ -548,8 +537,7 @@ fscrypt_setup_encryption_info(struct inode *inode,
- 	WARN_ON(mode->ivsize > FSCRYPT_MAX_IV_SIZE);
- 	crypt_info->ci_mode = mode;
- 
--	res = setup_file_encryption_key(crypt_info, need_dirhash_key,
--					&master_key);
-+	res = setup_file_encryption_key(crypt_info, need_dirhash_key, &mk);
- 	if (res)
- 		goto out;
- 
-@@ -564,12 +552,9 @@ fscrypt_setup_encryption_info(struct inode *inode,
- 		 * We won the race and set ->i_crypt_info to our crypt_info.
- 		 * Now link it into the master key's inode list.
- 		 */
--		if (master_key) {
--			struct fscrypt_master_key *mk =
--				master_key->payload.data[0];
--
--			refcount_inc(&mk->mk_refcount);
--			crypt_info->ci_master_key = key_get(master_key);
-+		if (mk) {
-+			crypt_info->ci_master_key = mk;
-+			refcount_inc(&mk->mk_active_refs);
- 			spin_lock(&mk->mk_decrypted_inodes_lock);
- 			list_add(&crypt_info->ci_master_key_link,
- 				 &mk->mk_decrypted_inodes);
-@@ -579,9 +564,9 @@ fscrypt_setup_encryption_info(struct inode *inode,
- 	}
- 	res = 0;
- out:
--	if (master_key) {
--		up_read(&master_key->sem);
--		key_put(master_key);
-+	if (mk) {
-+		up_read(&mk->mk_sem);
-+		fscrypt_put_master_key(mk);
- 	}
- 	put_crypt_info(crypt_info);
- 	return res;
-@@ -746,7 +731,6 @@ EXPORT_SYMBOL(fscrypt_free_inode);
- int fscrypt_drop_inode(struct inode *inode)
- {
- 	const struct fscrypt_info *ci = fscrypt_get_info(inode);
--	const struct fscrypt_master_key *mk;
- 
- 	/*
- 	 * If ci is NULL, then the inode doesn't have an encryption key set up
-@@ -756,7 +740,6 @@ int fscrypt_drop_inode(struct inode *inode)
- 	 */
- 	if (!ci || !ci->ci_master_key)
- 		return 0;
--	mk = ci->ci_master_key->payload.data[0];
- 
- 	/*
- 	 * With proper, non-racy use of FS_IOC_REMOVE_ENCRYPTION_KEY, all inodes
-@@ -775,6 +758,6 @@ int fscrypt_drop_inode(struct inode *inode)
- 	 * then the thread removing the key will either evict the inode itself
- 	 * or will correctly detect that it wasn't evicted due to the race.
- 	 */
--	return !is_master_key_secret_present(&mk->mk_secret);
-+	return !is_master_key_secret_present(&ci->ci_master_key->mk_secret);
- }
- EXPORT_SYMBOL_GPL(fscrypt_drop_inode);
-diff --git a/fs/crypto/policy.c b/fs/crypto/policy.c
-index 5f858cee1e3b..ad21498f77bb 100644
---- a/fs/crypto/policy.c
-+++ b/fs/crypto/policy.c
-@@ -713,12 +713,8 @@ int fscrypt_set_context(struct inode *inode, void *fs_data)
- 	 * delayed key setup that requires the inode number.
- 	 */
- 	if (ci->ci_policy.version == FSCRYPT_POLICY_V2 &&
--	    (ci->ci_policy.v2.flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32)) {
--		const struct fscrypt_master_key *mk =
--			ci->ci_master_key->payload.data[0];
--
--		fscrypt_hash_inode_number(ci, mk);
--	}
-+	    (ci->ci_policy.v2.flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32))
-+		fscrypt_hash_inode_number(ci, ci->ci_master_key);
- 
- 	return inode->i_sb->s_cop->set_context(inode, &ctx, ctxsize, fs_data);
- }
-diff --git a/fs/super.c b/fs/super.c
-index 87379bb1f7a3..479c6bfc5033 100644
---- a/fs/super.c
-+++ b/fs/super.c
-@@ -293,7 +293,6 @@ static void __put_super(struct super_block *s)
- 		WARN_ON(s->s_inode_lru.node);
- 		WARN_ON(!list_empty(&s->s_mounts));
- 		security_sb_free(s);
--		fscrypt_sb_free(s);
- 		put_user_ns(s->s_user_ns);
- 		kfree(s->s_subtype);
- 		call_rcu(&s->rcu, destroy_super_rcu);
-@@ -454,6 +453,7 @@ void generic_shutdown_super(struct super_block *sb)
- 		evict_inodes(sb);
- 		/* only nonzero refcount inodes can have marks */
- 		fsnotify_sb_delete(sb);
-+		fscrypt_sb_delete(sb);
- 		security_sb_delete(sb);
- 
- 		if (sb->s_dio_done_wq) {
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index fd4c450dc612..806ac72c7220 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1487,7 +1487,7 @@ struct super_block {
- 	const struct xattr_handler **s_xattr;
- #ifdef CONFIG_FS_ENCRYPTION
- 	const struct fscrypt_operations	*s_cop;
--	struct key		*s_master_keys; /* master crypto keys in use */
-+	struct fscrypt_keyring	*s_master_keys; /* master crypto keys in use */
- #endif
- #ifdef CONFIG_FS_VERITY
- 	const struct fsverity_operations *s_vop;
-diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
-index e9a3a51f2963..1dea9aa57c95 100644
---- a/include/linux/fscrypt.h
-+++ b/include/linux/fscrypt.h
-@@ -311,7 +311,7 @@ fscrypt_free_dummy_policy(struct fscrypt_dummy_policy *dummy_policy)
- }
- 
- /* keyring.c */
--void fscrypt_sb_free(struct super_block *sb);
-+void fscrypt_sb_delete(struct super_block *sb);
- int fscrypt_ioctl_add_key(struct file *filp, void __user *arg);
- int fscrypt_add_test_dummy_key(struct super_block *sb,
- 			       const struct fscrypt_dummy_policy *dummy_policy);
-@@ -521,7 +521,7 @@ fscrypt_free_dummy_policy(struct fscrypt_dummy_policy *dummy_policy)
- }
- 
- /* keyring.c */
--static inline void fscrypt_sb_free(struct super_block *sb)
-+static inline void fscrypt_sb_delete(struct super_block *sb)
- {
- }
- 
--- 
-2.38.1
-
-
-From f1f5c4710a250cea57a066cb322e4945ee608519 Mon Sep 17 00:00:00 2001
+From 86cad99f44a54cf21b1e40924eaec1bc7326baa2 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Thu, 1 Sep 2022 12:32:07 -0700
-Subject: [PATCH 171/175] fscrypt: stop holding extra request_queue references
+Subject: [PATCH 170/174] fscrypt: stop holding extra request_queue references
 
 Now that the fscrypt_master_key lifetime has been reworked to not be
 subject to the quirks of the keyrings subsystem, blk_crypto_evict_key()
@@ -29863,7 +28562,7 @@ index 90f3e68f166e..7d1e2ec72253 100644
  
  	fscrypt_generate_dun(inode->i_crypt_info, next_lblk, next_dun);
 diff --git a/fs/crypto/keyring.c b/fs/crypto/keyring.c
-index 9b98d6a576e6..1cca09aa43f8 100644
+index f10ace12c05f..2a24b1f0ae68 100644
 --- a/fs/crypto/keyring.c
 +++ b/fs/crypto/keyring.c
 @@ -105,9 +105,12 @@ void fscrypt_put_master_key_activeref(struct fscrypt_master_key *mk)
@@ -29943,10 +28642,10 @@ index 2762c5350432..75dabd9b27f9 100644
 2.38.1
 
 
-From bbbdac7af3223275ab13107e2b40888770f1b01f Mon Sep 17 00:00:00 2001
+From d41dfd5c63778839199894d0b1c22774de023593 Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Thu, 1 Sep 2022 12:32:08 -0700
-Subject: [PATCH 172/175] fscrypt: work on block_devices instead of
+Subject: [PATCH 171/174] fscrypt: work on block_devices instead of
  request_queues
 
 request_queues are a block layer implementation detail that should not
@@ -30173,7 +28872,7 @@ index 930a11bd37e5..34322873970e 100644
  };
  #endif
 diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
-index 1dea9aa57c95..b357f6b7f1f1 100644
+index f72c777f34c5..1a4f7bda6a62 100644
 --- a/include/linux/fscrypt.h
 +++ b/include/linux/fscrypt.h
 @@ -161,24 +161,21 @@ struct fscrypt_operations {
@@ -30214,10 +28913,10 @@ index 1dea9aa57c95..b357f6b7f1f1 100644
 2.38.1
 
 
-From 544db6e65592f7b11dfc1c8428f393df3dcee11a Mon Sep 17 00:00:00 2001
+From 8591c43749313f22c8d81b4526a179424fd5fa59 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 26 Aug 2022 23:58:46 -0700
-Subject: [PATCH 173/175] fscrypt: change fscrypt_dio_supported() to prepare
+Subject: [PATCH 172/174] fscrypt: change fscrypt_dio_supported() to prepare
  for STATX_DIOALIGN
 
 To prepare for STATX_DIOALIGN support, make two changes to
@@ -30353,7 +29052,7 @@ index b420c57f9676..a7e4b96ee4d1 100644
  	if (fsverity_active(inode))
  		return true;
 diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
-index b357f6b7f1f1..c1a6b27c96a9 100644
+index 1a4f7bda6a62..85055af941f9 100644
 --- a/include/linux/fscrypt.h
 +++ b/include/linux/fscrypt.h
 @@ -761,7 +761,7 @@ bool fscrypt_mergeable_bio(struct bio *bio, const struct inode *inode,
@@ -30382,10 +29081,10 @@ index b357f6b7f1f1..c1a6b27c96a9 100644
 2.38.1
 
 
-From 0e3ca4c5e21146062f4f93e3ec0bc2a6907da340 Mon Sep 17 00:00:00 2001
+From 17946ef8db61fcd78c2ceaf1cad341eaf85dca9f Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 26 Aug 2022 23:58:48 -0700
-Subject: [PATCH 174/175] f2fs: move f2fs_force_buffered_io() into file.c
+Subject: [PATCH 173/174] f2fs: move f2fs_force_buffered_io() into file.c
 
 f2fs_force_buffered_io() is only used in file.c, so move it into there.
 No behavior change.  This makes it easier to review later patches.
@@ -30521,10 +29220,10 @@ index 709ea6b42b65..c16136f4df24 100644
 2.38.1
 
 
-From be1fabb2a9c78afec017c33603dc0e5767bd134c Mon Sep 17 00:00:00 2001
+From 208867fb7c82502a0ac138e1f9f8307d3c35c3fd Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 26 Aug 2022 23:58:49 -0700
-Subject: [PATCH 175/175] f2fs: simplify f2fs_force_buffered_io()
+Subject: [PATCH 174/174] f2fs: simplify f2fs_force_buffered_io()
 
 f2fs only allows direct I/O that is aligned to the filesystem block
 size.  Given that fact, simplify f2fs_force_buffered_io() by removing
