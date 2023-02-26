@@ -140,22 +140,22 @@ index 3a98439bba83..6efc4f907f58 100644
 2.28.0
 
 
-From f85ed068b4d0e6c31edce8574a95757a60e58b87 Mon Sep 17 00:00:00 2001
+From 02d4cc5bf11df99efcca153fa2ab78f1a7bcd072 Mon Sep 17 00:00:00 2001
 From: Etienne Juvigny <Ti3noU@gmail.com>
 Date: Mon, 3 Sep 2018 17:36:25 +0200
 Subject: [PATCH 07/17] Zenify & stuff
 
 ---
- init/Kconfig           | 32 ++++++++++++++++++++++++++++++++
- kernel/sched/fair.c    | 25 +++++++++++++++++++++++++
- mm/page-writeback.c    |  8 ++++++++
- 3 files changed, 65 insertions(+)
+ init/Kconfig        | 32 ++++++++++++++++++++++++++++++++
+ kernel/sched/fair.c | 18 ++++++++++++++++++
+ mm/page-writeback.c |  8 ++++++++
+ 3 files changed, 58 insertions(+)
 
 diff --git a/init/Kconfig b/init/Kconfig
-index 3ae8678e1145..da708eed0f1e 100644
+index 2c6f097a4836..6cfa4175d33e 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -92,6 +92,38 @@ config THREAD_INFO_IN_TASK
+@@ -116,6 +116,38 @@ config THREAD_INFO_IN_TASK
  
  menu "General setup"
  
@@ -177,8 +177,8 @@ index 3ae8678e1145..da708eed0f1e 100644
 +
 +	  --- CFS CPU Scheduler ----------------------------------
 +
-+	    Scheduling latency.............:   6    ->   3    ms
-+	    Minimal granularity............:   0.75 ->   0.3  ms
++	    Scheduling latency.............:   6    ->   4    ms
++	    Minimal granularity............:   0.75 ->   0.4  ms
 +	    Wakeup granularity.............:   1    ->   0.5  ms
 +	    CPU migration cost.............:   0.5  ->   0.25 ms
 +	    Bandwidth slice size...........:   5    ->   3    ms
@@ -195,16 +195,16 @@ index 3ae8678e1145..da708eed0f1e 100644
  	bool
  
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 6b3b59cc51d6..2a0072192c3d 100644
+index 6648683cd964..d41dbf85fca2 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -37,8 +37,13 @@
+@@ -35,8 +35,13 @@
   *
   * (default: 6ms * (1 + ilog(ncpus)), units: nanoseconds)
   */
 +#ifdef CONFIG_ZENIFY
-+unsigned int sysctl_sched_latency			= 3000000ULL;
-+static unsigned int normalized_sysctl_sched_latency	= 3000000ULL;
++unsigned int sysctl_sched_latency			= 4000000ULL;
++static unsigned int normalized_sysctl_sched_latency	= 4000000ULL;
 +#else
  unsigned int sysctl_sched_latency			= 6000000ULL;
  static unsigned int normalized_sysctl_sched_latency	= 6000000ULL;
@@ -212,13 +212,13 @@ index 6b3b59cc51d6..2a0072192c3d 100644
  
  /*
   * The initial- and re-scaling of tunables is configurable
-@@ -58,13 +63,22 @@ enum sched_tunable_scaling sysctl_sched_tunable_scaling = SCHED_TUNABLESCALING_L
+@@ -56,13 +61,22 @@ unsigned int sysctl_sched_tunable_scaling = SCHED_TUNABLESCALING_LOG;
   *
   * (default: 0.75 msec * (1 + ilog(ncpus)), units: nanoseconds)
   */
 +#ifdef CONFIG_ZENIFY
-+unsigned int sysctl_sched_min_granularity			= 300000ULL;
-+static unsigned int normalized_sysctl_sched_min_granularity	= 300000ULL;
++unsigned int sysctl_sched_min_granularity			= 400000ULL;
++static unsigned int normalized_sysctl_sched_min_granularity	= 400000ULL;
 +#else
  unsigned int sysctl_sched_min_granularity			= 750000ULL;
  static unsigned int normalized_sysctl_sched_min_granularity	= 750000ULL;
@@ -235,7 +235,7 @@ index 6b3b59cc51d6..2a0072192c3d 100644
  
  /*
   * After fork, child runs first. If set to 0 (default) then
-@@ -128,8 +149,12 @@ int __weak arch_asym_cpu_priority(int cpu)
+@@ -133,8 +147,12 @@ int __weak arch_asym_cpu_priority(int cpu)
   *
   * (default: 5 msec, units: microseconds)
   */
@@ -249,10 +249,10 @@ index 6b3b59cc51d6..2a0072192c3d 100644
  static inline void update_load_add(struct load_weight *lw, unsigned long inc)
  {
 diff --git a/mm/page-writeback.c b/mm/page-writeback.c
-index 28b3e7a67565..01a1aef2b9b1 100644
+index 8ca6617b2a72..cdf321ce4edd 100644
 --- a/mm/page-writeback.c
 +++ b/mm/page-writeback.c
-@@ -71,7 +71,11 @@ static long ratelimit_pages = 32;
+@@ -70,7 +70,11 @@ static long ratelimit_pages = 32;
  /*
   * Start background writeback (via writeback threads) at this percentage
   */
@@ -264,7 +264,7 @@ index 28b3e7a67565..01a1aef2b9b1 100644
  
  /*
   * dirty_background_bytes starts at 0 (disabled) so that it is a function of
-@@ -88,7 +92,11 @@ int vm_highmem_is_dirtyable;
+@@ -87,7 +91,11 @@ int vm_highmem_is_dirtyable;
  /*
   * The generator of dirty data starts writeback at this percentage
   */
@@ -277,7 +277,7 @@ index 28b3e7a67565..01a1aef2b9b1 100644
  /*
   * vm_dirty_bytes starts at 0 (disabled) so that it is a function of
 -- 
-2.28.0
+2.39.2
 
 
 From e92e67143385cf285851e12aa8b7f083dd38dd24 Mon Sep 17 00:00:00 2001
