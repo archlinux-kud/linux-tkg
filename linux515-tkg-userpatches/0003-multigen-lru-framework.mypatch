@@ -1,7 +1,7 @@
 From 093c91285d1e7f9495b501c5d78b30b23b02f3a2 Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Sun, 18 Sep 2022 01:59:58 -0600
-Subject: [PATCH 01/14] BACKPORT: mm: x86, arm64: add arch_has_hw_pte_young()
+Subject: [PATCH 01/15] BACKPORT: mm: x86, arm64: add arch_has_hw_pte_young()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -448,7 +448,7 @@ index a4d0f744a458..392b7326a2d2 100644
 From b671fbd4713f5f87baa29d057aead0d06ac6ed5b Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Sun, 18 Sep 2022 02:00:00 -0600
-Subject: [PATCH 02/14] BACKPORT: mm/vmscan.c: refactor shrink_node()
+Subject: [PATCH 02/15] BACKPORT: mm/vmscan.c: refactor shrink_node()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -739,7 +739,7 @@ index 201acea81804..dc5f0381513f 100644
 From 0aa2f8c31d4828a57dc327438ce8188696214d8d Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Sun, 18 Sep 2022 02:00:01 -0600
-Subject: [PATCH 03/14] UPSTREAM: Revert "include/linux/mm_inline.h: fold
+Subject: [PATCH 03/15] UPSTREAM: Revert "include/linux/mm_inline.h: fold
  __update_lru_size() into its sole caller"
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -838,7 +838,7 @@ index 355ea1ee32bd..a822d6b690a5 100644
 From 80ad5fd42f87b3c6f5ccb1e772bbd07d8c1e6177 Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Sun, 18 Sep 2022 02:00:02 -0600
-Subject: [PATCH 04/14] BACKPORT: mm: multi-gen LRU: groundwork
+Subject: [PATCH 04/15] BACKPORT: mm: multi-gen LRU: groundwork
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -1691,7 +1691,7 @@ index dc5f0381513f..41826fe17eb3 100644
 From 4fa1aee3e179bb0c51f2ca6c32522dea1ef707b0 Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Sun, 18 Sep 2022 02:00:03 -0600
-Subject: [PATCH 05/14] BACKPORT: mm: multi-gen LRU: minimal implementation
+Subject: [PATCH 05/15] BACKPORT: mm: multi-gen LRU: minimal implementation
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -3168,7 +3168,7 @@ index 880d882f3325..aeba62cebf8c 100644
 From fe63129249097a29038010bcbf2d4f52753e719d Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Sun, 18 Sep 2022 02:00:04 -0600
-Subject: [PATCH 06/14] BACKPORT: mm: multi-gen LRU: exploit locality in rmap
+Subject: [PATCH 06/15] BACKPORT: mm: multi-gen LRU: exploit locality in rmap
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -3687,7 +3687,7 @@ index 932abd24c1b3..1d0b25ae378c 100644
 From 3c7b4b7742cf9cbf6baad254e498d183a232ac17 Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Sun, 18 Sep 2022 02:00:05 -0600
-Subject: [PATCH 07/14] BACKPORT: mm: multi-gen LRU: support page table walks
+Subject: [PATCH 07/15] BACKPORT: mm: multi-gen LRU: support page table walks
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5406,7 +5406,7 @@ index 1d0b25ae378c..8295b35c090c 100644
 From 9b2533141cf6413efc1a3f599a94cd868627b728 Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Sun, 18 Sep 2022 02:00:06 -0600
-Subject: [PATCH 08/14] BACKPORT: mm: multi-gen LRU: optimize multiple memcgs
+Subject: [PATCH 08/15] BACKPORT: mm: multi-gen LRU: optimize multiple memcgs
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -5736,7 +5736,7 @@ index 8295b35c090c..e828ae78c494 100644
 From b18f79a7b5486bb9b1022bb582400aa9184b249b Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Sun, 18 Sep 2022 02:00:07 -0600
-Subject: [PATCH 09/14] BACKPORT: mm: multi-gen LRU: kill switch
+Subject: [PATCH 09/15] BACKPORT: mm: multi-gen LRU: kill switch
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -6260,7 +6260,7 @@ index e828ae78c494..578d4606bad1 100644
 From 7a34c487380d9f6fc2f1c84e1d3454e2e6ac6b4e Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Sun, 18 Sep 2022 02:00:08 -0600
-Subject: [PATCH 10/14] UPSTREAM: mm: multi-gen LRU: thrashing prevention
+Subject: [PATCH 10/15] UPSTREAM: mm: multi-gen LRU: thrashing prevention
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -6505,7 +6505,7 @@ index 578d4606bad1..86dcbf374138 100644
 From 9cea55f6da4e5b89174303ce34516b220601cfd1 Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Sun, 18 Sep 2022 02:00:09 -0600
-Subject: [PATCH 11/14] BACKPORT: mm: multi-gen LRU: debugfs interface
+Subject: [PATCH 11/15] BACKPORT: mm: multi-gen LRU: debugfs interface
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -7102,7 +7102,7 @@ index 86dcbf374138..4ef75461a3a1 100644
 From 53a43e0c3b6cfbb995bcb3ac318bf3e822d063f7 Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Sun, 18 Sep 2022 02:00:10 -0600
-Subject: [PATCH 12/14] mm: multi-gen LRU: admin guide
+Subject: [PATCH 12/15] mm: multi-gen LRU: admin guide
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -7391,7 +7391,7 @@ index 4ef75461a3a1..aa6aced4c533 100644
 From 8282b9b24a9f7260f039acd83a8d9f18a6f9f19a Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Tue, 15 Nov 2022 18:38:07 -0700
-Subject: [PATCH 13/14] mm: multi-gen LRU: retry folios written back while
+Subject: [PATCH 13/15] mm: multi-gen LRU: retry folios written back while
  isolated
 
 The page reclaim isolates a batch of folios from the tail of one of the
@@ -7522,7 +7522,7 @@ index aa6aced4c533..96f365077669 100644
 From 47ded4fc19812b313ecdbd7d71deb125b08b7396 Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Sun, 15 Jan 2023 20:44:05 -0700
-Subject: [PATCH 14/14] mm: multi-gen LRU: fix crash during cgroup migration
+Subject: [PATCH 14/15] mm: multi-gen LRU: fix crash during cgroup migration
 
 lru_gen_migrate_mm() assumes lru_gen_add_mm() runs prior to itself.  This
 isn't true for the following scenario:
@@ -7577,6 +7577,43 @@ index 96f365077669..e8d03826d6c2 100644
  	VM_WARN_ON_ONCE(list_empty(&mm->lru_gen.list));
  
  	lru_gen_del_mm(mm);
+-- 
+2.39.2
+
+
+From 957dd5e25721855ed7998b2fa4a77d2a55c2923d Mon Sep 17 00:00:00 2001
+From: Steven Barrett <steven@liquorix.net>
+Date: Wed, 11 Aug 2021 18:47:46 -0500
+Subject: [PATCH 15/15] ZEN: INTERACTIVE: Tune mgLRU to protect cache used in
+ the last second
+
+Although not identical to the le9 patches that protect a byte-amount of
+cache through tunables, multigenerational LRU now supports protecting
+cache accessed in the last X milliseconds.
+
+In #218, Yu recommends starting with 1000ms and tuning as needed.  This
+looks like a safe default and turning on this feature should help users
+that don't know they need it.
+---
+ mm/vmscan.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/mm/vmscan.c b/mm/vmscan.c
+index e8d03826d6c2..d3ee99f4f4c0 100644
+--- a/mm/vmscan.c
++++ b/mm/vmscan.c
+@@ -4265,7 +4265,11 @@ static bool age_lruvec(struct lruvec *lruvec, struct scan_control *sc, unsigned
+ }
+ 
+ /* to protect the working set of the last N jiffies */
++#ifdef CONFIG_ZENIFY
++static unsigned long lru_gen_min_ttl __read_mostly = HZ;
++#else
+ static unsigned long lru_gen_min_ttl __read_mostly;
++#endif
+ 
+ static void lru_gen_age_node(struct pglist_data *pgdat, struct scan_control *sc)
+ {
 -- 
 2.39.2
 
