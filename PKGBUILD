@@ -207,6 +207,9 @@ hackheaders() {
       depends=('pahole')
     ;;
   esac
+  if [ "$_compiler_name" = "-llvm" ]; then
+    depends+=( 'lld' 'clang' 'llvm')
+  fi
 
   _define_kernel_abs_paths
   cd "$_kernel_work_folder_abs"
