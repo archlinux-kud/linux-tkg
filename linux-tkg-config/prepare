@@ -975,6 +975,8 @@ _tkg_srcprep() {
     _processor_opt="${_selected_value}"
   fi
 
+  msg2 "Selected CPU micro-architecture: $_processor_opt"
+
   for _march in "${_cpu_marchs[@]}"
   do
     _march_upper=`echo "$_march" | tr '[a-z]' '[A-Z]'`
