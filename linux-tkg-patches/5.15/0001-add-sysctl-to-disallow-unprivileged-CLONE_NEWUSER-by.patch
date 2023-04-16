@@ -1,121 +1,45 @@
-From 5ec2dd3a095442ec1a21d86042a4994f2ba24e63 Mon Sep 17 00:00:00 2001
-Message-Id: <5ec2dd3a095442ec1a21d86042a4994f2ba24e63.1512651251.git.jan.steffens@gmail.com>
-From: Serge Hallyn <serge.hallyn@canonical.com>
-Date: Fri, 31 May 2013 19:12:12 +0100
-Subject: [PATCH] add sysctl to disallow unprivileged CLONE_NEWUSER by default
-
-Signed-off-by: Serge Hallyn <serge.hallyn@ubuntu.com>
-[bwh: Remove unneeded binary sysctl bits]
-Signed-off-by: Daniel Micay <danielmicay@gmail.com>
----
- kernel/fork.c           | 15 +++++++++++++++
- kernel/sysctl.c         | 12 ++++++++++++
- kernel/user_namespace.c |  3 +++
- 3 files changed, 30 insertions(+)
-
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 07cc743698d3668e..4011d68a8ff9305c 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -102,6 +102,11 @@
- 
- #define CREATE_TRACE_POINTS
- #include <trace/events/task.h>
-+#ifdef CONFIG_USER_NS
-+extern int unprivileged_userns_clone;
-+#else
-+#define unprivileged_userns_clone 0
-+#endif
- 
- /*
-  * Minimum number of threads to boot the kernel
-@@ -1555,6 +1560,10 @@ static __latent_entropy struct task_struct *copy_process(
- 	if ((clone_flags & (CLONE_NEWUSER|CLONE_FS)) == (CLONE_NEWUSER|CLONE_FS))
- 		return ERR_PTR(-EINVAL);
- 
-+	if ((clone_flags & CLONE_NEWUSER) && !unprivileged_userns_clone)
-+		if (!capable(CAP_SYS_ADMIN))
-+			return ERR_PTR(-EPERM);
-+
- 	/*
- 	 * Thread groups must share signals as well, and detached threads
- 	 * can only be started up within the thread group.
-@@ -2348,6 +2357,12 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
- 	if (unshare_flags & CLONE_NEWNS)
- 		unshare_flags |= CLONE_FS;
- 
-+	if ((unshare_flags & CLONE_NEWUSER) && !unprivileged_userns_clone) {
-+		err = -EPERM;
-+		if (!capable(CAP_SYS_ADMIN))
-+			goto bad_unshare_out;
-+	}
-+
- 	err = check_unshare_flags(unshare_flags);
- 	if (err)
- 		goto bad_unshare_out;
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index b86520ed3fb60fbf..f7dab3760839f1a1 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -105,6 +105,9 @@ extern int core_uses_pid;
- 
- #if defined(CONFIG_SYSCTL)
- 
-+#ifdef CONFIG_USER_NS
-+extern int unprivileged_userns_clone;
-+#endif
- /* Constants used for minimum and  maximum */
- #ifdef CONFIG_LOCKUP_DETECTOR
- static int sixty = 60;
-@@ -513,6 +516,15 @@ static struct ctl_table kern_table[] = {
- 		.proc_handler	= proc_dointvec,
- 	},
- #endif
-+#ifdef CONFIG_USER_NS
-+	{
-+		.procname	= "unprivileged_userns_clone",
-+		.data		= &unprivileged_userns_clone,
-+		.maxlen		= sizeof(int),
-+		.mode		= 0644,
-+		.proc_handler	= proc_dointvec,
-+	},
-+#endif
- #ifdef CONFIG_PROC_SYSCTL
- 	{
- 		.procname	= "tainted",
-diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index c490f1e4313b998a..dd03bd39d7bf194d 100644
---- a/kernel/user_namespace.c
-+++ b/kernel/user_namespace.c
-@@ -24,6 +24,9 @@
- #include <linux/projid.h>
- #include <linux/fs_struct.h>
- 
-+/* sysctl */
-+int unprivileged_userns_clone;
-+
- static struct kmem_cache *user_ns_cachep __read_mostly;
- static DEFINE_MUTEX(userns_state_mutex);
- 
--- 
-2.15.1
-
-From b5202296055dd333db4425120d3f93ef4e6a0573 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <jan.steffens@gmail.com>
-Date: Thu, 7 Dec 2017 13:50:48 +0100
-Subject: ZEN: Add CONFIG for unprivileged_userns_clone
+Date: Mon, 16 Sep 2019 04:53:20 +0200
+Subject: [PATCH] ZEN: Add sysctl and CONFIG to disallow unprivileged
+ CLONE_NEWUSER
 
-This way our default behavior continues to match the vanilla kernel.
+Our default behavior continues to match the vanilla kernel.
 ---
- init/Kconfig            | 16 ++++++++++++++++
- kernel/user_namespace.c |  4 ++++
- 2 files changed, 20 insertions(+)
+ include/linux/user_namespace.h |  4 ++++
+ init/Kconfig                   | 16 ++++++++++++++++
+ kernel/fork.c                  | 14 ++++++++++++++
+ kernel/sysctl.c                | 12 ++++++++++++
+ kernel/user_namespace.c        |  7 +++++++
+ 5 files changed, 53 insertions(+)
 
+diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
+index 33a4240e6a6f..82213f9c4c17 100644
+--- a/include/linux/user_namespace.h
++++ b/include/linux/user_namespace.h
+@@ -139,6 +139,8 @@ static inline void set_rlimit_ucount_max(struct user_namespace *ns,
+ 
+ #ifdef CONFIG_USER_NS
+ 
++extern int unprivileged_userns_clone;
++
+ static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
+ {
+ 	if (ns)
+@@ -172,6 +174,8 @@ extern bool current_in_userns(const struct user_namespace *target_ns);
+ struct ns_common *ns_get_owner(struct ns_common *ns);
+ #else
+ 
++#define unprivileged_userns_clone 0
++
+ static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
+ {
+ 	return &init_user_ns;
 diff --git a/init/Kconfig b/init/Kconfig
-index 4592bf7997c0..f3df02990aff 100644
+index d19ed66aba3b..a67689ca1929 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1004,6 +1004,22 @@ config USER_NS
+@@ -1231,6 +1231,22 @@ config USER_NS
  
  	  If unsure, say N.
  
@@ -138,19 +62,289 @@ index 4592bf7997c0..f3df02990aff 100644
  config PID_NS
  	bool "PID Namespaces"
  	default y
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 908ba3c93893..b4982474fb93 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -98,6 +98,10 @@
+ #include <linux/io_uring.h>
+ #include <linux/bpf.h>
+ 
++#ifdef CONFIG_USER_NS
++#include <linux/user_namespace.h>
++#endif
++
+ #include <asm/pgalloc.h>
+ #include <linux/uaccess.h>
+ #include <asm/mmu_context.h>
+@@ -1951,6 +1955,10 @@ static __latent_entropy struct task_struct *copy_process(
+ 	if ((clone_flags & (CLONE_NEWUSER|CLONE_FS)) == (CLONE_NEWUSER|CLONE_FS))
+ 		return ERR_PTR(-EINVAL);
+ 
++	if ((clone_flags & CLONE_NEWUSER) && !unprivileged_userns_clone)
++		if (!capable(CAP_SYS_ADMIN))
++			return ERR_PTR(-EPERM);
++
+ 	/*
+ 	 * Thread groups must share signals as well, and detached threads
+ 	 * can only be started up within the thread group.
+@@ -3067,6 +3075,12 @@ int ksys_unshare(unsigned long unshare_flags)
+ 	if (unshare_flags & CLONE_NEWNS)
+ 		unshare_flags |= CLONE_FS;
+ 
++	if ((unshare_flags & CLONE_NEWUSER) && !unprivileged_userns_clone) {
++		err = -EPERM;
++		if (!capable(CAP_SYS_ADMIN))
++			goto bad_unshare_out;
++	}
++
+ 	err = check_unshare_flags(unshare_flags);
+ 	if (err)
+ 		goto bad_unshare_out;
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index 23c08bf3db58..63ab60778e5d 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -105,6 +105,9 @@
+ #ifdef CONFIG_LOCKUP_DETECTOR
+ #include <linux/nmi.h>
+ #endif
++#ifdef CONFIG_USER_NS
++#include <linux/user_namespace.h>
++#endif
+ 
+ #if defined(CONFIG_SYSCTL)
+ 
+@@ -1953,6 +1956,15 @@ static struct ctl_table kern_table[] = {
+ 		.proc_handler	= proc_dointvec,
+ 	},
+ #endif
++#ifdef CONFIG_USER_NS
++	{
++		.procname	= "unprivileged_userns_clone",
++		.data		= &unprivileged_userns_clone,
++		.maxlen		= sizeof(int),
++		.mode		= 0644,
++		.proc_handler	= proc_dointvec,
++	},
++#endif
+ #ifdef CONFIG_PROC_SYSCTL
+ 	{
+ 		.procname	= "tainted",
 diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index 6b9dbc257e34..107b17f0d528 100644
+index 5481ba44a8d6..423ab2563ad7 100644
 --- a/kernel/user_namespace.c
 +++ b/kernel/user_namespace.c
-@@ -27,7 +27,11 @@
+@@ -21,6 +21,13 @@
+ #include <linux/bsearch.h>
  #include <linux/sort.h>
  
- /* sysctl */
++/* sysctl */
 +#ifdef CONFIG_USER_NS_UNPRIVILEGED
 +int unprivileged_userns_clone = 1;
 +#else
- int unprivileged_userns_clone;
++int unprivileged_userns_clone;
 +#endif
- 
++
  static struct kmem_cache *user_ns_cachep __read_mostly;
  static DEFINE_MUTEX(userns_state_mutex);
+ 
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
+Date: Thu, 18 Nov 2021 22:53:31 +0100
+Subject: [PATCH] PCI: Add more NVIDIA controllers to the MSI masking quirk
+
+For: https://bugs.archlinux.org/task/72734
+For: https://bugs.archlinux.org/task/72777
+---
+ drivers/pci/quirks.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
+index a531064233f9..e1893dde40f6 100644
+--- a/drivers/pci/quirks.c
++++ b/drivers/pci/quirks.c
+@@ -5824,3 +5824,5 @@ static void nvidia_ion_ahci_fixup(struct pci_dev *pdev)
+ 	pdev->dev_flags |= PCI_DEV_FLAGS_HAS_MSI_MASKING;
+ }
+ DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_NVIDIA, 0x0ab8, nvidia_ion_ahci_fixup);
++DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_NVIDIA, 0x0ab9, nvidia_ion_ahci_fixup);
++DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_NVIDIA, 0x0d88, nvidia_ion_ahci_fixup);
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ajay Garg <ajaygargnsit@gmail.com>
+Date: Tue, 12 Oct 2021 19:26:53 +0530
+Subject: [PATCH] iommu: intel: do deep dma-unmapping, to avoid
+ kernel-flooding.
+
+Origins at :
+https://lists.linuxfoundation.org/pipermail/iommu/2021-October/thread.html
+
+=== Changes from v1 => v2 ===
+
+a)
+Improved patch-description.
+
+b)
+A more root-level fix, as suggested by
+
+	1.
+	Alex Williamson <alex.williamson@redhat.com>
+
+	2.
+	Lu Baolu <baolu.lu@linux.intel.com>
+
+=== Issue ===
+
+Kernel-flooding is seen, when an x86_64 L1 guest (Ubuntu-21) is booted in qemu/kvm
+on a x86_64 host (Ubuntu-21), with a host-pci-device attached.
+
+Following kind of logs, along with the stacktraces, cause the flood :
+
+......
+ DMAR: ERROR: DMA PTE for vPFN 0x428ec already set (to 3f6ec003 not 3f6ec003)
+ DMAR: ERROR: DMA PTE for vPFN 0x428ed already set (to 3f6ed003 not 3f6ed003)
+ DMAR: ERROR: DMA PTE for vPFN 0x428ee already set (to 3f6ee003 not 3f6ee003)
+ DMAR: ERROR: DMA PTE for vPFN 0x428ef already set (to 3f6ef003 not 3f6ef003)
+ DMAR: ERROR: DMA PTE for vPFN 0x428f0 already set (to 3f6f0003 not 3f6f0003)
+......
+
+=== Current Behaviour, leading to the issue ===
+
+Currently, when we do a dma-unmapping, we unmap/unlink the mappings, but
+the pte-entries are not cleared.
+
+Thus, following sequencing would flood the kernel-logs :
+
+i)
+A dma-unmapping makes the real/leaf-level pte-slot invalid, but the
+pte-content itself is not cleared.
+
+ii)
+Now, during some later dma-mapping procedure, as the pte-slot is about
+to hold a new pte-value, the intel-iommu checks if a prior
+pte-entry exists in the pte-slot. If it exists, it logs a kernel-error,
+along with a corresponding stacktrace.
+
+iii)
+Step ii) runs in abundance, and the kernel-logs run insane.
+
+=== Fix ===
+
+We ensure that as part of a dma-unmapping, each (unmapped) pte-slot
+is also cleared of its value/content (at the leaf-level, where the
+real mapping from a iova => pfn mapping is stored).
+
+This completes a "deep" dma-unmapping.
+
+Signed-off-by: Ajay Garg <ajaygargnsit@gmail.com>
+Link: https://lore.kernel.org/linux-iommu/20211012135653.3852-1-ajaygargnsit@gmail.com/
+---
+ drivers/iommu/intel/iommu.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/iommu/intel/iommu.c b/drivers/iommu/intel/iommu.c
+index 71a932017772..d8f9bec2c1f7 100644
+--- a/drivers/iommu/intel/iommu.c
++++ b/drivers/iommu/intel/iommu.c
+@@ -5123,6 +5123,8 @@ static size_t intel_iommu_unmap(struct iommu_domain *domain,
+ 	gather->freelist = domain_unmap(dmar_domain, start_pfn,
+ 					last_pfn, gather->freelist);
+ 
++	dma_pte_clear_range(dmar_domain, start_pfn, last_pfn);
++
+ 	if (dmar_domain->max_addr == iova + size)
+ 		dmar_domain->max_addr = iova;
+ 
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Kiran K <kiran.k@intel.com>
+Date: Wed, 13 Oct 2021 13:35:11 +0530
+Subject: [PATCH] Bluetooth: btintel: Fix bdaddress comparison with garbage
+ value
+
+Intel Read Verision(TLV) data is parsed into a local structure variable
+and it contains a field for bd address. Bd address is returned only in
+bootloader mode and hence bd address in TLV structure needs to be validated
+only if controller is present in boot loader mode.
+
+Signed-off-by: Kiran K <kiran.k@intel.com>
+Reviewed-by: Tedd Ho-Jeong An <tedd.an@intel.com>
+---
+ drivers/bluetooth/btintel.c | 22 ++++++++++++++--------
+ 1 file changed, 14 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/bluetooth/btintel.c b/drivers/bluetooth/btintel.c
+index d122cc973917..a828fcd05d83 100644
+--- a/drivers/bluetooth/btintel.c
++++ b/drivers/bluetooth/btintel.c
+@@ -2006,14 +2006,16 @@ static int btintel_prepare_fw_download_tlv(struct hci_dev *hdev,
+ 	if (ver->img_type == 0x03) {
+ 		btintel_clear_flag(hdev, INTEL_BOOTLOADER);
+ 		btintel_check_bdaddr(hdev);
+-	}
+-
+-	/* If the OTP has no valid Bluetooth device address, then there will
+-	 * also be no valid address for the operational firmware.
+-	 */
+-	if (!bacmp(&ver->otp_bd_addr, BDADDR_ANY)) {
+-		bt_dev_info(hdev, "No device address configured");
+-		set_bit(HCI_QUIRK_INVALID_BDADDR, &hdev->quirks);
++	} else {
++		/*
++		 * Check for valid bd address in boot loader mode. Device
++		 * will be marked as unconfigured if empty bd address is
++		 * found.
++		 */
++		if (!bacmp(&ver->otp_bd_addr, BDADDR_ANY)) {
++			bt_dev_info(hdev, "No device address configured");
++			set_bit(HCI_QUIRK_INVALID_BDADDR, &hdev->quirks);
++		}
+ 	}
+ 
+ 	btintel_get_fw_name_tlv(ver, fwname, sizeof(fwname), "sfi");
+@@ -2309,6 +2311,10 @@ static int btintel_setup_combined(struct hci_dev *hdev)
+ 		goto exit_error;
+ 	}
+ 
++	/* memset ver_tlv to start with clean state as few fields are exclusive
++	 * to bootloader mode and are not populated in operational mode
++	 */
++	memset(&ver_tlv, 0, sizeof(ver_tlv));
+ 	/* For TLV type device, parse the tlv data */
+ 	err = btintel_parse_version_tlv(hdev, &ver_tlv, skb);
+ 	if (err) {
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Matan Ziv-Av <matan@svgalib.org>
+Date: Tue, 23 Nov 2021 22:14:55 +0200
+Subject: [PATCH] lg-laptop: Recognize more models
+
+LG uses 5 instead of 0 in the third digit (second digit after 2019) of the year string to indicate newer models in the same year. Handle this case as well.
+
+Signed-off-by: Matan Ziv-Av <matan@svgalib.org>
+For: https://bugs.archlinux.org/task/71772
+---
+ drivers/platform/x86/lg-laptop.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/drivers/platform/x86/lg-laptop.c b/drivers/platform/x86/lg-laptop.c
+index 88b551caeaaf..d6f74d3a7605 100644
+--- a/drivers/platform/x86/lg-laptop.c
++++ b/drivers/platform/x86/lg-laptop.c
+@@ -658,6 +658,18 @@ static int acpi_add(struct acpi_device *device)
+ 	if (product && strlen(product) > 4)
+ 		switch (product[4]) {
+ 		case '5':
++			if (strlen(product) > 5)
++				switch (product[5]) {
++				case 'N':
++					year = 2021;
++					break;
++				case '0':
++					year = 2016;
++					break;
++				default:
++					year = 2022;
++				}
++			break;
+ 		case '6':
+ 			year = 2016;
+ 			break;
