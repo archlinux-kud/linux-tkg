@@ -28,3 +28,4 @@ current_env
 kernelconfig.new
 linux-kernel.git/
 linux-src-git/
+!linux-tkg-moe.myfrag
