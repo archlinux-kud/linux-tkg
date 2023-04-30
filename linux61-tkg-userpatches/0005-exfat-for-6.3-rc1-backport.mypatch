@@ -1,0 +1,1933 @@
+From 753e18ff9ad9a41c836d41cdbb4509bd44dda360 Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Thu, 21 Jul 2022 09:59:32 +0800
+Subject: [PATCH 01/18] exfat: simplify empty entry hint
+
+This commit adds exfat_set_empty_hint()/exfat_reset_empty_hint()
+to reduce code complexity and make code more readable.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/dir.c | 58 +++++++++++++++++++++++++++-----------------------
+ 1 file changed, 31 insertions(+), 27 deletions(-)
+
+diff --git a/fs/exfat/dir.c b/fs/exfat/dir.c
+index 15c4f901be36..f73aec4a4cb7 100644
+--- a/fs/exfat/dir.c
++++ b/fs/exfat/dir.c
+@@ -894,6 +894,29 @@ struct exfat_entry_set_cache *exfat_get_dentry_set(struct super_block *sb,
+ 	return NULL;
+ }
+ 
++static inline void exfat_reset_empty_hint(struct exfat_hint_femp *hint_femp)
++{
++	hint_femp->eidx = EXFAT_HINT_NONE;
++	hint_femp->count = 0;
++}
++
++static inline void exfat_set_empty_hint(struct exfat_inode_info *ei,
++		struct exfat_hint_femp *candi_empty, struct exfat_chain *clu,
++		int dentry, int num_entries)
++{
++	if (ei->hint_femp.eidx == EXFAT_HINT_NONE ||
++	    ei->hint_femp.eidx > dentry) {
++		if (candi_empty->count == 0) {
++			candi_empty->cur = *clu;
++			candi_empty->eidx = dentry;
++		}
++
++		candi_empty->count++;
++		if (candi_empty->count == num_entries)
++			ei->hint_femp = *candi_empty;
++	}
++}
++
+ enum {
+ 	DIRENT_STEP_FILE,
+ 	DIRENT_STEP_STRM,
+@@ -918,7 +941,7 @@ int exfat_find_dir_entry(struct super_block *sb, struct exfat_inode_info *ei,
+ {
+ 	int i, rewind = 0, dentry = 0, end_eidx = 0, num_ext = 0, len;
+ 	int order, step, name_len = 0;
+-	int dentries_per_clu, num_empty = 0;
++	int dentries_per_clu;
+ 	unsigned int entry_type;
+ 	unsigned short *uniname = NULL;
+ 	struct exfat_chain clu;
+@@ -936,10 +959,13 @@ int exfat_find_dir_entry(struct super_block *sb, struct exfat_inode_info *ei,
+ 		end_eidx = dentry;
+ 	}
+ 
+-	candi_empty.eidx = EXFAT_HINT_NONE;
++	exfat_reset_empty_hint(&ei->hint_femp);
++
+ rewind:
+ 	order = 0;
+ 	step = DIRENT_STEP_FILE;
++	exfat_reset_empty_hint(&candi_empty);
++
+ 	while (clu.dir != EXFAT_EOF_CLUSTER) {
+ 		i = dentry & (dentries_per_clu - 1);
+ 		for (; i < dentries_per_clu; i++, dentry++) {
+@@ -959,26 +985,8 @@ int exfat_find_dir_entry(struct super_block *sb, struct exfat_inode_info *ei,
+ 			    entry_type == TYPE_DELETED) {
+ 				step = DIRENT_STEP_FILE;
+ 
+-				num_empty++;
+-				if (candi_empty.eidx == EXFAT_HINT_NONE &&
+-						num_empty == 1) {
+-					exfat_chain_set(&candi_empty.cur,
+-						clu.dir, clu.size, clu.flags);
+-				}
+-
+-				if (candi_empty.eidx == EXFAT_HINT_NONE &&
+-						num_empty >= num_entries) {
+-					candi_empty.eidx =
+-						dentry - (num_empty - 1);
+-					WARN_ON(candi_empty.eidx < 0);
+-					candi_empty.count = num_empty;
+-
+-					if (ei->hint_femp.eidx ==
+-							EXFAT_HINT_NONE ||
+-						candi_empty.eidx <=
+-							 ei->hint_femp.eidx)
+-						ei->hint_femp = candi_empty;
+-				}
++				exfat_set_empty_hint(ei, &candi_empty, &clu,
++						dentry, num_entries);
+ 
+ 				brelse(bh);
+ 				if (entry_type == TYPE_UNUSED)
+@@ -986,8 +994,7 @@ int exfat_find_dir_entry(struct super_block *sb, struct exfat_inode_info *ei,
+ 				continue;
+ 			}
+ 
+-			num_empty = 0;
+-			candi_empty.eidx = EXFAT_HINT_NONE;
++			exfat_reset_empty_hint(&candi_empty);
+ 
+ 			if (entry_type == TYPE_FILE || entry_type == TYPE_DIR) {
+ 				step = DIRENT_STEP_FILE;
+@@ -1087,9 +1094,6 @@ int exfat_find_dir_entry(struct super_block *sb, struct exfat_inode_info *ei,
+ 		rewind = 1;
+ 		dentry = 0;
+ 		clu.dir = p_dir->dir;
+-		/* reset empty hint */
+-		num_empty = 0;
+-		candi_empty.eidx = EXFAT_HINT_NONE;
+ 		goto rewind;
+ 	}
+ 
+-- 
+2.40.1
+
+
+From a9fbcaa6668395b9a8b320c0a20f5305e5921bba Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Mon, 7 Nov 2022 17:22:13 +0900
+Subject: [PATCH 02/18] exfat: hint the empty entry which at the end of cluster
+ chain
+
+After traversing all directory entries, hint the empty directory
+entry no matter whether or not there are enough empty directory
+entries.
+
+After this commit, hint the empty directory entries like this:
+
+1. Hint the deleted directory entries if enough;
+2. Hint the deleted and unused directory entries which at the
+   end of the cluster chain no matter whether enough or not(Add
+   by this commit);
+3. If no any empty directory entries, hint the empty directory
+   entries in the new cluster(Add by this commit).
+
+This avoids repeated traversal of directory entries, reduces CPU
+usage, and improves the performance of creating files and
+directories(especially on low-performance CPUs).
+
+Test create 5000 files in a class 4 SD card on imx6q-sabrelite
+with:
+
+for ((i=0;i<5;i++)); do
+   sync
+   time (for ((j=1;j<=1000;j++)); do touch file$((i*1000+j)); done)
+done
+
+The more files, the more performance improvements.
+
+            Before   After    Improvement
+   1~1000   25.360s  22.168s  14.40%
+1001~2000   38.242s  28.72ss  33.15%
+2001~3000   49.134s  35.037s  40.23%
+3001~4000   62.042s  41.624s  49.05%
+4001~5000   73.629s  46.772s  57.42%
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/dir.c   | 26 ++++++++++++++++++++++----
+ fs/exfat/namei.c | 33 +++++++++++++++++++++------------
+ 2 files changed, 43 insertions(+), 16 deletions(-)
+
+diff --git a/fs/exfat/dir.c b/fs/exfat/dir.c
+index f73aec4a4cb7..867990dda107 100644
+--- a/fs/exfat/dir.c
++++ b/fs/exfat/dir.c
+@@ -902,17 +902,24 @@ static inline void exfat_reset_empty_hint(struct exfat_hint_femp *hint_femp)
+ 
+ static inline void exfat_set_empty_hint(struct exfat_inode_info *ei,
+ 		struct exfat_hint_femp *candi_empty, struct exfat_chain *clu,
+-		int dentry, int num_entries)
++		int dentry, int num_entries, int entry_type)
+ {
+ 	if (ei->hint_femp.eidx == EXFAT_HINT_NONE ||
+ 	    ei->hint_femp.eidx > dentry) {
++		int total_entries = EXFAT_B_TO_DEN(i_size_read(&ei->vfs_inode));
++
+ 		if (candi_empty->count == 0) {
+ 			candi_empty->cur = *clu;
+ 			candi_empty->eidx = dentry;
+ 		}
+ 
+-		candi_empty->count++;
+-		if (candi_empty->count == num_entries)
++		if (entry_type == TYPE_UNUSED)
++			candi_empty->count += total_entries - dentry;
++		else
++			candi_empty->count++;
++
++		if (candi_empty->count == num_entries ||
++		    candi_empty->count + candi_empty->eidx == total_entries)
+ 			ei->hint_femp = *candi_empty;
+ 	}
+ }
+@@ -986,7 +993,8 @@ int exfat_find_dir_entry(struct super_block *sb, struct exfat_inode_info *ei,
+ 				step = DIRENT_STEP_FILE;
+ 
+ 				exfat_set_empty_hint(ei, &candi_empty, &clu,
+-						dentry, num_entries);
++						dentry, num_entries,
++						entry_type);
+ 
+ 				brelse(bh);
+ 				if (entry_type == TYPE_UNUSED)
+@@ -1097,6 +1105,16 @@ int exfat_find_dir_entry(struct super_block *sb, struct exfat_inode_info *ei,
+ 		goto rewind;
+ 	}
+ 
++	/*
++	 * set the EXFAT_EOF_CLUSTER flag to avoid search
++	 * from the beginning again when allocated a new cluster
++	 */
++	if (ei->hint_femp.eidx == EXFAT_HINT_NONE) {
++		ei->hint_femp.cur.dir = EXFAT_EOF_CLUSTER;
++		ei->hint_femp.eidx = p_dir->size * dentries_per_clu;
++		ei->hint_femp.count = 0;
++	}
++
+ 	/* initialized hint_stat */
+ 	hint_stat->clu = p_dir->dir;
+ 	hint_stat->eidx = 0;
+diff --git a/fs/exfat/namei.c b/fs/exfat/namei.c
+index 90b047791144..edb578e8f781 100644
+--- a/fs/exfat/namei.c
++++ b/fs/exfat/namei.c
+@@ -224,11 +224,18 @@ static int exfat_search_empty_slot(struct super_block *sb,
+ 
+ 	if (hint_femp->eidx != EXFAT_HINT_NONE) {
+ 		dentry = hint_femp->eidx;
+-		if (num_entries <= hint_femp->count) {
+-			hint_femp->eidx = EXFAT_HINT_NONE;
+-			return dentry;
+-		}
+ 
++		/*
++		 * If hint_femp->count is enough, it is needed to check if
++		 * there are actual empty entries.
++		 * Otherwise, and if "dentry + hint_famp->count" is also equal
++		 * to "p_dir->size * dentries_per_clu", it means ENOSPC.
++		 */
++		if (dentry + hint_femp->count == p_dir->size * dentries_per_clu &&
++		    num_entries > hint_femp->count)
++			return -ENOSPC;
++
++		hint_femp->eidx = EXFAT_HINT_NONE;
+ 		exfat_chain_dup(&clu, &hint_femp->cur);
+ 	} else {
+ 		exfat_chain_dup(&clu, p_dir);
+@@ -293,6 +300,12 @@ static int exfat_search_empty_slot(struct super_block *sb,
+ 		}
+ 	}
+ 
++	hint_femp->eidx = p_dir->size * dentries_per_clu - num_empty;
++	hint_femp->count = num_empty;
++	if (num_empty == 0)
++		exfat_chain_set(&hint_femp->cur, EXFAT_EOF_CLUSTER, 0,
++				clu.flags);
++
+ 	return -ENOSPC;
+ }
+ 
+@@ -369,15 +382,11 @@ static int exfat_find_empty_entry(struct inode *inode,
+ 			if (exfat_ent_set(sb, last_clu, clu.dir))
+ 				return -EIO;
+ 
+-		if (hint_femp.eidx == EXFAT_HINT_NONE) {
+-			/* the special case that new dentry
+-			 * should be allocated from the start of new cluster
+-			 */
+-			hint_femp.eidx = EXFAT_B_TO_DEN_IDX(p_dir->size, sbi);
+-			hint_femp.count = sbi->dentries_per_clu;
+-
++		if (hint_femp.cur.dir == EXFAT_EOF_CLUSTER)
+ 			exfat_chain_set(&hint_femp.cur, clu.dir, 0, clu.flags);
+-		}
++
++		hint_femp.count += sbi->dentries_per_clu;
++
+ 		hint_femp.cur.size++;
+ 		p_dir->size++;
+ 		size = EXFAT_CLU_TO_B(p_dir->size, sbi);
+-- 
+2.40.1
+
+
+From c6f3a2c7fd4483405336aff57f407e0b6f72e772 Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Thu, 7 Apr 2022 15:55:56 +0800
+Subject: [PATCH 03/18] exfat: reduce the size of exfat_entry_set_cache
+
+In normal, there are 19 directory entries at most for a file or
+a directory.
+  - A file directory entry
+  - A stream extension directory entry
+  - 1~17 file name directory entry
+
+So the directory entries are in 3 sectors at most, it is enough
+for struct exfat_entry_set_cache to pre-allocate 3 bh.
+
+This commit changes the size of struct exfat_entry_set_cache as:
+
+                   Before   After
+32-bit system      88       32    bytes
+64-bit system      168      48    bytes
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/exfat_fs.h | 25 +++++++++++++++++++++----
+ 1 file changed, 21 insertions(+), 4 deletions(-)
+
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index e0af6ace633c..fd9af474f3e7 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -9,6 +9,7 @@
+ #include <linux/fs.h>
+ #include <linux/ratelimit.h>
+ #include <linux/nls.h>
++#include <linux/blkdev.h>
+ 
+ #define EXFAT_ROOT_INO		1
+ 
+@@ -41,6 +42,14 @@ enum {
+ #define ES_2_ENTRIES		2
+ #define ES_ALL_ENTRIES		0
+ 
++#define ES_IDX_FILE		0
++#define ES_IDX_STREAM		1
++#define ES_IDX_FIRST_FILENAME	2
++#define EXFAT_FILENAME_ENTRY_NUM(name_len) \
++	DIV_ROUND_UP(name_len, EXFAT_FILE_NAME_LEN)
++#define ES_IDX_LAST_FILENAME(name_len)	\
++	(ES_IDX_FIRST_FILENAME + EXFAT_FILENAME_ENTRY_NUM(name_len) - 1)
++
+ #define DIR_DELETED		0xFFFFFFF7
+ 
+ /* type values */
+@@ -68,9 +77,6 @@ enum {
+ #define MAX_NAME_LENGTH		255 /* max len of file name excluding NULL */
+ #define MAX_VFSNAME_BUF_SIZE	((MAX_NAME_LENGTH + 1) * MAX_CHARSET_SIZE)
+ 
+-/* Enough size to hold 256 dentry (even 512 Byte sector) */
+-#define DIR_CACHE_SIZE		(256*sizeof(struct exfat_dentry)/512+1)
+-
+ #define EXFAT_HINT_NONE		-1
+ #define EXFAT_MIN_SUBDIR	2
+ 
+@@ -125,6 +131,17 @@ enum {
+ #define BITS_PER_BYTE_MASK	0x7
+ #define IGNORED_BITS_REMAINED(clu, clu_base) ((1 << ((clu) - (clu_base))) - 1)
+ 
++#define ES_ENTRY_NUM(name_len)	(ES_IDX_LAST_FILENAME(name_len) + 1)
++/* 19 entries = 1 file entry + 1 stream entry + 17 filename entries */
++#define ES_MAX_ENTRY_NUM	ES_ENTRY_NUM(MAX_NAME_LENGTH)
++
++/*
++ * 19 entries x 32 bytes/entry = 608 bytes.
++ * The 608 bytes are in 3 sectors at most (even 512 Byte sector).
++ */
++#define DIR_CACHE_SIZE		\
++	(DIV_ROUND_UP(EXFAT_DEN_TO_B(ES_MAX_ENTRY_NUM), SECTOR_SIZE) + 1)
++
+ struct exfat_dentry_namebuf {
+ 	char *lfn;
+ 	int lfnbuf_len; /* usually MAX_UNINAME_BUF_SIZE */
+@@ -166,11 +183,11 @@ struct exfat_hint {
+ 
+ struct exfat_entry_set_cache {
+ 	struct super_block *sb;
+-	bool modified;
+ 	unsigned int start_off;
+ 	int num_bh;
+ 	struct buffer_head *bh[DIR_CACHE_SIZE];
+ 	unsigned int num_entries;
++	bool modified;
+ };
+ 
+ struct exfat_dir_entry {
+-- 
+2.40.1
+
+
+From 1423b476de8b930a0503c39d2866b14dafb7c44c Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Wed, 9 Nov 2022 13:50:22 +0800
+Subject: [PATCH 04/18] exfat: support dynamic allocate bh for
+ exfat_entry_set_cache
+
+In special cases, a file or a directory may occupied more than 19
+directory entries, pre-allocating 3 bh is not enough. Such as
+  - Support vendor secondary directory entry in the future.
+  - Since file directory entry is damaged, the SecondaryCount
+    field is bigger than 18.
+
+So this commit supports dynamic allocation of bh.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/dir.c      | 15 +++++++++++++++
+ fs/exfat/exfat_fs.h |  5 ++++-
+ 2 files changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/fs/exfat/dir.c b/fs/exfat/dir.c
+index 867990dda107..e42f0e625662 100644
+--- a/fs/exfat/dir.c
++++ b/fs/exfat/dir.c
+@@ -612,6 +612,10 @@ int exfat_free_dentry_set(struct exfat_entry_set_cache *es, int sync)
+ 			bforget(es->bh[i]);
+ 		else
+ 			brelse(es->bh[i]);
++
++	if (IS_DYNAMIC_ES(es))
++		kfree(es->bh);
++
+ 	kfree(es);
+ 	return err;
+ }
+@@ -844,6 +848,7 @@ struct exfat_entry_set_cache *exfat_get_dentry_set(struct super_block *sb,
+ 	/* byte offset in sector */
+ 	off = EXFAT_BLK_OFFSET(byte_offset, sb);
+ 	es->start_off = off;
++	es->bh = es->__bh;
+ 
+ 	/* sector offset in cluster */
+ 	sec = EXFAT_B_TO_BLK(byte_offset, sb);
+@@ -863,6 +868,16 @@ struct exfat_entry_set_cache *exfat_get_dentry_set(struct super_block *sb,
+ 	es->num_entries = num_entries;
+ 
+ 	num_bh = EXFAT_B_TO_BLK_ROUND_UP(off + num_entries * DENTRY_SIZE, sb);
++	if (num_bh > ARRAY_SIZE(es->__bh)) {
++		es->bh = kmalloc_array(num_bh, sizeof(*es->bh), GFP_KERNEL);
++		if (!es->bh) {
++			brelse(bh);
++			kfree(es);
++			return NULL;
++		}
++		es->bh[0] = bh;
++	}
++
+ 	for (i = 1; i < num_bh; i++) {
+ 		/* get the next sector */
+ 		if (exfat_is_last_sector_in_cluster(sbi, sec)) {
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index fd9af474f3e7..5113d0c09865 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -185,11 +185,14 @@ struct exfat_entry_set_cache {
+ 	struct super_block *sb;
+ 	unsigned int start_off;
+ 	int num_bh;
+-	struct buffer_head *bh[DIR_CACHE_SIZE];
++	struct buffer_head *__bh[DIR_CACHE_SIZE];
++	struct buffer_head **bh;
+ 	unsigned int num_entries;
+ 	bool modified;
+ };
+ 
++#define IS_DYNAMIC_ES(es)	((es)->__bh != (es)->bh)
++
+ struct exfat_dir_entry {
+ 	struct exfat_chain dir;
+ 	int entry;
+-- 
+2.40.1
+
+
+From 2ff510bbcfb9327d51b6d11d287045d6001c392b Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Thu, 17 Nov 2022 11:37:13 +0800
+Subject: [PATCH 05/18] exfat: move exfat_entry_set_cache from heap to stack
+
+The size of struct exfat_entry_set_cache is only 56 bytes on
+64-bit system, and allocating from stack is more efficient than
+allocating from heap.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/dir.c      | 35 +++++++++++++++--------------------
+ fs/exfat/exfat_fs.h |  5 +++--
+ fs/exfat/inode.c    | 13 ++++++-------
+ fs/exfat/namei.c    | 11 +++++------
+ 4 files changed, 29 insertions(+), 35 deletions(-)
+
+diff --git a/fs/exfat/dir.c b/fs/exfat/dir.c
+index e42f0e625662..dfa7310828a8 100644
+--- a/fs/exfat/dir.c
++++ b/fs/exfat/dir.c
+@@ -33,10 +33,9 @@ static void exfat_get_uniname_from_ext_entry(struct super_block *sb,
+ 		struct exfat_chain *p_dir, int entry, unsigned short *uniname)
+ {
+ 	int i;
+-	struct exfat_entry_set_cache *es;
++	struct exfat_entry_set_cache es;
+ 
+-	es = exfat_get_dentry_set(sb, p_dir, entry, ES_ALL_ENTRIES);
+-	if (!es)
++	if (exfat_get_dentry_set(&es, sb, p_dir, entry, ES_ALL_ENTRIES))
+ 		return;
+ 
+ 	/*
+@@ -45,8 +44,8 @@ static void exfat_get_uniname_from_ext_entry(struct super_block *sb,
+ 	 * Third entry  : first file-name entry
+ 	 * So, the index of first file-name dentry should start from 2.
+ 	 */
+-	for (i = 2; i < es->num_entries; i++) {
+-		struct exfat_dentry *ep = exfat_get_dentry_cached(es, i);
++	for (i = 2; i < es.num_entries; i++) {
++		struct exfat_dentry *ep = exfat_get_dentry_cached(&es, i);
+ 
+ 		/* end of name entry */
+ 		if (exfat_get_entry_type(ep) != TYPE_EXTEND)
+@@ -56,7 +55,7 @@ static void exfat_get_uniname_from_ext_entry(struct super_block *sb,
+ 		uniname += EXFAT_FILE_NAME_LEN;
+ 	}
+ 
+-	exfat_free_dentry_set(es, false);
++	exfat_free_dentry_set(&es, false);
+ }
+ 
+ /* read a directory entry from the opened directory */
+@@ -616,7 +615,6 @@ int exfat_free_dentry_set(struct exfat_entry_set_cache *es, int sync)
+ 	if (IS_DYNAMIC_ES(es))
+ 		kfree(es->bh);
+ 
+-	kfree(es);
+ 	return err;
+ }
+ 
+@@ -813,14 +811,14 @@ struct exfat_dentry *exfat_get_dentry_cached(
+  *   pointer of entry set on success,
+  *   NULL on failure.
+  */
+-struct exfat_entry_set_cache *exfat_get_dentry_set(struct super_block *sb,
+-		struct exfat_chain *p_dir, int entry, unsigned int type)
++int exfat_get_dentry_set(struct exfat_entry_set_cache *es,
++		struct super_block *sb, struct exfat_chain *p_dir, int entry,
++		unsigned int type)
+ {
+ 	int ret, i, num_bh;
+ 	unsigned int off, byte_offset, clu = 0;
+ 	sector_t sec;
+ 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+-	struct exfat_entry_set_cache *es;
+ 	struct exfat_dentry *ep;
+ 	int num_entries;
+ 	enum exfat_validate_dentry_mode mode = ES_MODE_STARTED;
+@@ -828,17 +826,15 @@ struct exfat_entry_set_cache *exfat_get_dentry_set(struct super_block *sb,
+ 
+ 	if (p_dir->dir == DIR_DELETED) {
+ 		exfat_err(sb, "access to deleted dentry");
+-		return NULL;
++		return -EIO;
+ 	}
+ 
+ 	byte_offset = EXFAT_DEN_TO_B(entry);
+ 	ret = exfat_walk_fat_chain(sb, p_dir, byte_offset, &clu);
+ 	if (ret)
+-		return NULL;
++		return ret;
+ 
+-	es = kzalloc(sizeof(*es), GFP_KERNEL);
+-	if (!es)
+-		return NULL;
++	memset(es, 0, sizeof(*es));
+ 	es->sb = sb;
+ 	es->modified = false;
+ 
+@@ -856,7 +852,7 @@ struct exfat_entry_set_cache *exfat_get_dentry_set(struct super_block *sb,
+ 
+ 	bh = sb_bread(sb, sec);
+ 	if (!bh)
+-		goto free_es;
++		return -EIO;
+ 	es->bh[es->num_bh++] = bh;
+ 
+ 	ep = exfat_get_dentry_cached(es, 0);
+@@ -872,8 +868,7 @@ struct exfat_entry_set_cache *exfat_get_dentry_set(struct super_block *sb,
+ 		es->bh = kmalloc_array(num_bh, sizeof(*es->bh), GFP_KERNEL);
+ 		if (!es->bh) {
+ 			brelse(bh);
+-			kfree(es);
+-			return NULL;
++			return -ENOMEM;
+ 		}
+ 		es->bh[0] = bh;
+ 	}
+@@ -902,11 +897,11 @@ struct exfat_entry_set_cache *exfat_get_dentry_set(struct super_block *sb,
+ 		if (!exfat_validate_entry(exfat_get_entry_type(ep), &mode))
+ 			goto free_es;
+ 	}
+-	return es;
++	return 0;
+ 
+ free_es:
+ 	exfat_free_dentry_set(es, false);
+-	return NULL;
++	return -EIO;
+ }
+ 
+ static inline void exfat_reset_empty_hint(struct exfat_hint_femp *hint_femp)
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index 5113d0c09865..efb183787931 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -490,8 +490,9 @@ struct exfat_dentry *exfat_get_dentry(struct super_block *sb,
+ 		struct exfat_chain *p_dir, int entry, struct buffer_head **bh);
+ struct exfat_dentry *exfat_get_dentry_cached(struct exfat_entry_set_cache *es,
+ 		int num);
+-struct exfat_entry_set_cache *exfat_get_dentry_set(struct super_block *sb,
+-		struct exfat_chain *p_dir, int entry, unsigned int type);
++int exfat_get_dentry_set(struct exfat_entry_set_cache *es,
++		struct super_block *sb, struct exfat_chain *p_dir, int entry,
++		unsigned int type);
+ int exfat_free_dentry_set(struct exfat_entry_set_cache *es, int sync);
+ int exfat_count_dir_entries(struct super_block *sb, struct exfat_chain *p_dir);
+ 
+diff --git a/fs/exfat/inode.c b/fs/exfat/inode.c
+index 3a6d6750dbeb..dd2823a42814 100644
+--- a/fs/exfat/inode.c
++++ b/fs/exfat/inode.c
+@@ -21,7 +21,7 @@ int __exfat_write_inode(struct inode *inode, int sync)
+ {
+ 	unsigned long long on_disk_size;
+ 	struct exfat_dentry *ep, *ep2;
+-	struct exfat_entry_set_cache *es = NULL;
++	struct exfat_entry_set_cache es;
+ 	struct super_block *sb = inode->i_sb;
+ 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+ 	struct exfat_inode_info *ei = EXFAT_I(inode);
+@@ -42,11 +42,10 @@ int __exfat_write_inode(struct inode *inode, int sync)
+ 	exfat_set_volume_dirty(sb);
+ 
+ 	/* get the directory entry of given file or directory */
+-	es = exfat_get_dentry_set(sb, &(ei->dir), ei->entry, ES_ALL_ENTRIES);
+-	if (!es)
++	if (exfat_get_dentry_set(&es, sb, &(ei->dir), ei->entry, ES_ALL_ENTRIES))
+ 		return -EIO;
+-	ep = exfat_get_dentry_cached(es, 0);
+-	ep2 = exfat_get_dentry_cached(es, 1);
++	ep = exfat_get_dentry_cached(&es, 0);
++	ep2 = exfat_get_dentry_cached(&es, 1);
+ 
+ 	ep->dentry.file.attr = cpu_to_le16(exfat_make_attr(inode));
+ 
+@@ -83,8 +82,8 @@ int __exfat_write_inode(struct inode *inode, int sync)
+ 		ep2->dentry.stream.start_clu = EXFAT_FREE_CLUSTER;
+ 	}
+ 
+-	exfat_update_dir_chksum_with_entry_set(es);
+-	return exfat_free_dentry_set(es, sync);
++	exfat_update_dir_chksum_with_entry_set(&es);
++	return exfat_free_dentry_set(&es, sync);
+ }
+ 
+ int exfat_write_inode(struct inode *inode, struct writeback_control *wbc)
+diff --git a/fs/exfat/namei.c b/fs/exfat/namei.c
+index edb578e8f781..89e0735f2129 100644
+--- a/fs/exfat/namei.c
++++ b/fs/exfat/namei.c
+@@ -604,7 +604,7 @@ static int exfat_find(struct inode *dir, struct qstr *qname,
+ 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+ 	struct exfat_inode_info *ei = EXFAT_I(dir);
+ 	struct exfat_dentry *ep, *ep2;
+-	struct exfat_entry_set_cache *es;
++	struct exfat_entry_set_cache es;
+ 	/* for optimized dir & entry to prevent long traverse of cluster chain */
+ 	struct exfat_hint hint_opt;
+ 
+@@ -644,11 +644,10 @@ static int exfat_find(struct inode *dir, struct qstr *qname,
+ 	if (cdir.flags & ALLOC_NO_FAT_CHAIN)
+ 		cdir.size -= dentry / sbi->dentries_per_clu;
+ 	dentry = hint_opt.eidx;
+-	es = exfat_get_dentry_set(sb, &cdir, dentry, ES_2_ENTRIES);
+-	if (!es)
++	if (exfat_get_dentry_set(&es, sb, &cdir, dentry, ES_2_ENTRIES))
+ 		return -EIO;
+-	ep = exfat_get_dentry_cached(es, 0);
+-	ep2 = exfat_get_dentry_cached(es, 1);
++	ep = exfat_get_dentry_cached(&es, 0);
++	ep2 = exfat_get_dentry_cached(&es, 1);
+ 
+ 	info->type = exfat_get_entry_type(ep);
+ 	info->attr = le16_to_cpu(ep->dentry.file.attr);
+@@ -677,7 +676,7 @@ static int exfat_find(struct inode *dir, struct qstr *qname,
+ 			     ep->dentry.file.access_time,
+ 			     ep->dentry.file.access_date,
+ 			     0);
+-	exfat_free_dentry_set(es, false);
++	exfat_free_dentry_set(&es, false);
+ 
+ 	if (ei->start_clu == EXFAT_FREE_CLUSTER) {
+ 		exfat_fs_error(sb,
+-- 
+2.40.1
+
+
+From dab6b8f77c4e6143d6780d86cc74e49b0a858bfa Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Thu, 17 Mar 2022 18:12:40 +0800
+Subject: [PATCH 06/18] exfat: rename exfat_free_dentry_set() to
+ exfat_put_dentry_set()
+
+Since struct exfat_entry_set_cache is allocated from stack,
+no need to free, so rename exfat_free_dentry_set() to
+exfat_put_dentry_set(). After renaming, the new function pair
+is exfat_get_dentry_set()/exfat_put_dentry_set().
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/dir.c      | 16 ++++++++--------
+ fs/exfat/exfat_fs.h |  2 +-
+ fs/exfat/inode.c    |  2 +-
+ fs/exfat/namei.c    |  2 +-
+ 4 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/fs/exfat/dir.c b/fs/exfat/dir.c
+index dfa7310828a8..8e2ae26eac00 100644
+--- a/fs/exfat/dir.c
++++ b/fs/exfat/dir.c
+@@ -55,7 +55,7 @@ static void exfat_get_uniname_from_ext_entry(struct super_block *sb,
+ 		uniname += EXFAT_FILE_NAME_LEN;
+ 	}
+ 
+-	exfat_free_dentry_set(&es, false);
++	exfat_put_dentry_set(&es, false);
+ }
+ 
+ /* read a directory entry from the opened directory */
+@@ -599,7 +599,7 @@ void exfat_update_dir_chksum_with_entry_set(struct exfat_entry_set_cache *es)
+ 	es->modified = true;
+ }
+ 
+-int exfat_free_dentry_set(struct exfat_entry_set_cache *es, int sync)
++int exfat_put_dentry_set(struct exfat_entry_set_cache *es, int sync)
+ {
+ 	int i, err = 0;
+ 
+@@ -857,7 +857,7 @@ int exfat_get_dentry_set(struct exfat_entry_set_cache *es,
+ 
+ 	ep = exfat_get_dentry_cached(es, 0);
+ 	if (!exfat_validate_entry(exfat_get_entry_type(ep), &mode))
+-		goto free_es;
++		goto put_es;
+ 
+ 	num_entries = type == ES_ALL_ENTRIES ?
+ 		ep->dentry.file.num_ext + 1 : type;
+@@ -879,7 +879,7 @@ int exfat_get_dentry_set(struct exfat_entry_set_cache *es,
+ 			if (p_dir->flags == ALLOC_NO_FAT_CHAIN)
+ 				clu++;
+ 			else if (exfat_get_next_cluster(sb, &clu))
+-				goto free_es;
++				goto put_es;
+ 			sec = exfat_cluster_to_sector(sbi, clu);
+ 		} else {
+ 			sec++;
+@@ -887,7 +887,7 @@ int exfat_get_dentry_set(struct exfat_entry_set_cache *es,
+ 
+ 		bh = sb_bread(sb, sec);
+ 		if (!bh)
+-			goto free_es;
++			goto put_es;
+ 		es->bh[es->num_bh++] = bh;
+ 	}
+ 
+@@ -895,12 +895,12 @@ int exfat_get_dentry_set(struct exfat_entry_set_cache *es,
+ 	for (i = 1; i < num_entries; i++) {
+ 		ep = exfat_get_dentry_cached(es, i);
+ 		if (!exfat_validate_entry(exfat_get_entry_type(ep), &mode))
+-			goto free_es;
++			goto put_es;
+ 	}
+ 	return 0;
+ 
+-free_es:
+-	exfat_free_dentry_set(es, false);
++put_es:
++	exfat_put_dentry_set(es, false);
+ 	return -EIO;
+ }
+ 
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index efb183787931..3b2d1fb45404 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -493,7 +493,7 @@ struct exfat_dentry *exfat_get_dentry_cached(struct exfat_entry_set_cache *es,
+ int exfat_get_dentry_set(struct exfat_entry_set_cache *es,
+ 		struct super_block *sb, struct exfat_chain *p_dir, int entry,
+ 		unsigned int type);
+-int exfat_free_dentry_set(struct exfat_entry_set_cache *es, int sync);
++int exfat_put_dentry_set(struct exfat_entry_set_cache *es, int sync);
+ int exfat_count_dir_entries(struct super_block *sb, struct exfat_chain *p_dir);
+ 
+ /* inode.c */
+diff --git a/fs/exfat/inode.c b/fs/exfat/inode.c
+index dd2823a42814..fdd9659d6ee6 100644
+--- a/fs/exfat/inode.c
++++ b/fs/exfat/inode.c
+@@ -83,7 +83,7 @@ int __exfat_write_inode(struct inode *inode, int sync)
+ 	}
+ 
+ 	exfat_update_dir_chksum_with_entry_set(&es);
+-	return exfat_free_dentry_set(&es, sync);
++	return exfat_put_dentry_set(&es, sync);
+ }
+ 
+ int exfat_write_inode(struct inode *inode, struct writeback_control *wbc)
+diff --git a/fs/exfat/namei.c b/fs/exfat/namei.c
+index 89e0735f2129..3cb6baf6fade 100644
+--- a/fs/exfat/namei.c
++++ b/fs/exfat/namei.c
+@@ -676,7 +676,7 @@ static int exfat_find(struct inode *dir, struct qstr *qname,
+ 			     ep->dentry.file.access_time,
+ 			     ep->dentry.file.access_date,
+ 			     0);
+-	exfat_free_dentry_set(&es, false);
++	exfat_put_dentry_set(&es, false);
+ 
+ 	if (ei->start_clu == EXFAT_FREE_CLUSTER) {
+ 		exfat_fs_error(sb,
+-- 
+2.40.1
+
+
+From 0efff5f7cd618738b3bce71a30bc537336c24b83 Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Thu, 17 Mar 2022 19:39:20 +0800
+Subject: [PATCH 07/18] exfat: replace magic numbers with Macros
+
+Code refinement, no functional changes.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/dir.c   | 12 ++++++------
+ fs/exfat/inode.c |  4 ++--
+ fs/exfat/namei.c |  4 ++--
+ 3 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/fs/exfat/dir.c b/fs/exfat/dir.c
+index 8e2ae26eac00..049ab85e0481 100644
+--- a/fs/exfat/dir.c
++++ b/fs/exfat/dir.c
+@@ -44,7 +44,7 @@ static void exfat_get_uniname_from_ext_entry(struct super_block *sb,
+ 	 * Third entry  : first file-name entry
+ 	 * So, the index of first file-name dentry should start from 2.
+ 	 */
+-	for (i = 2; i < es.num_entries; i++) {
++	for (i = ES_IDX_FIRST_FILENAME; i < es.num_entries; i++) {
+ 		struct exfat_dentry *ep = exfat_get_dentry_cached(&es, i);
+ 
+ 		/* end of name entry */
+@@ -333,7 +333,7 @@ int exfat_calc_num_entries(struct exfat_uni_name *p_uniname)
+ 		return -EINVAL;
+ 
+ 	/* 1 file entry + 1 stream entry + name entries */
+-	return ((len - 1) / EXFAT_FILE_NAME_LEN + 3);
++	return ES_ENTRY_NUM(len);
+ }
+ 
+ unsigned int exfat_get_entry_type(struct exfat_dentry *ep)
+@@ -588,13 +588,13 @@ void exfat_update_dir_chksum_with_entry_set(struct exfat_entry_set_cache *es)
+ 	unsigned short chksum = 0;
+ 	struct exfat_dentry *ep;
+ 
+-	for (i = 0; i < es->num_entries; i++) {
++	for (i = ES_IDX_FILE; i < es->num_entries; i++) {
+ 		ep = exfat_get_dentry_cached(es, i);
+ 		chksum = exfat_calc_chksum16(ep, DENTRY_SIZE, chksum,
+ 					     chksum_type);
+ 		chksum_type = CS_DEFAULT;
+ 	}
+-	ep = exfat_get_dentry_cached(es, 0);
++	ep = exfat_get_dentry_cached(es, ES_IDX_FILE);
+ 	ep->dentry.file.checksum = cpu_to_le16(chksum);
+ 	es->modified = true;
+ }
+@@ -855,7 +855,7 @@ int exfat_get_dentry_set(struct exfat_entry_set_cache *es,
+ 		return -EIO;
+ 	es->bh[es->num_bh++] = bh;
+ 
+-	ep = exfat_get_dentry_cached(es, 0);
++	ep = exfat_get_dentry_cached(es, ES_IDX_FILE);
+ 	if (!exfat_validate_entry(exfat_get_entry_type(ep), &mode))
+ 		goto put_es;
+ 
+@@ -892,7 +892,7 @@ int exfat_get_dentry_set(struct exfat_entry_set_cache *es,
+ 	}
+ 
+ 	/* validate cached dentries */
+-	for (i = 1; i < num_entries; i++) {
++	for (i = ES_IDX_STREAM; i < num_entries; i++) {
+ 		ep = exfat_get_dentry_cached(es, i);
+ 		if (!exfat_validate_entry(exfat_get_entry_type(ep), &mode))
+ 			goto put_es;
+diff --git a/fs/exfat/inode.c b/fs/exfat/inode.c
+index fdd9659d6ee6..b1dba4022b6e 100644
+--- a/fs/exfat/inode.c
++++ b/fs/exfat/inode.c
+@@ -44,8 +44,8 @@ int __exfat_write_inode(struct inode *inode, int sync)
+ 	/* get the directory entry of given file or directory */
+ 	if (exfat_get_dentry_set(&es, sb, &(ei->dir), ei->entry, ES_ALL_ENTRIES))
+ 		return -EIO;
+-	ep = exfat_get_dentry_cached(&es, 0);
+-	ep2 = exfat_get_dentry_cached(&es, 1);
++	ep = exfat_get_dentry_cached(&es, ES_IDX_FILE);
++	ep2 = exfat_get_dentry_cached(&es, ES_IDX_STREAM);
+ 
+ 	ep->dentry.file.attr = cpu_to_le16(exfat_make_attr(inode));
+ 
+diff --git a/fs/exfat/namei.c b/fs/exfat/namei.c
+index 3cb6baf6fade..171a413e5c64 100644
+--- a/fs/exfat/namei.c
++++ b/fs/exfat/namei.c
+@@ -646,8 +646,8 @@ static int exfat_find(struct inode *dir, struct qstr *qname,
+ 	dentry = hint_opt.eidx;
+ 	if (exfat_get_dentry_set(&es, sb, &cdir, dentry, ES_2_ENTRIES))
+ 		return -EIO;
+-	ep = exfat_get_dentry_cached(&es, 0);
+-	ep2 = exfat_get_dentry_cached(&es, 1);
++	ep = exfat_get_dentry_cached(&es, ES_IDX_FILE);
++	ep2 = exfat_get_dentry_cached(&es, ES_IDX_STREAM);
+ 
+ 	info->type = exfat_get_entry_type(ep);
+ 	info->attr = le16_to_cpu(ep->dentry.file.attr);
+-- 
+2.40.1
+
+
+From 908b62990cb6c4c68bfa577ce9c49a31ff78702e Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Tue, 16 Aug 2022 16:55:06 +0800
+Subject: [PATCH 08/18] exfat: remove call ilog2() from exfat_readdir()
+
+There is no need to call ilog2() for the conversions between
+cluster and dentry in exfat_readdir(), because these conversions
+can be replaced with EXFAT_DEN_TO_CLU()/EXFAT_CLU_TO_DEN().
+
+Code refinement, no functional changes.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/dir.c      |  9 ++++-----
+ fs/exfat/exfat_fs.h | 10 ++++++++--
+ 2 files changed, 12 insertions(+), 7 deletions(-)
+
+diff --git a/fs/exfat/dir.c b/fs/exfat/dir.c
+index 049ab85e0481..526bc3a5104a 100644
+--- a/fs/exfat/dir.c
++++ b/fs/exfat/dir.c
+@@ -61,7 +61,7 @@ static void exfat_get_uniname_from_ext_entry(struct super_block *sb,
+ /* read a directory entry from the opened directory */
+ static int exfat_readdir(struct inode *inode, loff_t *cpos, struct exfat_dir_entry *dir_entry)
+ {
+-	int i, dentries_per_clu, dentries_per_clu_bits = 0, num_ext;
++	int i, dentries_per_clu, num_ext;
+ 	unsigned int type, clu_offset, max_dentries;
+ 	struct exfat_chain dir, clu;
+ 	struct exfat_uni_name uni_name;
+@@ -83,11 +83,10 @@ static int exfat_readdir(struct inode *inode, loff_t *cpos, struct exfat_dir_ent
+ 			EXFAT_B_TO_CLU(i_size_read(inode), sbi), ei->flags);
+ 
+ 	dentries_per_clu = sbi->dentries_per_clu;
+-	dentries_per_clu_bits = ilog2(dentries_per_clu);
+ 	max_dentries = (unsigned int)min_t(u64, MAX_EXFAT_DENTRIES,
+-					   (u64)sbi->num_clusters << dentries_per_clu_bits);
++				(u64)EXFAT_CLU_TO_DEN(sbi->num_clusters, sbi));
+ 
+-	clu_offset = dentry >> dentries_per_clu_bits;
++	clu_offset = EXFAT_DEN_TO_CLU(dentry, sbi);
+ 	exfat_chain_dup(&clu, &dir);
+ 
+ 	if (clu.flags == ALLOC_NO_FAT_CHAIN) {
+@@ -162,7 +161,7 @@ static int exfat_readdir(struct inode *inode, loff_t *cpos, struct exfat_dir_ent
+ 			dir_entry->entry = dentry;
+ 			brelse(bh);
+ 
+-			ei->hint_bmap.off = dentry >> dentries_per_clu_bits;
++			ei->hint_bmap.off = EXFAT_DEN_TO_CLU(dentry, sbi);
+ 			ei->hint_bmap.clu = clu.dir;
+ 
+ 			*cpos = EXFAT_DEN_TO_B(dentry + 1 + num_ext);
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index 3b2d1fb45404..2fda27df167b 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -101,11 +101,17 @@ enum {
+ /*
+  * helpers for block size to dentry size conversion.
+  */
+-#define EXFAT_B_TO_DEN_IDX(b, sbi)	\
+-	((b) << ((sbi)->cluster_size_bits - DENTRY_SIZE_BITS))
+ #define EXFAT_B_TO_DEN(b)		((b) >> DENTRY_SIZE_BITS)
+ #define EXFAT_DEN_TO_B(b)		((b) << DENTRY_SIZE_BITS)
+ 
++/*
++ * helpers for cluster size to dentry size conversion.
++ */
++#define EXFAT_CLU_TO_DEN(clu, sbi)	\
++	((clu) << ((sbi)->cluster_size_bits - DENTRY_SIZE_BITS))
++#define EXFAT_DEN_TO_CLU(dentry, sbi)	\
++	((dentry) >> ((sbi)->cluster_size_bits - DENTRY_SIZE_BITS))
++
+ /*
+  * helpers for fat entry.
+  */
+-- 
+2.40.1
+
+
+From bb6dcf07cbe1afa1997ca4bfe6614a5109d17f09 Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Mon, 15 Aug 2022 10:15:16 +0800
+Subject: [PATCH 09/18] exfat: remove unneeded codes from __exfat_rename()
+
+The code gets the dentry, but the dentry is not used, remove the
+code.
+
+Code refinement, no functional changes.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/namei.c | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/fs/exfat/namei.c b/fs/exfat/namei.c
+index 171a413e5c64..9b2aae01cddb 100644
+--- a/fs/exfat/namei.c
++++ b/fs/exfat/namei.c
+@@ -1175,7 +1175,7 @@ static int __exfat_rename(struct inode *old_parent_inode,
+ 	struct exfat_inode_info *new_ei = NULL;
+ 	unsigned int new_entry_type = TYPE_UNUSED;
+ 	int new_entry = 0;
+-	struct buffer_head *old_bh, *new_bh = NULL;
++	struct buffer_head *new_bh = NULL;
+ 
+ 	/* check the validity of pointer parameters */
+ 	if (new_path == NULL || strlen(new_path) == 0)
+@@ -1191,13 +1191,6 @@ static int __exfat_rename(struct inode *old_parent_inode,
+ 		EXFAT_I(old_parent_inode)->flags);
+ 	dentry = ei->entry;
+ 
+-	ep = exfat_get_dentry(sb, &olddir, dentry, &old_bh);
+-	if (!ep) {
+-		ret = -EIO;
+-		goto out;
+-	}
+-	brelse(old_bh);
+-
+ 	/* check whether new dir is existing directory and empty */
+ 	if (new_inode) {
+ 		ret = -EIO;
+-- 
+2.40.1
+
+
+From 8394c61a3520aa27313768cad1715d3f738a6d5c Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Sun, 10 Apr 2022 16:12:14 +0800
+Subject: [PATCH 10/18] exfat: remove unnecessary arguments from
+ exfat_find_dir_entry()
+
+This commit removes argument 'num_entries' and 'type' from
+exfat_find_dir_entry().
+
+Code refinement, no functional changes.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/dir.c      | 12 +++++++-----
+ fs/exfat/exfat_fs.h |  3 +--
+ fs/exfat/namei.c    | 10 ++--------
+ 3 files changed, 10 insertions(+), 15 deletions(-)
+
+diff --git a/fs/exfat/dir.c b/fs/exfat/dir.c
+index 526bc3a5104a..4fda52e02eba 100644
+--- a/fs/exfat/dir.c
++++ b/fs/exfat/dir.c
+@@ -953,7 +953,7 @@ enum {
+  */
+ int exfat_find_dir_entry(struct super_block *sb, struct exfat_inode_info *ei,
+ 		struct exfat_chain *p_dir, struct exfat_uni_name *p_uniname,
+-		int num_entries, unsigned int type, struct exfat_hint *hint_opt)
++		struct exfat_hint *hint_opt)
+ {
+ 	int i, rewind = 0, dentry = 0, end_eidx = 0, num_ext = 0, len;
+ 	int order, step, name_len = 0;
+@@ -964,6 +964,10 @@ int exfat_find_dir_entry(struct super_block *sb, struct exfat_inode_info *ei,
+ 	struct exfat_hint *hint_stat = &ei->hint_stat;
+ 	struct exfat_hint_femp candi_empty;
+ 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
++	int num_entries = exfat_calc_num_entries(p_uniname);
++
++	if (num_entries < 0)
++		return num_entries;
+ 
+ 	dentries_per_clu = sbi->dentries_per_clu;
+ 
+@@ -1017,10 +1021,8 @@ int exfat_find_dir_entry(struct super_block *sb, struct exfat_inode_info *ei,
+ 				step = DIRENT_STEP_FILE;
+ 				hint_opt->clu = clu.dir;
+ 				hint_opt->eidx = i;
+-				if (type == TYPE_ALL || type == entry_type) {
+-					num_ext = ep->dentry.file.num_ext;
+-					step = DIRENT_STEP_STRM;
+-				}
++				num_ext = ep->dentry.file.num_ext;
++				step = DIRENT_STEP_STRM;
+ 				brelse(bh);
+ 				continue;
+ 			}
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index 2fda27df167b..01b0db025a48 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -71,7 +71,6 @@ enum {
+ #define TYPE_PADDING		0x0402
+ #define TYPE_ACLTAB		0x0403
+ #define TYPE_BENIGN_SEC		0x0800
+-#define TYPE_ALL		0x0FFF
+ 
+ #define MAX_CHARSET_SIZE	6 /* max size of multi-byte character */
+ #define MAX_NAME_LENGTH		255 /* max len of file name excluding NULL */
+@@ -490,7 +489,7 @@ void exfat_update_dir_chksum_with_entry_set(struct exfat_entry_set_cache *es);
+ int exfat_calc_num_entries(struct exfat_uni_name *p_uniname);
+ int exfat_find_dir_entry(struct super_block *sb, struct exfat_inode_info *ei,
+ 		struct exfat_chain *p_dir, struct exfat_uni_name *p_uniname,
+-		int num_entries, unsigned int type, struct exfat_hint *hint_opt);
++		struct exfat_hint *hint_opt);
+ int exfat_alloc_new_dir(struct inode *inode, struct exfat_chain *clu);
+ struct exfat_dentry *exfat_get_dentry(struct super_block *sb,
+ 		struct exfat_chain *p_dir, int entry, struct buffer_head **bh);
+diff --git a/fs/exfat/namei.c b/fs/exfat/namei.c
+index 9b2aae01cddb..7442fead0279 100644
+--- a/fs/exfat/namei.c
++++ b/fs/exfat/namei.c
+@@ -597,7 +597,7 @@ static int exfat_create(struct user_namespace *mnt_userns, struct inode *dir,
+ static int exfat_find(struct inode *dir, struct qstr *qname,
+ 		struct exfat_dir_entry *info)
+ {
+-	int ret, dentry, num_entries, count;
++	int ret, dentry, count;
+ 	struct exfat_chain cdir;
+ 	struct exfat_uni_name uni_name;
+ 	struct super_block *sb = dir->i_sb;
+@@ -616,10 +616,6 @@ static int exfat_find(struct inode *dir, struct qstr *qname,
+ 	if (ret)
+ 		return ret;
+ 
+-	num_entries = exfat_calc_num_entries(&uni_name);
+-	if (num_entries < 0)
+-		return num_entries;
+-
+ 	/* check the validation of hint_stat and initialize it if required */
+ 	if (ei->version != (inode_peek_iversion_raw(dir) & 0xffffffff)) {
+ 		ei->hint_stat.clu = cdir.dir;
+@@ -629,9 +625,7 @@ static int exfat_find(struct inode *dir, struct qstr *qname,
+ 	}
+ 
+ 	/* search the file name for directories */
+-	dentry = exfat_find_dir_entry(sb, ei, &cdir, &uni_name,
+-			num_entries, TYPE_ALL, &hint_opt);
+-
++	dentry = exfat_find_dir_entry(sb, ei, &cdir, &uni_name, &hint_opt);
+ 	if (dentry < 0)
+ 		return dentry; /* -error value */
+ 
+-- 
+2.40.1
+
+
+From 68e15f9240d5b009e30e9992c7f2eaf2b09f9041 Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Thu, 17 Nov 2022 10:36:21 +0800
+Subject: [PATCH 11/18] exfat: remove argument 'size' from exfat_truncate()
+
+argument 'size' is not used in exfat_truncate(), remove it.
+
+Code refinement, no functional changes.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/exfat_fs.h | 2 +-
+ fs/exfat/file.c     | 4 ++--
+ fs/exfat/inode.c    | 2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index 01b0db025a48..51b087ac3cc1 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -449,7 +449,7 @@ int exfat_trim_fs(struct inode *inode, struct fstrim_range *range);
+ /* file.c */
+ extern const struct file_operations exfat_file_operations;
+ int __exfat_truncate(struct inode *inode, loff_t new_size);
+-void exfat_truncate(struct inode *inode, loff_t size);
++void exfat_truncate(struct inode *inode);
+ int exfat_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+ 		  struct iattr *attr);
+ int exfat_getattr(struct user_namespace *mnt_userns, const struct path *path,
+diff --git a/fs/exfat/file.c b/fs/exfat/file.c
+index 65f97fd2e167..5dd277153e27 100644
+--- a/fs/exfat/file.c
++++ b/fs/exfat/file.c
+@@ -189,7 +189,7 @@ int __exfat_truncate(struct inode *inode, loff_t new_size)
+ 	return 0;
+ }
+ 
+-void exfat_truncate(struct inode *inode, loff_t size)
++void exfat_truncate(struct inode *inode)
+ {
+ 	struct super_block *sb = inode->i_sb;
+ 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+@@ -309,7 +309,7 @@ int exfat_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+ 		 * __exfat_write_inode() is called from exfat_truncate(), inode
+ 		 * is already written by it, so mark_inode_dirty() is unneeded.
+ 		 */
+-		exfat_truncate(inode, attr->ia_size);
++		exfat_truncate(inode);
+ 		up_write(&EXFAT_I(inode)->truncate_lock);
+ 	} else
+ 		mark_inode_dirty(inode);
+diff --git a/fs/exfat/inode.c b/fs/exfat/inode.c
+index b1dba4022b6e..f67fa0cc3d82 100644
+--- a/fs/exfat/inode.c
++++ b/fs/exfat/inode.c
+@@ -361,7 +361,7 @@ static void exfat_write_failed(struct address_space *mapping, loff_t to)
+ 	if (to > i_size_read(inode)) {
+ 		truncate_pagecache(inode, i_size_read(inode));
+ 		inode->i_mtime = inode->i_ctime = current_time(inode);
+-		exfat_truncate(inode, EXFAT_I(inode)->i_size_aligned);
++		exfat_truncate(inode);
+ 	}
+ }
+ 
+-- 
+2.40.1
+
+
+From 7156e5963f830a7eaecd53eacc0d200728b5e9c3 Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Mon, 28 Mar 2022 16:37:58 +0800
+Subject: [PATCH 12/18] exfat: remove i_size_write() from __exfat_truncate()
+
+The file/directory size is updated into inode by i_size_write()
+before __exfat_truncate() is called, so it is redundant to
+re-update by i_size_write() in __exfat_truncate().
+
+Code refinement, no functional changes.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/exfat_fs.h | 2 +-
+ fs/exfat/file.c     | 8 +++-----
+ fs/exfat/inode.c    | 2 +-
+ 3 files changed, 5 insertions(+), 7 deletions(-)
+
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index 51b087ac3cc1..4ab0988d12a8 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -448,7 +448,7 @@ int exfat_trim_fs(struct inode *inode, struct fstrim_range *range);
+ 
+ /* file.c */
+ extern const struct file_operations exfat_file_operations;
+-int __exfat_truncate(struct inode *inode, loff_t new_size);
++int __exfat_truncate(struct inode *inode);
+ void exfat_truncate(struct inode *inode);
+ int exfat_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+ 		  struct iattr *attr);
+diff --git a/fs/exfat/file.c b/fs/exfat/file.c
+index 5dd277153e27..b33431c74c8a 100644
+--- a/fs/exfat/file.c
++++ b/fs/exfat/file.c
+@@ -93,7 +93,7 @@ static int exfat_sanitize_mode(const struct exfat_sb_info *sbi,
+ }
+ 
+ /* resize the file length */
+-int __exfat_truncate(struct inode *inode, loff_t new_size)
++int __exfat_truncate(struct inode *inode)
+ {
+ 	unsigned int num_clusters_new, num_clusters_phys;
+ 	unsigned int last_clu = EXFAT_FREE_CLUSTER;
+@@ -113,7 +113,7 @@ int __exfat_truncate(struct inode *inode, loff_t new_size)
+ 
+ 	exfat_chain_set(&clu, ei->start_clu, num_clusters_phys, ei->flags);
+ 
+-	if (new_size > 0) {
++	if (i_size_read(inode) > 0) {
+ 		/*
+ 		 * Truncate FAT chain num_clusters after the first cluster
+ 		 * num_clusters = min(new, phys);
+@@ -143,8 +143,6 @@ int __exfat_truncate(struct inode *inode, loff_t new_size)
+ 		ei->start_clu = EXFAT_EOF_CLUSTER;
+ 	}
+ 
+-	i_size_write(inode, new_size);
+-
+ 	if (ei->type == TYPE_FILE)
+ 		ei->attr |= ATTR_ARCHIVE;
+ 
+@@ -207,7 +205,7 @@ void exfat_truncate(struct inode *inode)
+ 		goto write_size;
+ 	}
+ 
+-	err = __exfat_truncate(inode, i_size_read(inode));
++	err = __exfat_truncate(inode);
+ 	if (err)
+ 		goto write_size;
+ 
+diff --git a/fs/exfat/inode.c b/fs/exfat/inode.c
+index f67fa0cc3d82..9776ca2936a5 100644
+--- a/fs/exfat/inode.c
++++ b/fs/exfat/inode.c
+@@ -624,7 +624,7 @@ void exfat_evict_inode(struct inode *inode)
+ 	if (!inode->i_nlink) {
+ 		i_size_write(inode, 0);
+ 		mutex_lock(&EXFAT_SB(inode->i_sb)->s_lock);
+-		__exfat_truncate(inode, 0);
++		__exfat_truncate(inode);
+ 		mutex_unlock(&EXFAT_SB(inode->i_sb)->s_lock);
+ 	}
+ 
+-- 
+2.40.1
+
+
+From 38700ec143cc4880532eb535f3dfc14b5a3dcb2c Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Tue, 13 Dec 2022 09:40:32 +0800
+Subject: [PATCH 13/18] exfat: fix overflow in sector and cluster conversion
+
+According to the exFAT specification, there are at most 2^32-11
+clusters in a volume. so using 'int' is not enough for cluster
+index, the return value type of exfat_sector_to_cluster() should
+be 'unsigned int'.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/exfat_fs.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index 4ab0988d12a8..25a5df0fdfe0 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -400,7 +400,7 @@ static inline sector_t exfat_cluster_to_sector(struct exfat_sb_info *sbi,
+ 		sbi->data_start_sector;
+ }
+ 
+-static inline int exfat_sector_to_cluster(struct exfat_sb_info *sbi,
++static inline unsigned int exfat_sector_to_cluster(struct exfat_sb_info *sbi,
+ 		sector_t sec)
+ {
+ 	return ((sec - sbi->data_start_sector) >> sbi->sect_per_clus_bits) +
+-- 
+2.40.1
+
+
+From 795d56f432b96f0391e7cb06a5ca77a422de18a6 Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Thu, 17 Nov 2022 11:31:30 +0800
+Subject: [PATCH 14/18] exfat: reuse exfat_find_location() to simplify
+ exfat_get_dentry_set()
+
+In exfat_get_dentry_set(), part of the code is the same as
+exfat_find_location(), reuse exfat_find_location() to simplify
+exfat_get_dentry_set().
+
+Code refinement, no functional changes.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/dir.c | 17 ++++-------------
+ 1 file changed, 4 insertions(+), 13 deletions(-)
+
+diff --git a/fs/exfat/dir.c b/fs/exfat/dir.c
+index 4fda52e02eba..158427e8124e 100644
+--- a/fs/exfat/dir.c
++++ b/fs/exfat/dir.c
+@@ -815,7 +815,7 @@ int exfat_get_dentry_set(struct exfat_entry_set_cache *es,
+ 		unsigned int type)
+ {
+ 	int ret, i, num_bh;
+-	unsigned int off, byte_offset, clu = 0;
++	unsigned int off;
+ 	sector_t sec;
+ 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+ 	struct exfat_dentry *ep;
+@@ -828,27 +828,16 @@ int exfat_get_dentry_set(struct exfat_entry_set_cache *es,
+ 		return -EIO;
+ 	}
+ 
+-	byte_offset = EXFAT_DEN_TO_B(entry);
+-	ret = exfat_walk_fat_chain(sb, p_dir, byte_offset, &clu);
++	ret = exfat_find_location(sb, p_dir, entry, &sec, &off);
+ 	if (ret)
+ 		return ret;
+ 
+ 	memset(es, 0, sizeof(*es));
+ 	es->sb = sb;
+ 	es->modified = false;
+-
+-	/* byte offset in cluster */
+-	byte_offset = EXFAT_CLU_OFFSET(byte_offset, sbi);
+-
+-	/* byte offset in sector */
+-	off = EXFAT_BLK_OFFSET(byte_offset, sb);
+ 	es->start_off = off;
+ 	es->bh = es->__bh;
+ 
+-	/* sector offset in cluster */
+-	sec = EXFAT_B_TO_BLK(byte_offset, sb);
+-	sec += exfat_cluster_to_sector(sbi, clu);
+-
+ 	bh = sb_bread(sb, sec);
+ 	if (!bh)
+ 		return -EIO;
+@@ -875,6 +864,8 @@ int exfat_get_dentry_set(struct exfat_entry_set_cache *es,
+ 	for (i = 1; i < num_bh; i++) {
+ 		/* get the next sector */
+ 		if (exfat_is_last_sector_in_cluster(sbi, sec)) {
++			unsigned int clu = exfat_sector_to_cluster(sbi, sec);
++
+ 			if (p_dir->flags == ALLOC_NO_FAT_CHAIN)
+ 				clu++;
+ 			else if (exfat_get_next_cluster(sb, &clu))
+-- 
+2.40.1
+
+
+From da18fe8a8c3fe8d258bcddfca8e5beb0a128d53f Mon Sep 17 00:00:00 2001
+From: Namjae Jeon <linkinjeon@kernel.org>
+Date: Sat, 14 Jan 2023 13:09:48 +0900
+Subject: [PATCH 15/18] exfat: handle unreconized benign secondary entries
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Sony PXW-Z280 camera add vendor allocation entries to directory of
+pictures. Currently, linux exfat does not support it and the file is
+not visible. This patch handle vendor extension and allocation entries
+as unreconized benign secondary entries. As described in the specification,
+it is recognized but ignored, and when deleting directory entry set,
+the associated clusters allocation are removed as well as benign secondary
+directory entries.
+
+Reported-by: Barócsi Dénes <admin@tveger.hu>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Reviewed-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/dir.c       | 83 +++++++++++++++++++++++++++++++-------------
+ fs/exfat/exfat_fs.h  |  2 ++
+ fs/exfat/exfat_raw.h | 21 +++++++++++
+ 3 files changed, 81 insertions(+), 25 deletions(-)
+
+diff --git a/fs/exfat/dir.c b/fs/exfat/dir.c
+index 158427e8124e..957574180a5e 100644
+--- a/fs/exfat/dir.c
++++ b/fs/exfat/dir.c
+@@ -29,14 +29,15 @@ static int exfat_extract_uni_name(struct exfat_dentry *ep,
+ 
+ }
+ 
+-static void exfat_get_uniname_from_ext_entry(struct super_block *sb,
++static int exfat_get_uniname_from_ext_entry(struct super_block *sb,
+ 		struct exfat_chain *p_dir, int entry, unsigned short *uniname)
+ {
+-	int i;
++	int i, err;
+ 	struct exfat_entry_set_cache es;
+ 
+-	if (exfat_get_dentry_set(&es, sb, p_dir, entry, ES_ALL_ENTRIES))
+-		return;
++	err = exfat_get_dentry_set(&es, sb, p_dir, entry, ES_ALL_ENTRIES);
++	if (err)
++		return err;
+ 
+ 	/*
+ 	 * First entry  : file entry
+@@ -56,12 +57,13 @@ static void exfat_get_uniname_from_ext_entry(struct super_block *sb,
+ 	}
+ 
+ 	exfat_put_dentry_set(&es, false);
++	return 0;
+ }
+ 
+ /* read a directory entry from the opened directory */
+ static int exfat_readdir(struct inode *inode, loff_t *cpos, struct exfat_dir_entry *dir_entry)
+ {
+-	int i, dentries_per_clu, num_ext;
++	int i, dentries_per_clu, num_ext, err;
+ 	unsigned int type, clu_offset, max_dentries;
+ 	struct exfat_chain dir, clu;
+ 	struct exfat_uni_name uni_name;
+@@ -146,8 +148,12 @@ static int exfat_readdir(struct inode *inode, loff_t *cpos, struct exfat_dir_ent
+ 					0);
+ 
+ 			*uni_name.name = 0x0;
+-			exfat_get_uniname_from_ext_entry(sb, &clu, i,
++			err = exfat_get_uniname_from_ext_entry(sb, &clu, i,
+ 				uni_name.name);
++			if (err) {
++				brelse(bh);
++				continue;
++			}
+ 			exfat_utf16_to_nls(sb, &uni_name,
+ 				dir_entry->namebuf.lfn,
+ 				dir_entry->namebuf.lfnbuf_len);
+@@ -375,6 +381,12 @@ unsigned int exfat_get_entry_type(struct exfat_dentry *ep)
+ 			return TYPE_ACL;
+ 		return TYPE_CRITICAL_SEC;
+ 	}
++
++	if (ep->type == EXFAT_VENDOR_EXT)
++		return TYPE_VENDOR_EXT;
++	if (ep->type == EXFAT_VENDOR_ALLOC)
++		return TYPE_VENDOR_ALLOC;
++
+ 	return TYPE_BENIGN_SEC;
+ }
+ 
+@@ -518,6 +530,25 @@ int exfat_update_dir_chksum(struct inode *inode, struct exfat_chain *p_dir,
+ 	return ret;
+ }
+ 
++static void exfat_free_benign_secondary_clusters(struct inode *inode,
++		struct exfat_dentry *ep)
++{
++	struct super_block *sb = inode->i_sb;
++	struct exfat_chain dir;
++	unsigned int start_clu =
++		le32_to_cpu(ep->dentry.generic_secondary.start_clu);
++	u64 size = le64_to_cpu(ep->dentry.generic_secondary.size);
++	unsigned char flags = ep->dentry.generic_secondary.flags;
++
++	if (!(flags & ALLOC_POSSIBLE) || !start_clu || !size)
++		return;
++
++	exfat_chain_set(&dir, start_clu,
++			EXFAT_B_TO_CLU_ROUND_UP(size, EXFAT_SB(sb)),
++			flags);
++	exfat_free_cluster(inode, &dir);
++}
++
+ int exfat_init_ext_entry(struct inode *inode, struct exfat_chain *p_dir,
+ 		int entry, int num_entries, struct exfat_uni_name *p_uniname)
+ {
+@@ -550,6 +581,9 @@ int exfat_init_ext_entry(struct inode *inode, struct exfat_chain *p_dir,
+ 		if (!ep)
+ 			return -EIO;
+ 
++		if (exfat_get_entry_type(ep) & TYPE_BENIGN_SEC)
++			exfat_free_benign_secondary_clusters(inode, ep);
++
+ 		exfat_init_name_entry(ep, uniname);
+ 		exfat_update_bh(bh, sync);
+ 		brelse(bh);
+@@ -573,6 +607,9 @@ int exfat_remove_entries(struct inode *inode, struct exfat_chain *p_dir,
+ 		if (!ep)
+ 			return -EIO;
+ 
++		if (exfat_get_entry_type(ep) & TYPE_BENIGN_SEC)
++			exfat_free_benign_secondary_clusters(inode, ep);
++
+ 		exfat_set_entry_type(ep, TYPE_DELETED);
+ 		exfat_update_bh(bh, IS_DIRSYNC(inode));
+ 		brelse(bh);
+@@ -741,6 +778,7 @@ enum exfat_validate_dentry_mode {
+ 	ES_MODE_GET_STRM_ENTRY,
+ 	ES_MODE_GET_NAME_ENTRY,
+ 	ES_MODE_GET_CRITICAL_SEC_ENTRY,
++	ES_MODE_GET_BENIGN_SEC_ENTRY,
+ };
+ 
+ static bool exfat_validate_entry(unsigned int type,
+@@ -754,36 +792,33 @@ static bool exfat_validate_entry(unsigned int type,
+ 		if  (type != TYPE_FILE && type != TYPE_DIR)
+ 			return false;
+ 		*mode = ES_MODE_GET_FILE_ENTRY;
+-		return true;
++		break;
+ 	case ES_MODE_GET_FILE_ENTRY:
+ 		if (type != TYPE_STREAM)
+ 			return false;
+ 		*mode = ES_MODE_GET_STRM_ENTRY;
+-		return true;
++		break;
+ 	case ES_MODE_GET_STRM_ENTRY:
+ 		if (type != TYPE_EXTEND)
+ 			return false;
+ 		*mode = ES_MODE_GET_NAME_ENTRY;
+-		return true;
++		break;
+ 	case ES_MODE_GET_NAME_ENTRY:
+-		if (type == TYPE_STREAM)
++		if (type & TYPE_BENIGN_SEC)
++			*mode = ES_MODE_GET_BENIGN_SEC_ENTRY;
++		else if (type != TYPE_EXTEND)
+ 			return false;
+-		if (type != TYPE_EXTEND) {
+-			if (!(type & TYPE_CRITICAL_SEC))
+-				return false;
+-			*mode = ES_MODE_GET_CRITICAL_SEC_ENTRY;
+-		}
+-		return true;
+-	case ES_MODE_GET_CRITICAL_SEC_ENTRY:
+-		if (type == TYPE_EXTEND || type == TYPE_STREAM)
+-			return false;
+-		if ((type & TYPE_CRITICAL_SEC) != TYPE_CRITICAL_SEC)
++		break;
++	case ES_MODE_GET_BENIGN_SEC_ENTRY:
++		/* Assume unreconized benign secondary entry */
++		if (!(type & TYPE_BENIGN_SEC))
+ 			return false;
+-		return true;
++		break;
+ 	default:
+-		WARN_ON_ONCE(1);
+ 		return false;
+ 	}
++
++	return true;
+ }
+ 
+ struct exfat_dentry *exfat_get_dentry_cached(
+@@ -1164,10 +1199,8 @@ int exfat_count_ext_entries(struct super_block *sb, struct exfat_chain *p_dir,
+ 
+ 		type = exfat_get_entry_type(ext_ep);
+ 		brelse(bh);
+-		if (type == TYPE_EXTEND || type == TYPE_STREAM)
++		if (type & TYPE_CRITICAL_SEC || type & TYPE_BENIGN_SEC)
+ 			count++;
+-		else
+-			break;
+ 	}
+ 	return count;
+ }
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index 25a5df0fdfe0..8a399e234aab 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -71,6 +71,8 @@ enum {
+ #define TYPE_PADDING		0x0402
+ #define TYPE_ACLTAB		0x0403
+ #define TYPE_BENIGN_SEC		0x0800
++#define TYPE_VENDOR_EXT		0x0801
++#define TYPE_VENDOR_ALLOC	0x0802
+ 
+ #define MAX_CHARSET_SIZE	6 /* max size of multi-byte character */
+ #define MAX_NAME_LENGTH		255 /* max len of file name excluding NULL */
+diff --git a/fs/exfat/exfat_raw.h b/fs/exfat/exfat_raw.h
+index 7f39b1c6469c..0ece2e43cf49 100644
+--- a/fs/exfat/exfat_raw.h
++++ b/fs/exfat/exfat_raw.h
+@@ -27,6 +27,7 @@
+ 	((sbi)->num_clusters - EXFAT_RESERVED_CLUSTERS)
+ 
+ /* AllocationPossible and NoFatChain field in GeneralSecondaryFlags Field */
++#define ALLOC_POSSIBLE		0x01
+ #define ALLOC_FAT_CHAIN		0x01
+ #define ALLOC_NO_FAT_CHAIN	0x03
+ 
+@@ -50,6 +51,8 @@
+ #define EXFAT_STREAM		0xC0	/* stream entry */
+ #define EXFAT_NAME		0xC1	/* file name entry */
+ #define EXFAT_ACL		0xC2	/* stream entry */
++#define EXFAT_VENDOR_EXT	0xE0	/* vendor extension entry */
++#define EXFAT_VENDOR_ALLOC	0xE1	/* vendor allocation entry */
+ 
+ #define IS_EXFAT_CRITICAL_PRI(x)	(x < 0xA0)
+ #define IS_EXFAT_BENIGN_PRI(x)		(x < 0xC0)
+@@ -155,6 +158,24 @@ struct exfat_dentry {
+ 			__le32 start_clu;
+ 			__le64 size;
+ 		} __packed upcase; /* up-case table directory entry */
++		struct {
++			__u8 flags;
++			__u8 vendor_guid[16];
++			__u8 vendor_defined[14];
++		} __packed vendor_ext; /* vendor extension directory entry */
++		struct {
++			__u8 flags;
++			__u8 vendor_guid[16];
++			__u8 vendor_defined[2];
++			__le32 start_clu;
++			__le64 size;
++		} __packed vendor_alloc; /* vendor allocation directory entry */
++		struct {
++			__u8 flags;
++			__u8 custom_defined[18];
++			__le32 start_clu;
++			__le64 size;
++		} __packed generic_secondary; /* generic secondary directory entry */
+ 	} __packed dentry;
+ } __packed;
+ 
+-- 
+2.40.1
+
+
+From 7a439647b800886c899120576d82a9e815e86f0d Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Mon, 6 Feb 2023 18:25:20 +0800
+Subject: [PATCH 16/18] exfat: remove unneeded code from exfat_alloc_cluster()
+
+In the removed code, num_clusters is 0, nothing is done in
+exfat_chain_cont_cluster(), so it is unneeded, remove it.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/fatent.c | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/fs/exfat/fatent.c b/fs/exfat/fatent.c
+index 41ae4cce1f42..65a8c9fb072c 100644
+--- a/fs/exfat/fatent.c
++++ b/fs/exfat/fatent.c
+@@ -347,14 +347,7 @@ int exfat_alloc_cluster(struct inode *inode, unsigned int num_alloc,
+ 		exfat_err(sb, "hint_cluster is invalid (%u)",
+ 			hint_clu);
+ 		hint_clu = EXFAT_FIRST_CLUSTER;
+-		if (p_chain->flags == ALLOC_NO_FAT_CHAIN) {
+-			if (exfat_chain_cont_cluster(sb, p_chain->dir,
+-					num_clusters)) {
+-				ret = -EIO;
+-				goto unlock;
+-			}
+-			p_chain->flags = ALLOC_FAT_CHAIN;
+-		}
++		p_chain->flags = ALLOC_FAT_CHAIN;
+ 	}
+ 
+ 	p_chain->dir = EXFAT_EOF_CLUSTER;
+-- 
+2.40.1
+
+
+From dbadcbbaff31b100c15dbff988a709aeaf053fbe Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Thu, 9 Feb 2023 17:44:50 +0800
+Subject: [PATCH 17/18] exfat: don't print error log in normal case
+
+When allocating a new cluster, exFAT first allocates from the
+next cluster of the last cluster of the file. If the last cluster
+of the file is the last cluster of the volume, allocate from the
+first cluster. This is a normal case, but the following error log
+will be printed. It makes users confused, so this commit removes
+the error log.
+
+[1960905.181545] exFAT-fs (sdb1): hint_cluster is invalid (262130)
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/fatent.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/fs/exfat/fatent.c b/fs/exfat/fatent.c
+index 65a8c9fb072c..c75c5a2cad42 100644
+--- a/fs/exfat/fatent.c
++++ b/fs/exfat/fatent.c
+@@ -344,8 +344,9 @@ int exfat_alloc_cluster(struct inode *inode, unsigned int num_alloc,
+ 
+ 	/* check cluster validation */
+ 	if (!is_valid_cluster(sbi, hint_clu)) {
+-		exfat_err(sb, "hint_cluster is invalid (%u)",
+-			hint_clu);
++		if (hint_clu != sbi->num_clusters)
++			exfat_err(sb, "hint_cluster is invalid (%u), rewind to the first cluster",
++					hint_clu);
+ 		hint_clu = EXFAT_FIRST_CLUSTER;
+ 		p_chain->flags = ALLOC_FAT_CHAIN;
+ 	}
+-- 
+2.40.1
+
+
+From 22678e76f2578e3b3a1d56fc0e23eb6e28c4e291 Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Fri, 10 Feb 2023 13:33:44 +0800
+Subject: [PATCH 18/18] exfat: fix the newly allocated clusters are not freed
+ in error handling
+
+In error handling 'free_cluster', before num_alloc clusters allocated,
+p_chain->size will not updated and always 0, thus the newly allocated
+clusters are not freed.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/fatent.c | 18 ++++++++----------
+ 1 file changed, 8 insertions(+), 10 deletions(-)
+
+diff --git a/fs/exfat/fatent.c b/fs/exfat/fatent.c
+index c75c5a2cad42..56b870d9cc0d 100644
+--- a/fs/exfat/fatent.c
++++ b/fs/exfat/fatent.c
+@@ -307,7 +307,7 @@ int exfat_alloc_cluster(struct inode *inode, unsigned int num_alloc,
+ 		struct exfat_chain *p_chain, bool sync_bmap)
+ {
+ 	int ret = -ENOSPC;
+-	unsigned int num_clusters = 0, total_cnt;
++	unsigned int total_cnt;
+ 	unsigned int hint_clu, new_clu, last_clu = EXFAT_EOF_CLUSTER;
+ 	struct super_block *sb = inode->i_sb;
+ 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+@@ -358,7 +358,7 @@ int exfat_alloc_cluster(struct inode *inode, unsigned int num_alloc,
+ 		if (new_clu != hint_clu &&
+ 		    p_chain->flags == ALLOC_NO_FAT_CHAIN) {
+ 			if (exfat_chain_cont_cluster(sb, p_chain->dir,
+-					num_clusters)) {
++					p_chain->size)) {
+ 				ret = -EIO;
+ 				goto free_cluster;
+ 			}
+@@ -371,8 +371,6 @@ int exfat_alloc_cluster(struct inode *inode, unsigned int num_alloc,
+ 			goto free_cluster;
+ 		}
+ 
+-		num_clusters++;
+-
+ 		/* update FAT table */
+ 		if (p_chain->flags == ALLOC_FAT_CHAIN) {
+ 			if (exfat_ent_set(sb, new_clu, EXFAT_EOF_CLUSTER)) {
+@@ -389,13 +387,14 @@ int exfat_alloc_cluster(struct inode *inode, unsigned int num_alloc,
+ 				goto free_cluster;
+ 			}
+ 		}
++		p_chain->size++;
++
+ 		last_clu = new_clu;
+ 
+-		if (--num_alloc == 0) {
++		if (p_chain->size == num_alloc) {
+ 			sbi->clu_srch_ptr = hint_clu;
+-			sbi->used_clusters += num_clusters;
++			sbi->used_clusters += num_alloc;
+ 
+-			p_chain->size += num_clusters;
+ 			mutex_unlock(&sbi->bitmap_lock);
+ 			return 0;
+ 		}
+@@ -406,7 +405,7 @@ int exfat_alloc_cluster(struct inode *inode, unsigned int num_alloc,
+ 
+ 			if (p_chain->flags == ALLOC_NO_FAT_CHAIN) {
+ 				if (exfat_chain_cont_cluster(sb, p_chain->dir,
+-						num_clusters)) {
++						p_chain->size)) {
+ 					ret = -EIO;
+ 					goto free_cluster;
+ 				}
+@@ -415,8 +414,7 @@ int exfat_alloc_cluster(struct inode *inode, unsigned int num_alloc,
+ 		}
+ 	}
+ free_cluster:
+-	if (num_clusters)
+-		__exfat_free_cluster(inode, p_chain);
++	__exfat_free_cluster(inode, p_chain);
+ unlock:
+ 	mutex_unlock(&sbi->bitmap_lock);
+ 	return ret;
+-- 
+2.40.1
+
