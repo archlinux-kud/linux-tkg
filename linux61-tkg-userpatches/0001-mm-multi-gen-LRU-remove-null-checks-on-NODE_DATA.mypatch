@@ -1,7 +1,7 @@
-From 931b6a8b36a2de3985eca27e758900e70cd99779 Mon Sep 17 00:00:00 2001
+From ab6fc0acb45c1e3940d320ecfaeebbac99a5ebb0 Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Tue, 15 Nov 2022 18:38:08 -0700
-Subject: mm: multi-gen LRU: remove NULL checks on NODE_DATA()
+Subject: [PATCH] mm: multi-gen LRU: remove NULL checks on NODE_DATA()
 
 NODE_DATA() is preallocated for all possible nodes after commit
 09f49dca570a ("mm: handle uninitialized numa nodes gracefully").  Checking
@@ -15,10 +15,10 @@ Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
  1 file changed, 2 insertions(+), 11 deletions(-)
 
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 82f32c929b114..805fa51b175c2 100644
+index d18296109aa7..91ac65dff3ce 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -3166,7 +3166,7 @@ static struct lruvec *get_lruvec(struct mem_cgroup *memcg, int nid)
+@@ -3159,7 +3159,7 @@ static struct lruvec *get_lruvec(struct mem_cgroup *memcg, int nid)
  	if (memcg) {
  		struct lruvec *lruvec = &memcg->nodeinfo[nid]->lruvec;
  
@@ -27,7 +27,7 @@ index 82f32c929b114..805fa51b175c2 100644
  		if (!lruvec->pgdat)
  			lruvec->pgdat = pgdat;
  
-@@ -3175,7 +3175,7 @@ static struct lruvec *get_lruvec(struct mem_cgroup *memcg, int nid)
+@@ -3168,7 +3168,7 @@ static struct lruvec *get_lruvec(struct mem_cgroup *memcg, int nid)
  #endif
  	VM_WARN_ON_ONCE(!mem_cgroup_disabled());
  
@@ -36,7 +36,7 @@ index 82f32c929b114..805fa51b175c2 100644
  }
  
  static int get_swappiness(struct lruvec *lruvec, struct scan_control *sc)
-@@ -3239,9 +3239,6 @@ void lru_gen_add_mm(struct mm_struct *mm)
+@@ -3232,9 +3232,6 @@ void lru_gen_add_mm(struct mm_struct *mm)
  	for_each_node_state(nid, N_MEMORY) {
  		struct lruvec *lruvec = get_lruvec(memcg, nid);
  
@@ -46,7 +46,7 @@ index 82f32c929b114..805fa51b175c2 100644
  		/* the first addition since the last iteration */
  		if (lruvec->mm_state.tail == &mm_list->fifo)
  			lruvec->mm_state.tail = &mm->lru_gen.list;
-@@ -3271,9 +3268,6 @@ void lru_gen_del_mm(struct mm_struct *mm)
+@@ -3264,9 +3261,6 @@ void lru_gen_del_mm(struct mm_struct *mm)
  	for_each_node(nid) {
  		struct lruvec *lruvec = get_lruvec(memcg, nid);
  
@@ -56,7 +56,7 @@ index 82f32c929b114..805fa51b175c2 100644
  		/* where the last iteration ended (exclusive) */
  		if (lruvec->mm_state.tail == &mm->lru_gen.list)
  			lruvec->mm_state.tail = lruvec->mm_state.tail->next;
-@@ -5348,9 +5342,6 @@ static void lru_gen_change_state(bool enabled)
+@@ -5344,9 +5338,6 @@ static void lru_gen_change_state(bool enabled)
  		for_each_node(nid) {
  			struct lruvec *lruvec = get_lruvec(memcg, nid);
  
@@ -67,5 +67,5 @@ index 82f32c929b114..805fa51b175c2 100644
  
  			VM_WARN_ON_ONCE(!seq_is_valid(lruvec));
 -- 
-cgit 
+2.40.1
 
