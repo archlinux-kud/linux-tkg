@@ -1,0 +1,489 @@
+From 8ca0787a4cc7ba5aad6cf65d99cbb6e5e9acc7d4 Mon Sep 17 00:00:00 2001
+From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+Date: Tue, 15 Nov 2022 18:54:16 -0800
+Subject: [PATCH 1/6] thermal: intel: Prevent accidental clearing of HFI status
+
+When there is a package thermal interrupt with PROCHOT log, it will be
+processed and cleared. It is possible that there is an active HFI event
+status, which is about to get processed or getting processed. While
+clearing PROCHOT log bit, it will also clear HFI status bit. This means
+that hardware is free to update HFI memory.
+
+When clearing a package thermal interrupt, some processors will generate
+a "general protection fault" when any of the read only bit is set to 1.
+
+The driver maintains a mask of all read-write bits which can be set.
+
+This mask doesn't include HFI status bit. This bit will also be cleared,
+as it will be assumed read-only bit. So, add HFI status bit 26 to the
+mask.
+
+Signed-off-by: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+Reviewed-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+---
+ drivers/thermal/intel/therm_throt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/thermal/intel/therm_throt.c b/drivers/thermal/intel/therm_throt.c
+index 8352083b87c7..9e8ab31d756e 100644
+--- a/drivers/thermal/intel/therm_throt.c
++++ b/drivers/thermal/intel/therm_throt.c
+@@ -197,7 +197,7 @@ static const struct attribute_group thermal_attr_group = {
+ #define THERM_STATUS_PROCHOT_LOG	BIT(1)
+ 
+ #define THERM_STATUS_CLEAR_CORE_MASK (BIT(1) | BIT(3) | BIT(5) | BIT(7) | BIT(9) | BIT(11) | BIT(13) | BIT(15))
+-#define THERM_STATUS_CLEAR_PKG_MASK  (BIT(1) | BIT(3) | BIT(5) | BIT(7) | BIT(9) | BIT(11))
++#define THERM_STATUS_CLEAR_PKG_MASK  (BIT(1) | BIT(3) | BIT(5) | BIT(7) | BIT(9) | BIT(11) | BIT(26))
+ 
+ static void clear_therm_status_log(int level)
+ {
+-- 
+2.40.1
+
+
+From 35528b628c9aae5e5ddb952d20bbc0bb08aee4f2 Mon Sep 17 00:00:00 2001
+From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+Date: Tue, 15 Nov 2022 18:54:17 -0800
+Subject: [PATCH 2/6] thermal: intel: Protect clearing of thermal status bits
+
+The clearing of the package thermal status is done by Read-Modify-Write
+operation. This may result in clearing of some new status bits which are
+being or about to be processed.
+
+For example, while clearing of HFI status, after read of thermal status
+register, a new thermal status bit is set by the hardware. But during
+write back, the newly generated status bit will be set to 0 or cleared.
+So, it is not safe to do read-modify-write.
+
+Since thermal status Read-Write bits can be set to only 0 not 1, it is
+safe to set all other bits to 1 which are not getting cleared.
+
+Create a common interface for clearing package thermal status bits. Use
+this interface to replace existing code to clear thermal package status
+bits.
+
+It is safe to call from different CPUs without protection as there is no
+read-modify-write. Also wrmsrl results in just single instruction. For
+example while CPU 0 and CPU 3 are clearing bit 1 and 3 respectively. If
+CPU 3 wins the race, it will write 0x4000aa2, then CPU 1 will write
+0x4000aa8. The bits which are not part of clear are set to 1. The default
+mask for bits, which can be written here is 0x4000aaa.
+
+Signed-off-by: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+Reviewed-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+---
+ drivers/thermal/intel/intel_hfi.c            |  8 ++-----
+ drivers/thermal/intel/therm_throt.c          | 23 ++++++++++----------
+ drivers/thermal/intel/thermal_interrupt.h    |  6 +++++
+ drivers/thermal/intel/x86_pkg_temp_thermal.c |  9 ++------
+ 4 files changed, 22 insertions(+), 24 deletions(-)
+
+diff --git a/drivers/thermal/intel/intel_hfi.c b/drivers/thermal/intel/intel_hfi.c
+index a0640f762dc5..c9e0827c9ebe 100644
+--- a/drivers/thermal/intel/intel_hfi.c
++++ b/drivers/thermal/intel/intel_hfi.c
+@@ -42,9 +42,7 @@
+ 
+ #include "../thermal_core.h"
+ #include "intel_hfi.h"
+-
+-#define THERM_STATUS_CLEAR_PKG_MASK (BIT(1) | BIT(3) | BIT(5) | BIT(7) | \
+-				     BIT(9) | BIT(11) | BIT(26))
++#include "thermal_interrupt.h"
+ 
+ /* Hardware Feedback Interface MSR configuration bits */
+ #define HW_FEEDBACK_PTR_VALID_BIT		BIT(0)
+@@ -304,9 +302,7 @@ void intel_hfi_process_event(__u64 pkg_therm_status_msr_val)
+ 	 * Let hardware know that we are done reading the HFI table and it is
+ 	 * free to update it again.
+ 	 */
+-	pkg_therm_status_msr_val &= THERM_STATUS_CLEAR_PKG_MASK &
+-				    ~PACKAGE_THERM_STATUS_HFI_UPDATED;
+-	wrmsrl(MSR_IA32_PACKAGE_THERM_STATUS, pkg_therm_status_msr_val);
++	thermal_clear_package_intr_status(PACKAGE_LEVEL, PACKAGE_THERM_STATUS_HFI_UPDATED);
+ 
+ 	queue_delayed_work(hfi_updates_wq, &hfi_instance->update_work,
+ 			   HFI_UPDATE_INTERVAL);
+diff --git a/drivers/thermal/intel/therm_throt.c b/drivers/thermal/intel/therm_throt.c
+index 9e8ab31d756e..4bb7fddaa143 100644
+--- a/drivers/thermal/intel/therm_throt.c
++++ b/drivers/thermal/intel/therm_throt.c
+@@ -190,32 +190,33 @@ static const struct attribute_group thermal_attr_group = {
+ };
+ #endif /* CONFIG_SYSFS */
+ 
+-#define CORE_LEVEL	0
+-#define PACKAGE_LEVEL	1
+-
+ #define THERM_THROT_POLL_INTERVAL	HZ
+ #define THERM_STATUS_PROCHOT_LOG	BIT(1)
+ 
+ #define THERM_STATUS_CLEAR_CORE_MASK (BIT(1) | BIT(3) | BIT(5) | BIT(7) | BIT(9) | BIT(11) | BIT(13) | BIT(15))
+ #define THERM_STATUS_CLEAR_PKG_MASK  (BIT(1) | BIT(3) | BIT(5) | BIT(7) | BIT(9) | BIT(11) | BIT(26))
+ 
+-static void clear_therm_status_log(int level)
++/*
++ * Clear the bits in package thermal status register for bit = 1
++ * in bitmask
++ */
++void thermal_clear_package_intr_status(int level, u64 bit_mask)
+ {
++	u64 msr_val;
+ 	int msr;
+-	u64 mask, msr_val;
+ 
+ 	if (level == CORE_LEVEL) {
+ 		msr  = MSR_IA32_THERM_STATUS;
+-		mask = THERM_STATUS_CLEAR_CORE_MASK;
++		msr_val = THERM_STATUS_CLEAR_CORE_MASK;
+ 	} else {
+ 		msr  = MSR_IA32_PACKAGE_THERM_STATUS;
+-		mask = THERM_STATUS_CLEAR_PKG_MASK;
++		msr_val = THERM_STATUS_CLEAR_PKG_MASK;
+ 	}
+ 
+-	rdmsrl(msr, msr_val);
+-	msr_val &= mask;
+-	wrmsrl(msr, msr_val & ~THERM_STATUS_PROCHOT_LOG);
++	msr_val &= ~bit_mask;
++	wrmsrl(msr, msr_val);
+ }
++EXPORT_SYMBOL_GPL(thermal_clear_package_intr_status);
+ 
+ static void get_therm_status(int level, bool *proc_hot, u8 *temp)
+ {
+@@ -295,7 +296,7 @@ static void __maybe_unused throttle_active_work(struct work_struct *work)
+ 	state->average = avg;
+ 
+ re_arm:
+-	clear_therm_status_log(state->level);
++	thermal_clear_package_intr_status(state->level, THERM_STATUS_PROCHOT_LOG);
+ 	schedule_delayed_work_on(this_cpu, &state->therm_work, THERM_THROT_POLL_INTERVAL);
+ }
+ 
+diff --git a/drivers/thermal/intel/thermal_interrupt.h b/drivers/thermal/intel/thermal_interrupt.h
+index 01e7bed2ffc7..01dfd4cdb5df 100644
+--- a/drivers/thermal/intel/thermal_interrupt.h
++++ b/drivers/thermal/intel/thermal_interrupt.h
+@@ -2,6 +2,9 @@
+ #ifndef _INTEL_THERMAL_INTERRUPT_H
+ #define _INTEL_THERMAL_INTERRUPT_H
+ 
++#define CORE_LEVEL	0
++#define PACKAGE_LEVEL	1
++
+ /* Interrupt Handler for package thermal thresholds */
+ extern int (*platform_thermal_package_notify)(__u64 msr_val);
+ 
+@@ -15,4 +18,7 @@ extern bool (*platform_thermal_package_rate_control)(void);
+ /* Handle HWP interrupt */
+ extern void notify_hwp_interrupt(void);
+ 
++/* Common function to clear Package thermal status register */
++extern void thermal_clear_package_intr_status(int level, u64 bit_mask);
++
+ #endif /* _INTEL_THERMAL_INTERRUPT_H */
+diff --git a/drivers/thermal/intel/x86_pkg_temp_thermal.c b/drivers/thermal/intel/x86_pkg_temp_thermal.c
+index a0e234fce71a..84c3a116ed04 100644
+--- a/drivers/thermal/intel/x86_pkg_temp_thermal.c
++++ b/drivers/thermal/intel/x86_pkg_temp_thermal.c
+@@ -265,7 +265,6 @@ static void pkg_temp_thermal_threshold_work_fn(struct work_struct *work)
+ 	struct thermal_zone_device *tzone = NULL;
+ 	int cpu = smp_processor_id();
+ 	struct zone_device *zonedev;
+-	u64 msr_val, wr_val;
+ 
+ 	mutex_lock(&thermal_zone_mutex);
+ 	raw_spin_lock_irq(&pkg_temp_lock);
+@@ -279,12 +278,8 @@ static void pkg_temp_thermal_threshold_work_fn(struct work_struct *work)
+ 	}
+ 	zonedev->work_scheduled = false;
+ 
+-	rdmsrl(MSR_IA32_PACKAGE_THERM_STATUS, msr_val);
+-	wr_val = msr_val & ~(THERM_LOG_THRESHOLD0 | THERM_LOG_THRESHOLD1);
+-	if (wr_val != msr_val) {
+-		wrmsrl(MSR_IA32_PACKAGE_THERM_STATUS, wr_val);
+-		tzone = zonedev->tzone;
+-	}
++	thermal_clear_package_intr_status(PACKAGE_LEVEL, THERM_LOG_THRESHOLD0 | THERM_LOG_THRESHOLD1);
++	tzone = zonedev->tzone;
+ 
+ 	enable_pkg_thres_interrupt();
+ 	raw_spin_unlock_irq(&pkg_temp_lock);
+-- 
+2.40.1
+
+
+From 9cd9aa7f6f2cc6e2928e8e20922714a0f9c013b9 Mon Sep 17 00:00:00 2001
+From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+Date: Wed, 16 Nov 2022 15:14:59 -0800
+Subject: [PATCH 3/6] thermal: intel: hfi: ACK HFI for the same timestamp
+
+Some processors issue more than one HFI interrupt with the same
+timestamp. Each interrupt must be acknowledged to let the hardware issue
+new HFI interrupts. But this can't be done without some additional flow
+modification in the existing interrupt handling.
+
+For background, the HFI interrupt is a package level thermal interrupt
+delivered via a LVT. This LVT is common for both the CPU and package
+level interrupts. Hence, all CPUs receive the HFI interrupts. But only
+one CPU should process interrupt and others simply exit by issuing EOI
+to LAPIC.
+
+The current HFI interrupt processing flow:
+
+  1. Receive Thermal interrupt
+  2. Check if there is an active HFI status in MSR_IA32_THERM_STATUS
+  3. Try and get spinlock, one CPU will enter spinlock and others
+     will simply return from here to issue EOI.
+    (Let's assume CPU 4 is processing interrupt)
+  4. Check the stored time-stamp from the HFI memory time-stamp
+  5. if same
+  6.      ignore interrupt, unlock and return
+  7. Copy the HFI message to local buffer
+  8. unlock spinlock
+  9. ACK HFI interrupt
+ 10. Queue the message for processing in a work-queue
+
+It is tempting to simply acknowledge all the interrupts even if they
+have the same timestamp. This may cause some interrupts to not be
+processed.
+
+Let's say CPU5 is slightly late and reaches step 4 while CPU4 is
+between steps 8 and 9.
+
+Currently we simply ignore interrupts with the same timestamp. No
+issue here for CPU5. When CPU4 acknowledges the interrupt, the next
+HFI interrupt can be delivered.
+
+If we acknowledge interrupts with the same timestamp (at step 6), there
+is a race condition. Under the same scenario, CPU 5 will acknowledge
+the HFI interrupt. This lets hardware generate another HFI interrupt,
+before CPU 4 start executing step 9. Once CPU 4 complete step 9, it
+will acknowledge the newly arrived HFI interrupt, without actually
+processing it.
+
+Acknowledge the interrupt when holding the spinlock. This avoids
+contention of the interrupt acknowledgment.
+
+Updated flow:
+
+  1. Receive HFI Thermal interrupt
+  2. Check if there is an active HFI status in MSR_IA32_THERM_STATUS
+  3. Try and get spin-lock
+     Let's assume CPU 4 is processing interrupt
+  4.1 Read MSR_IA32_PACKAGE_THERM_STATUS and check HFI status bit
+  4.2	If hfi status is 0
+  4.3		unlock spinlock
+  4.4		return
+  4.5 Check the stored time-stamp from the HFI memory time-stamp
+  5. if same
+  6.1      ACK HFI Interrupt,
+  6.2	unlock spinlock
+  6.3	return
+  7. Copy the HFI message to local buffer
+  8. ACK HFI interrupt
+  9. unlock spinlock
+ 10. Queue the message for processing in a work-queue
+
+To avoid taking the lock unnecessarily, intel_hfi_process_event() checks
+the status of the HFI interrupt before taking the lock. If CPU5 is late,
+when it starts processing the interrupt there are two scenarios:
+
+ a) CPU4 acknowledged the HFI interrupt before CPU5 read
+    MSR_IA32_THERM_STATUS. CPU5 exits.
+
+ b) CPU5 reads MSR_IA32_THERM_STATUS before CPU4 has acknowledged the
+    interrupt. CPU5 will take the lock if CPU4 has released it. It then
+    re-reads MSR_IA32_THERM_STATUS. If there is not a new interrupt,
+    the HFI status bit is clear and CPU5 exits. If a new HFI interrupt
+    was generated it will find that the status bit is set and it will
+    continue to process the interrupt. In this case even if timestamp
+    is not changed, the ACK can be issued as this is a new interrupt.
+
+Signed-off-by: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+Reviewed-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Tested-by: Arshad, Adeel<adeel.arshad@intel.com>
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+---
+ drivers/thermal/intel/intel_hfi.c | 22 +++++++++++++++++-----
+ 1 file changed, 17 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/thermal/intel/intel_hfi.c b/drivers/thermal/intel/intel_hfi.c
+index c9e0827c9ebe..c543a967cd50 100644
+--- a/drivers/thermal/intel/intel_hfi.c
++++ b/drivers/thermal/intel/intel_hfi.c
+@@ -250,7 +250,7 @@ void intel_hfi_process_event(__u64 pkg_therm_status_msr_val)
+ 	struct hfi_instance *hfi_instance;
+ 	int cpu = smp_processor_id();
+ 	struct hfi_cpu_info *info;
+-	u64 new_timestamp;
++	u64 new_timestamp, msr, hfi;
+ 
+ 	if (!pkg_therm_status_msr_val)
+ 		return;
+@@ -279,9 +279,21 @@ void intel_hfi_process_event(__u64 pkg_therm_status_msr_val)
+ 	if (!raw_spin_trylock(&hfi_instance->event_lock))
+ 		return;
+ 
+-	/* Skip duplicated updates. */
++	rdmsrl(MSR_IA32_PACKAGE_THERM_STATUS, msr);
++	hfi = msr & PACKAGE_THERM_STATUS_HFI_UPDATED;
++	if (!hfi) {
++		raw_spin_unlock(&hfi_instance->event_lock);
++		return;
++	}
++
++	/*
++	 * Ack duplicate update. Since there is an active HFI
++	 * status from HW, it must be a new event, not a case
++	 * where a lagging CPU entered the locked region.
++	 */
+ 	new_timestamp = *(u64 *)hfi_instance->hw_table;
+ 	if (*hfi_instance->timestamp == new_timestamp) {
++		thermal_clear_package_intr_status(PACKAGE_LEVEL, PACKAGE_THERM_STATUS_HFI_UPDATED);
+ 		raw_spin_unlock(&hfi_instance->event_lock);
+ 		return;
+ 	}
+@@ -295,15 +307,15 @@ void intel_hfi_process_event(__u64 pkg_therm_status_msr_val)
+ 	memcpy(hfi_instance->local_table, hfi_instance->hw_table,
+ 	       hfi_features.nr_table_pages << PAGE_SHIFT);
+ 
+-	raw_spin_unlock(&hfi_instance->table_lock);
+-	raw_spin_unlock(&hfi_instance->event_lock);
+-
+ 	/*
+ 	 * Let hardware know that we are done reading the HFI table and it is
+ 	 * free to update it again.
+ 	 */
+ 	thermal_clear_package_intr_status(PACKAGE_LEVEL, PACKAGE_THERM_STATUS_HFI_UPDATED);
+ 
++	raw_spin_unlock(&hfi_instance->table_lock);
++	raw_spin_unlock(&hfi_instance->event_lock);
++
+ 	queue_delayed_work(hfi_updates_wq, &hfi_instance->update_work,
+ 			   HFI_UPDATE_INTERVAL);
+ }
+-- 
+2.40.1
+
+
+From daad198cd6cbe038c6dda454653aaddf01789aff Mon Sep 17 00:00:00 2001
+From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+Date: Tue, 13 Dec 2022 18:06:51 -0800
+Subject: [PATCH 4/6] thermal: intel: Don't set HFI status bit to 1
+
+When CPU doesn't support HFI (Hardware Feedback Interface), don't include
+BIT 26 in the mask to prevent clearing. otherwise this results in:
+    unchecked MSR access error: WRMSR to 0x1b1
+      (tried to write 0x0000000004000aa8)
+      at rIP: 0xffffffff8b8559fe (throttle_active_work+0xbe/0x1b0)
+
+Fixes: 6fe1e64b6026 ("thermal: intel: Prevent accidental clearing of HFI status")
+Reported-by: Linus Torvalds <torvalds@linux-foundation.org>
+Tested-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+---
+ drivers/thermal/intel/therm_throt.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/thermal/intel/therm_throt.c b/drivers/thermal/intel/therm_throt.c
+index 4bb7fddaa143..2e22bb82b738 100644
+--- a/drivers/thermal/intel/therm_throt.c
++++ b/drivers/thermal/intel/therm_throt.c
+@@ -194,7 +194,7 @@ static const struct attribute_group thermal_attr_group = {
+ #define THERM_STATUS_PROCHOT_LOG	BIT(1)
+ 
+ #define THERM_STATUS_CLEAR_CORE_MASK (BIT(1) | BIT(3) | BIT(5) | BIT(7) | BIT(9) | BIT(11) | BIT(13) | BIT(15))
+-#define THERM_STATUS_CLEAR_PKG_MASK  (BIT(1) | BIT(3) | BIT(5) | BIT(7) | BIT(9) | BIT(11) | BIT(26))
++#define THERM_STATUS_CLEAR_PKG_MASK  (BIT(1) | BIT(3) | BIT(5) | BIT(7) | BIT(9) | BIT(11))
+ 
+ /*
+  * Clear the bits in package thermal status register for bit = 1
+@@ -211,6 +211,9 @@ void thermal_clear_package_intr_status(int level, u64 bit_mask)
+ 	} else {
+ 		msr  = MSR_IA32_PACKAGE_THERM_STATUS;
+ 		msr_val = THERM_STATUS_CLEAR_PKG_MASK;
++		if (boot_cpu_has(X86_FEATURE_HFI))
++			msr_val |= BIT(26);
++
+ 	}
+ 
+ 	msr_val &= ~bit_mask;
+-- 
+2.40.1
+
+
+From a666ad1526dff9c1363b3831cbedaedf44a52772 Mon Sep 17 00:00:00 2001
+From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Date: Tue, 18 Oct 2022 04:22:40 -0700
+Subject: [PATCH 5/6] thermal: intel: hfi: Improve the type of
+ hfi_features::nr_table_pages
+
+A Coverity static code scan raised a potential overflow_before_widen
+warning when hfi_features::nr_table_pages is used as an argument to
+memcpy in intel_hfi_process_event().
+
+Even though the overflow can never happen (the maximum number of pages of
+the HFI table is 0x10 and 0x10 << PAGE_SHIFT = 0x10000), using size_t as
+the data type of hfi_features::nr_table_pages makes Coverity happy and
+matches the data type of the argument 'size' of memcpy().
+
+Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+---
+ drivers/thermal/intel/intel_hfi.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/thermal/intel/intel_hfi.c b/drivers/thermal/intel/intel_hfi.c
+index c543a967cd50..90a11eef44f7 100644
+--- a/drivers/thermal/intel/intel_hfi.c
++++ b/drivers/thermal/intel/intel_hfi.c
+@@ -135,7 +135,7 @@ struct hfi_instance {
+  * Parameters and supported features that are common to all HFI instances
+  */
+ struct hfi_features {
+-	unsigned int	nr_table_pages;
++	size_t		nr_table_pages;
+ 	unsigned int	cpu_stride;
+ 	unsigned int	hdr_size;
+ };
+-- 
+2.40.1
+
+
+From 16442ae6f51c9968ee0a4172f92f2df97392972c Mon Sep 17 00:00:00 2001
+From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Date: Mon, 28 Nov 2022 08:20:01 -0800
+Subject: [PATCH 6/6] thermal: intel: hfi: Remove a pointless die_id check
+
+die_id is an u16 quantity. On single-die systems the default value of
+die_id is 0. No need to check for negative values.
+
+Plus, removing this check makes Coverity happy.
+
+Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+---
+ drivers/thermal/intel/intel_hfi.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/thermal/intel/intel_hfi.c b/drivers/thermal/intel/intel_hfi.c
+index 90a11eef44f7..6e604bda2b93 100644
+--- a/drivers/thermal/intel/intel_hfi.c
++++ b/drivers/thermal/intel/intel_hfi.c
+@@ -379,7 +379,7 @@ void intel_hfi_online(unsigned int cpu)
+ 	die_id = topology_logical_die_id(cpu);
+ 	hfi_instance = info->hfi_instance;
+ 	if (!hfi_instance) {
+-		if (die_id < 0 || die_id >= max_hfi_instances)
++		if (die_id >= max_hfi_instances)
+ 			return;
+ 
+ 		hfi_instance = &hfi_instances[die_id];
+-- 
+2.40.1
+
