@@ -1,4 +1,4 @@
-From 8ca0787a4cc7ba5aad6cf65d99cbb6e5e9acc7d4 Mon Sep 17 00:00:00 2001
+From 8f8106a1f04946c7578471823407a05ad03a0a3e Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Tue, 15 Nov 2022 18:54:16 -0800
 Subject: [PATCH 1/6] thermal: intel: Prevent accidental clearing of HFI status
@@ -42,7 +42,7 @@ index 8352083b87c7..9e8ab31d756e 100644
 2.40.1
 
 
-From 35528b628c9aae5e5ddb952d20bbc0bb08aee4f2 Mon Sep 17 00:00:00 2001
+From 22dc43494b7cde92c1aac97278855d03f7425bba Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Tue, 15 Nov 2022 18:54:17 -0800
 Subject: [PATCH 2/6] thermal: intel: Protect clearing of thermal status bits
@@ -216,7 +216,7 @@ index a0e234fce71a..84c3a116ed04 100644
 2.40.1
 
 
-From 9cd9aa7f6f2cc6e2928e8e20922714a0f9c013b9 Mon Sep 17 00:00:00 2001
+From eb4d1ba7150cee7b3855b62561cd0b9a5f4f6ca5 Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Wed, 16 Nov 2022 15:14:59 -0800
 Subject: [PATCH 3/6] thermal: intel: hfi: ACK HFI for the same timestamp
@@ -370,7 +370,7 @@ index c9e0827c9ebe..c543a967cd50 100644
 2.40.1
 
 
-From daad198cd6cbe038c6dda454653aaddf01789aff Mon Sep 17 00:00:00 2001
+From 3ec5f7a25848967e0a2342bcb502176ef002d111 Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Tue, 13 Dec 2022 18:06:51 -0800
 Subject: [PATCH 4/6] thermal: intel: Don't set HFI status bit to 1
@@ -417,7 +417,7 @@ index 4bb7fddaa143..2e22bb82b738 100644
 2.40.1
 
 
-From a666ad1526dff9c1363b3831cbedaedf44a52772 Mon Sep 17 00:00:00 2001
+From 4592be150688a2beed4067cbcecd146bd298798d Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 18 Oct 2022 04:22:40 -0700
 Subject: [PATCH 5/6] thermal: intel: hfi: Improve the type of
@@ -455,7 +455,7 @@ index c543a967cd50..90a11eef44f7 100644
 2.40.1
 
 
-From 16442ae6f51c9968ee0a4172f92f2df97392972c Mon Sep 17 00:00:00 2001
+From 18e1621877b61fc7ccff4541433dbecb0e6887c5 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 28 Nov 2022 08:20:01 -0800
 Subject: [PATCH 6/6] thermal: intel: hfi: Remove a pointless die_id check
