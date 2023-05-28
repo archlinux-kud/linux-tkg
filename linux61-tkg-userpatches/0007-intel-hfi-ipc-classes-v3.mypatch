@@ -1,884 +1,7 @@
-From 2b6764a3ea80bc02a62b24078d675260b33298af Mon Sep 17 00:00:00 2001
-From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Tue, 9 Aug 2022 06:53:29 -0700
-Subject: [PATCH 01/34] sched/fair: Generalize asym_packing logic for SMT cores
-
-When doing asym_packing load balancing between cores, all we care is that
-the destination core is fully idle (including SMT siblings, if any) and
-that the busiest candidate scheduling group has exactly one busy CPU. It is
-irrelevant whether the candidate busiest core is non-SMT, SMT2, SMT4, SMT8,
-etc.
-
-Do not handle the candidate busiest non-SMT vs SMT cases separately. Simply
-do the two checks described above. Let find_busiest_group() handle bigger
-imbalances in the number of idle CPUs.
-
-Cc: Ben Segall <bsegall@google.com>
-Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc: Len Brown <len.brown@intel.com>
-Cc: Mel Gorman <mgorman@suse.de>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Tim C. Chen <tim.c.chen@intel.com>
-Cc: Valentin Schneider <vschneid@redhat.com>
-Cc: x86@kernel.org
-Cc: linux-kernel@vger.kernel.org
-Reviewed-by: Len Brown <len.brown@intel.com>
-Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
----
-Changes since v2:
- * Updated documentation of the function to reflect the new behavior.
-   (Dietmar)
-
-Changes since v1:
- * Reworded commit message and inline comments for clarity.
- * Stated that this changeset does not impact SMT4 or SMT8.
----
- kernel/sched/fair.c | 41 ++++++++++++++---------------------------
- 1 file changed, 14 insertions(+), 27 deletions(-)
-
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index fa33c441ae86..3c96b0a96221 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -9156,13 +9156,11 @@ group_type group_classify(unsigned int imbalance_pct,
-  * the SMT siblings of @sg are busy. If only one CPU in @sg is busy, pull tasks
-  * only if @dst_cpu has higher priority.
-  *
-- * If both @dst_cpu and @sg have SMT siblings, and @sg has exactly one more
-- * busy CPU than @sds::local, let @dst_cpu pull tasks if it has higher priority.
-- * Bigger imbalances in the number of busy CPUs will be dealt with in
-- * update_sd_pick_busiest().
-- *
-- * If @sg does not have SMT siblings, only pull tasks if all of the SMT siblings
-- * of @dst_cpu are idle and @sg has lower priority.
-+ * If @dst_cpu has SMT siblings, check if there are no running tasks in
-+ * @sds::local. In such case, decide based on the priority of @sg. Do it only
-+ * if @sg has exactly one busy CPU (i.e., one more than @sds::local). Bigger
-+ * imbalances in the number of busy CPUs will be dealt with in
-+ * find_busiest_group().
-  *
-  * Return: true if @dst_cpu can pull tasks, false otherwise.
-  */
-@@ -9171,12 +9169,10 @@ static bool asym_smt_can_pull_tasks(int dst_cpu, struct sd_lb_stats *sds,
- 				    struct sched_group *sg)
- {
- #ifdef CONFIG_SCHED_SMT
--	bool local_is_smt, sg_is_smt;
-+	bool local_is_smt;
- 	int sg_busy_cpus;
- 
- 	local_is_smt = sds->local->flags & SD_SHARE_CPUCAPACITY;
--	sg_is_smt = sg->flags & SD_SHARE_CPUCAPACITY;
--
- 	sg_busy_cpus = sgs->group_weight - sgs->idle_cpus;
- 
- 	if (!local_is_smt) {
-@@ -9197,25 +9193,16 @@ static bool asym_smt_can_pull_tasks(int dst_cpu, struct sd_lb_stats *sds,
- 		return sched_asym_prefer(dst_cpu, sg->asym_prefer_cpu);
- 	}
- 
--	/* @dst_cpu has SMT siblings. */
--
--	if (sg_is_smt) {
--		int local_busy_cpus = sds->local->group_weight -
--				      sds->local_stat.idle_cpus;
--		int busy_cpus_delta = sg_busy_cpus - local_busy_cpus;
--
--		if (busy_cpus_delta == 1)
--			return sched_asym_prefer(dst_cpu, sg->asym_prefer_cpu);
--
--		return false;
--	}
--
- 	/*
--	 * @sg does not have SMT siblings. Ensure that @sds::local does not end
--	 * up with more than one busy SMT sibling and only pull tasks if there
--	 * are not busy CPUs (i.e., no CPU has running tasks).
-+	 * @dst_cpu has SMT siblings. Do asym_packing load balancing only if
-+	 * all its siblings are idle (moving tasks between physical cores in
-+	 * which some SMT siblings are busy results in the same throughput).
-+	 *
-+	 * If the difference in the number of busy CPUs is two or more, let
-+	 * find_busiest_group() take care of it. We only care if @sg has
-+	 * exactly one busy CPU. This covers SMT and non-SMT sched groups.
- 	 */
--	if (!sds->local_stat.sum_nr_running)
-+	if (sg_busy_cpus == 1 && !sds->local_stat.sum_nr_running)
- 		return sched_asym_prefer(dst_cpu, sg->asym_prefer_cpu);
- 
- 	return false;
--- 
-2.40.1
-
-
-From 96e457514687de9a1d32d2d97680e5073db810d1 Mon Sep 17 00:00:00 2001
-From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Tue, 24 May 2022 03:48:37 -0700
-Subject: [PATCH 02/34] sched/fair: Move is_core_idle() out of CONFIG_NUMA
-
-asym_packing needs this function to determine whether an SMT core is a
-suitable destination for load balancing.
-
-Cc: Ben Segall <bsegall@google.com>
-Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc: Len Brown <len.brown@intel.com>
-Cc: Mel Gorman <mgorman@suse.de>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Tim C. Chen <tim.c.chen@intel.com>
-Cc: Valentin Schneider <vschneid@redhat.com>
-Cc: x86@kernel.org
-Cc: linux-kernel@vger.kernel.org
-Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
----
-Changes since v2:
- * Introduced this patch.
-
-Changes since v1:
- * N/A
----
- kernel/sched/fair.c | 34 +++++++++++++++++-----------------
- 1 file changed, 17 insertions(+), 17 deletions(-)
-
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 3c96b0a96221..4bc293c320ad 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -1049,6 +1049,23 @@ update_stats_curr_start(struct cfs_rq *cfs_rq, struct sched_entity *se)
-  * Scheduling class queueing methods:
-  */
- 
-+static inline bool is_core_idle(int cpu)
-+{
-+#ifdef CONFIG_SCHED_SMT
-+	int sibling;
-+
-+	for_each_cpu(sibling, cpu_smt_mask(cpu)) {
-+		if (cpu == sibling)
-+			continue;
-+
-+		if (!idle_cpu(sibling))
-+			return false;
-+	}
-+#endif
-+
-+	return true;
-+}
-+
- #ifdef CONFIG_NUMA
- #define NUMA_IMBALANCE_MIN 2
- 
-@@ -1688,23 +1705,6 @@ struct numa_stats {
- 	int idle_cpu;
- };
- 
--static inline bool is_core_idle(int cpu)
--{
--#ifdef CONFIG_SCHED_SMT
--	int sibling;
--
--	for_each_cpu(sibling, cpu_smt_mask(cpu)) {
--		if (cpu == sibling)
--			continue;
--
--		if (!idle_cpu(sibling))
--			return false;
--	}
--#endif
--
--	return true;
--}
--
- struct task_numa_env {
- 	struct task_struct *p;
- 
--- 
-2.40.1
-
-
-From a2da5768e7e1dc688338182062ddefcb2996046a Mon Sep 17 00:00:00 2001
-From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Fri, 13 Jan 2023 16:53:27 -0800
-Subject: [PATCH 03/34] sched/fair: Only do asym_packing load balancing from
- fully idle SMT cores
-
-When balancing load between cores, all the SMT siblings of the destination
-CPU, if any, must be idle. Otherwise, pulling new tasks degrades the
-throughput of the busy SMT siblings. The overall throughput of the system
-remains the same.
-
-When balancing load within an SMT core this consideration is not relevant
-relevant. Follow the priorities that hardware indicates.
-
-Using is_core_idle() renders checking !sds->local_stat.sum_nr_running
-redundant. Remove it.
-
-Cc: Ben Segall <bsegall@google.com>
-Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc: Len Brown <len.brown@intel.com>
-Cc: Mel Gorman <mgorman@suse.de>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Tim C. Chen <tim.c.chen@intel.com>
-Cc: Valentin Schneider <vschneid@redhat.com>
-Cc: x86@kernel.org
-Cc: linux-kernel@vger.kernel.org
-Suggested-by: Valentin Schneider <vschneid@redhat.com>
-Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
----
-Changes since v2:
- * Introduced this patch.
-
-Changes since v1:
- * N/A
----
- kernel/sched/fair.c | 34 +++++++++++++++++++++++++---------
- 1 file changed, 25 insertions(+), 9 deletions(-)
-
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 4bc293c320ad..85fc511dc6fa 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -9152,12 +9152,14 @@ group_type group_classify(unsigned int imbalance_pct,
-  * Check the state of the SMT siblings of both @sds::local and @sg and decide
-  * if @dst_cpu can pull tasks.
-  *
-+ * This function must be called only if all the SMT siblings of @dst_cpu are
-+ * idle, if any.
-+ *
-  * If @dst_cpu does not have SMT siblings, it can pull tasks if two or more of
-  * the SMT siblings of @sg are busy. If only one CPU in @sg is busy, pull tasks
-  * only if @dst_cpu has higher priority.
-  *
-- * If @dst_cpu has SMT siblings, check if there are no running tasks in
-- * @sds::local. In such case, decide based on the priority of @sg. Do it only
-+ * If @dst_cpu has SMT siblings, decide based on the priority of @sg. Do it only
-  * if @sg has exactly one busy CPU (i.e., one more than @sds::local). Bigger
-  * imbalances in the number of busy CPUs will be dealt with in
-  * find_busiest_group().
-@@ -9194,15 +9196,13 @@ static bool asym_smt_can_pull_tasks(int dst_cpu, struct sd_lb_stats *sds,
- 	}
- 
- 	/*
--	 * @dst_cpu has SMT siblings. Do asym_packing load balancing only if
--	 * all its siblings are idle (moving tasks between physical cores in
--	 * which some SMT siblings are busy results in the same throughput).
-+	 * @dst_cpu has SMT siblings and are also idle.
- 	 *
- 	 * If the difference in the number of busy CPUs is two or more, let
- 	 * find_busiest_group() take care of it. We only care if @sg has
- 	 * exactly one busy CPU. This covers SMT and non-SMT sched groups.
- 	 */
--	if (sg_busy_cpus == 1 && !sds->local_stat.sum_nr_running)
-+	if (sg_busy_cpus == 1)
- 		return sched_asym_prefer(dst_cpu, sg->asym_prefer_cpu);
- 
- 	return false;
-@@ -9216,7 +9216,14 @@ static inline bool
- sched_asym(struct lb_env *env, struct sd_lb_stats *sds,  struct sg_lb_stats *sgs,
- 	   struct sched_group *group)
- {
--	/* Only do SMT checks if either local or candidate have SMT siblings */
-+	/*
-+	 * If the destination CPU has SMT siblings, env->idle != CPU_NOT_IDLE
-+	 * is not sufficient. We need to make sure the whole core is idle.
-+	 */
-+	if (sds->local->flags & SD_SHARE_CPUCAPACITY && !is_core_idle(env->dst_cpu))
-+		return false;
-+
-+	/* Only do SMT checks if either local or candidate have SMT siblings. */
- 	if ((sds->local->flags & SD_SHARE_CPUCAPACITY) ||
- 	    (group->flags & SD_SHARE_CPUCAPACITY))
- 		return asym_smt_can_pull_tasks(env->dst_cpu, sds, sgs, group);
-@@ -11173,8 +11180,17 @@ static void nohz_balancer_kick(struct rq *rq)
- 		 */
- 		for_each_cpu_and(i, sched_domain_span(sd), nohz.idle_cpus_mask) {
- 			if (sched_asym_prefer(i, cpu)) {
--				flags = NOHZ_STATS_KICK | NOHZ_BALANCE_KICK;
--				goto unlock;
-+				/*
-+				 * Always do ASYM_PACKING balance in the SMT
-+				 * domain. In upper domains, the core must be
-+				 * fully idle.
-+				 */
-+				if (sd->flags & SD_SHARE_CPUCAPACITY ||
-+				    (!(sd->flags & SD_SHARE_CPUCAPACITY) &&
-+				     is_core_idle(i))) {
-+					flags = NOHZ_STATS_KICK | NOHZ_BALANCE_KICK;
-+					goto unlock;
-+				}
- 			}
- 		}
- 	}
--- 
-2.40.1
-
-
-From e971c81b860cf1df543ad76dbbc7055542c78a68 Mon Sep 17 00:00:00 2001
-From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Wed, 25 Jan 2023 08:00:38 -0800
-Subject: [PATCH 04/34] sched/fair: Let low-priority cores help high-priority
- busy SMT cores
-
-Using asym_packing priorities within an SMT core is straightforward. Just
-follow the priorities that hardware indicates.
-
-When balancing load from an SMT core, also consider the idle of its
-siblings. Priorities do not reflect that an SMT core divides its throughput
-among all its busy siblings. They only makes sense when exactly one sibling
-is busy.
-
-Indicate that active balance is needed if the destination CPU has lower
-priority than the source CPU but the latter has busy SMT siblings.
-
-Make find_busiest_queue() not skip higher-priority SMT cores with more than
-busy sibling.
-
-Cc: Ben Segall <bsegall@google.com>
-Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc: Len Brown <len.brown@intel.com>
-Cc: Mel Gorman <mgorman@suse.de>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Tim C. Chen <tim.c.chen@intel.com>
-Cc: Valentin Schneider <vschneid@redhat.com>
-Cc: x86@kernel.org
-Cc: linux-kernel@vger.kernel.org
-Suggested-by: Valentin Schneider <vschneid@redhat.com>
-Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
----
-Changes since v2:
- * Introduced this patch.
-
-Changes since v1:
- * N/A
----
- kernel/sched/fair.c | 31 ++++++++++++++++++++++++++-----
- 1 file changed, 26 insertions(+), 5 deletions(-)
-
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 85fc511dc6fa..024af0be1df0 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -10348,11 +10348,20 @@ static struct rq *find_busiest_queue(struct lb_env *env,
- 		    nr_running == 1)
- 			continue;
- 
--		/* Make sure we only pull tasks from a CPU of lower priority */
-+		/*
-+		 * Make sure we only pull tasks from a CPU of lower priority
-+		 * when balancing between SMT siblings.
-+		 *
-+		 * If balancing between cores, let lower priority CPUs help
-+		 * SMT cores with more than one busy sibling.
-+		 */
- 		if ((env->sd->flags & SD_ASYM_PACKING) &&
- 		    sched_asym_prefer(i, env->dst_cpu) &&
--		    nr_running == 1)
--			continue;
-+		    nr_running == 1) {
-+			if (env->sd->flags & SD_SHARE_CPUCAPACITY ||
-+			    (!(env->sd->flags & SD_SHARE_CPUCAPACITY) && is_core_idle(i)))
-+				continue;
-+		}
- 
- 		switch (env->migration_type) {
- 		case migrate_load:
-@@ -10442,8 +10451,20 @@ asym_active_balance(struct lb_env *env)
- 	 * lower priority CPUs in order to pack all tasks in the
- 	 * highest priority CPUs.
- 	 */
--	return env->idle != CPU_NOT_IDLE && (env->sd->flags & SD_ASYM_PACKING) &&
--	       sched_asym_prefer(env->dst_cpu, env->src_cpu);
-+	if (env->idle != CPU_NOT_IDLE && (env->sd->flags & SD_ASYM_PACKING)) {
-+		/* Always obey priorities between SMT siblings. */
-+		if (env->sd->flags & SD_SHARE_CPUCAPACITY)
-+			return sched_asym_prefer(env->dst_cpu, env->src_cpu);
-+
-+		/*
-+		 * A lower priority CPU can help an SMT core with more than one
-+		 * busy sibling.
-+		 */
-+		return sched_asym_prefer(env->dst_cpu, env->src_cpu) ||
-+		       !is_core_idle(env->src_cpu);
-+	}
-+
-+	return false;
- }
- 
- static inline bool
--- 
-2.40.1
-
-
-From 9945ca57cca8de79d8a477ef412dc55911f7c62b Mon Sep 17 00:00:00 2001
-From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Fri, 13 Jan 2023 17:57:05 -0800
-Subject: [PATCH 05/34] sched/fair: Keep a fully_busy SMT sched group as
- busiest
-
-When comparing two fully_busy scheduling groups, keep the current busiest
-group if it represents an SMT core. Tasks in such scheduling group share
-CPU resources and need more help than tasks in a non-SMT fully_busy group.
-
-Cc: Ben Segall <bsegall@google.com>
-Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc: Len Brown <len.brown@intel.com>
-Cc: Mel Gorman <mgorman@suse.de>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Tim C. Chen <tim.c.chen@intel.com>
-Cc: Valentin Schneider <vschneid@redhat.com>
-Cc: x86@kernel.org
-Cc: linux-kernel@vger.kernel.org
-Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
----
-Changes since v2:
- * Introduced this patch.
-
-Changes since v1:
- * N/A
----
- kernel/sched/fair.c | 16 ++++++++++++++--
- 1 file changed, 14 insertions(+), 2 deletions(-)
-
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 024af0be1df0..1a09ec216a63 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -9416,10 +9416,22 @@ static bool update_sd_pick_busiest(struct lb_env *env,
- 		 * contention when accessing shared HW resources.
- 		 *
- 		 * XXX for now avg_load is not computed and always 0 so we
--		 * select the 1st one.
-+		 * select the 1st one, except if @sg is composed of SMT
-+		 * siblings.
- 		 */
--		if (sgs->avg_load <= busiest->avg_load)
-+
-+		if (sgs->avg_load < busiest->avg_load)
- 			return false;
-+
-+		if (sgs->avg_load == busiest->avg_load) {
-+			/*
-+			 * SMT sched groups need more help than non-SMT groups.
-+			 * If @sg happens to also be SMT, either choice is good.
-+			 */
-+			if (sds->busiest->flags & SD_SHARE_CPUCAPACITY)
-+				return false;
-+		}
-+
- 		break;
- 
- 	case group_has_spare:
--- 
-2.40.1
-
-
-From 0e0cb5e72c432b40a5f6c6860be15bb629c82fe7 Mon Sep 17 00:00:00 2001
-From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Fri, 20 Jan 2023 16:57:01 -0800
-Subject: [PATCH 06/34] sched/fair: Use the prefer_sibling flag of the current
- sched domain
-
-SD_PREFER_SIBLING is set from the SMT scheduling domain up to the first
-non-NUMA domain (the exception is systems with SD_ASYM_CPUCAPACITY).
-
-Above the SMT sched domain, all domains have a child. The SD_PREFER_
-SIBLING is honored always regardless of the scheduling domain at which the
-load balance takes place.
-
-There are cases, however, in which the busiest CPU's sched domain has
-child but the destination CPU's does not. Consider, for instance a non-SMT
-core (or an SMT core with only one online sibling) doing load balance with
-an SMT core at the MC level. SD_PREFER_SIBLING will not be honored. We are
-left with a fully busy SMT core and an idle non-SMT core.
-
-Avoid inconsistent behavior. Use the prefer_sibling behavior at the current
-scheduling domain, not its child.
-
-The NUMA sched domain does not have the SD_PREFER_SIBLING flag. Thus, we
-will not spread load among NUMA sched groups, as desired.
-
-Cc: Ben Segall <bsegall@google.com>
-Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc: Len Brown <len.brown@intel.com>
-Cc: Mel Gorman <mgorman@suse.de>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Tim C. Chen <tim.c.chen@intel.com>
-Cc: Valentin Schneider <vschneid@redhat.com>
-Cc: x86@kernel.org
-Cc: linux-kernel@vger.kernel.org
-Suggested-by: Valentin Schneider <vschneid@redhat.com>
-Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
----
-Changes since v2:
- * Introduced this patch.
-
-Changes since v1:
- * N/A
----
- kernel/sched/fair.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
-
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 1a09ec216a63..cda10af306ff 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -9906,7 +9906,6 @@ static void update_idle_cpu_scan(struct lb_env *env,
- 
- static inline void update_sd_lb_stats(struct lb_env *env, struct sd_lb_stats *sds)
- {
--	struct sched_domain *child = env->sd->child;
- 	struct sched_group *sg = env->sd->groups;
- 	struct sg_lb_stats *local = &sds->local_stat;
- 	struct sg_lb_stats tmp_sgs;
-@@ -9947,9 +9946,11 @@ static inline void update_sd_lb_stats(struct lb_env *env, struct sd_lb_stats *sd
- 		sg = sg->next;
- 	} while (sg != env->sd->groups);
- 
--	/* Tag domain that child domain prefers tasks go to siblings first */
--	sds->prefer_sibling = child && child->flags & SD_PREFER_SIBLING;
--
-+	/*
-+	 * Tag domain that @env::sd prefers to spread excess tasks among
-+	 * sibling sched groups.
-+	 */
-+	sds->prefer_sibling = env->sd->flags & SD_PREFER_SIBLING;
- 
- 	if (env->sd->flags & SD_NUMA)
- 		env->fbq_type = fbq_classify_group(&sds->busiest_stat);
-@@ -10258,7 +10259,6 @@ static struct sched_group *find_busiest_group(struct lb_env *env)
- 			goto out_balanced;
- 	}
- 
--	/* Try to move all excess tasks to child's sibling domain */
- 	if (sds.prefer_sibling && local->group_type == group_has_spare &&
- 	    busiest->sum_nr_running > local->sum_nr_running + 1)
- 		goto force_balance;
--- 
-2.40.1
-
-
-From d78f2d4d52001bb7da50bd4d93e4eaad2fe77b6f Mon Sep 17 00:00:00 2001
-From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Fri, 13 Jan 2023 17:38:18 -0800
-Subject: [PATCH 07/34] sched/fair: Do not even the number of busy CPUs via
- asym_packing
-
-Now that find_busiest_group() triggers load balancing between a fully_
-busy SMT2 core and an idle non-SMT core, it is no longer needed to force
-balancing via asym_packing. Use asym_packing only as intended: when there
-is high-priority CPU that is idle.
-
-After this change, the same logic apply to SMT and non-SMT local groups.
-Simplify asym_smt_can_pull_tasks() accordingly.
-
-Cc: Ben Segall <bsegall@google.com>
-Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc: Len Brown <len.brown@intel.com>
-Cc: Mel Gorman <mgorman@suse.de>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Tim C. Chen <tim.c.chen@intel.com>
-Cc: Valentin Schneider <vschneid@redhat.com>
-Cc: x86@kernel.org
-Cc: linux-kernel@vger.kernel.org
-Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
----
-Changes since v2:
- * Introduced this patch.
-
-Changes since v1:
- * N/A
----
- kernel/sched/fair.c | 37 +++++--------------------------------
- 1 file changed, 5 insertions(+), 32 deletions(-)
-
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index cda10af306ff..5db215447854 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -9149,20 +9149,15 @@ group_type group_classify(unsigned int imbalance_pct,
-  * @sgs:	Load-balancing statistics of the candidate busiest group
-  * @sg:		The candidate busiest group
-  *
-- * Check the state of the SMT siblings of both @sds::local and @sg and decide
-- * if @dst_cpu can pull tasks.
-+ * Check the state of the SMT siblings of @sg and decide if @dst_cpu can pull
-+ * tasks.
-  *
-  * This function must be called only if all the SMT siblings of @dst_cpu are
-  * idle, if any.
-  *
-- * If @dst_cpu does not have SMT siblings, it can pull tasks if two or more of
-- * the SMT siblings of @sg are busy. If only one CPU in @sg is busy, pull tasks
-- * only if @dst_cpu has higher priority.
-- *
-- * If @dst_cpu has SMT siblings, decide based on the priority of @sg. Do it only
-- * if @sg has exactly one busy CPU (i.e., one more than @sds::local). Bigger
-- * imbalances in the number of busy CPUs will be dealt with in
-- * find_busiest_group().
-+ * @dst_cpu can pull tasks if @sg has exactly one busy CPU (i.e., one more than
-+ * @sds::local) and has lower group priority than @sds::local. Bigger imbalances
-+ * in the number of busy CPUs will be dealt with in find_busiest_group().
-  *
-  * Return: true if @dst_cpu can pull tasks, false otherwise.
-  */
-@@ -9171,33 +9166,11 @@ static bool asym_smt_can_pull_tasks(int dst_cpu, struct sd_lb_stats *sds,
- 				    struct sched_group *sg)
- {
- #ifdef CONFIG_SCHED_SMT
--	bool local_is_smt;
- 	int sg_busy_cpus;
- 
--	local_is_smt = sds->local->flags & SD_SHARE_CPUCAPACITY;
- 	sg_busy_cpus = sgs->group_weight - sgs->idle_cpus;
- 
--	if (!local_is_smt) {
--		/*
--		 * If we are here, @dst_cpu is idle and does not have SMT
--		 * siblings. Pull tasks if candidate group has two or more
--		 * busy CPUs.
--		 */
--		if (sg_busy_cpus >= 2) /* implies sg_is_smt */
--			return true;
--
--		/*
--		 * @dst_cpu does not have SMT siblings. @sg may have SMT
--		 * siblings and only one is busy. In such case, @dst_cpu
--		 * can help if it has higher priority and is idle (i.e.,
--		 * it has no running tasks).
--		 */
--		return sched_asym_prefer(dst_cpu, sg->asym_prefer_cpu);
--	}
--
- 	/*
--	 * @dst_cpu has SMT siblings and are also idle.
--	 *
- 	 * If the difference in the number of busy CPUs is two or more, let
- 	 * find_busiest_group() take care of it. We only care if @sg has
- 	 * exactly one busy CPU. This covers SMT and non-SMT sched groups.
--- 
-2.40.1
-
-
-From dd598798be70fd86f69459ec43699924c9c7d7e5 Mon Sep 17 00:00:00 2001
-From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Sat, 21 Jan 2023 03:59:50 -0800
-Subject: [PATCH 08/34] sched/topology: Remove SHARED_CHILD from ASYM_PACKING
-
-Only x86 and Power7 use ASYM_PACKING. They use it differently.
-
-Power7 has cores of equal priority, but the SMT siblings of a core have
-different priorities. Parent scheduling domains do not need (nor have) the
-ASYM_PACKING flag. SHARED_CHILD is not needed. Using SHARED_PARENT would
-cause the topology debug code to complain.
-
-X86 has cores of different priority, but all the SMT siblings of the core
-have equal priority. It needs ASYM_PACKING at the MC level, but not at the
-SMT level (it also needs it at upper levels if they have scheduling groups
-of different priority). Removing ASYM_PACKING from the SMT domain causes
-the topology debug code to complain.
-
-Remove SHARED_CHILD for now. We still need a topology check that satisfies
-both architectures.
-
-Cc: Ben Segall <bsegall@google.com>
-Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc: Len Brown <len.brown@intel.com>
-Cc: Mel Gorman <mgorman@suse.de>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Tim C. Chen <tim.c.chen@intel.com>
-Cc: Valentin Schneider <vschneid@redhat.com>
-Cc: x86@kernel.org
-Cc: linux-kernel@vger.kernel.org
-Suggested-by: Valentin Schneider <vschneid@redhat.com>
-Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
----
-Changes since v2:
- * Introduced this patch.
-
-Changes since v1:
- * N/A
----
- include/linux/sched/sd_flags.h | 5 +----
- 1 file changed, 1 insertion(+), 4 deletions(-)
-
-diff --git a/include/linux/sched/sd_flags.h b/include/linux/sched/sd_flags.h
-index 57bde66d95f7..800238854ba5 100644
---- a/include/linux/sched/sd_flags.h
-+++ b/include/linux/sched/sd_flags.h
-@@ -132,12 +132,9 @@ SD_FLAG(SD_SERIALIZE, SDF_SHARED_PARENT | SDF_NEEDS_GROUPS)
- /*
-  * Place busy tasks earlier in the domain
-  *
-- * SHARED_CHILD: Usually set on the SMT level. Technically could be set further
-- *               up, but currently assumed to be set from the base domain
-- *               upwards (see update_top_cache_domain()).
-  * NEEDS_GROUPS: Load balancing flag.
-  */
--SD_FLAG(SD_ASYM_PACKING, SDF_SHARED_CHILD | SDF_NEEDS_GROUPS)
-+SD_FLAG(SD_ASYM_PACKING,  SDF_NEEDS_GROUPS)
- 
- /*
-  * Prefer to place tasks in a sibling domain
--- 
-2.40.1
-
-
-From d1dd6e603f520186d9244a7701f90c5200f2528b Mon Sep 17 00:00:00 2001
-From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Mon, 21 Nov 2022 15:34:39 -0800
-Subject: [PATCH 09/34] x86/sched: Remove SD_ASYM_PACKING from the SMT domain
- flags
-
-There is no difference between any of the SMT siblings of a physical core.
-Do not do asym_packing load balancing at this level.
-
-Cc: Ben Segall <bsegall@google.com>
-Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc: Len Brown <len.brown@intel.com>
-Cc: Mel Gorman <mgorman@suse.de>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Tim C. Chen <tim.c.chen@intel.com>
-Cc: Valentin Schneider <vschneid@redhat.com>
-Cc: x86@kernel.org
-Cc: linux-kernel@vger.kernel.org
-Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
----
-Changes since v2:
- * None.
-
-Changes since v1:
- * Introduced this patch.
----
- arch/x86/kernel/smpboot.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/arch/x86/kernel/smpboot.c b/arch/x86/kernel/smpboot.c
-index 3f3ea0287f69..c3de98224cb4 100644
---- a/arch/x86/kernel/smpboot.c
-+++ b/arch/x86/kernel/smpboot.c
-@@ -545,7 +545,7 @@ static int x86_core_flags(void)
- #ifdef CONFIG_SCHED_SMT
- static int x86_smt_flags(void)
- {
--	return cpu_smt_flags() | x86_sched_itmt_flags();
-+	return cpu_smt_flags();
- }
- #endif
- #ifdef CONFIG_SCHED_CLUSTER
--- 
-2.40.1
-
-
-From 2aed6a66f4b60d143d56c175dc687f775e2335ea Mon Sep 17 00:00:00 2001
-From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Mon, 21 Nov 2022 15:36:20 -0800
-Subject: [PATCH 10/34] x86/sched/itmt: Give all SMT siblings of a core the
- same priority
-
-X86 does not have the SD_ASYM_PACKING flag in the SMT domain. The scheduler
-knows how to handle SMT and non-SMT cores of different priority. There is
-no reason for SMT siblings of a core to have different priorities.
-
-Cc: Ben Segall <bsegall@google.com>
-Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc: Len Brown <len.brown@intel.com>
-Cc: Mel Gorman <mgorman@suse.de>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Tim C. Chen <tim.c.chen@intel.com>
-Cc: Valentin Schneider <vschneid@redhat.com>
-Cc: x86@kernel.org
-Cc: linux-kernel@vger.kernel.org
-Reviewed-by: Len Brown <len.brown@intel.com>
-Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
----
-Changes since v2:
- * None.
-
-Changes since v1:
- * Reworded commit message for clarity.
----
- arch/x86/kernel/itmt.c | 23 +++++------------------
- 1 file changed, 5 insertions(+), 18 deletions(-)
-
-diff --git a/arch/x86/kernel/itmt.c b/arch/x86/kernel/itmt.c
-index 9ff480e94511..6510883c5e81 100644
---- a/arch/x86/kernel/itmt.c
-+++ b/arch/x86/kernel/itmt.c
-@@ -174,32 +174,19 @@ int arch_asym_cpu_priority(int cpu)
- 
- /**
-  * sched_set_itmt_core_prio() - Set CPU priority based on ITMT
-- * @prio:	Priority of cpu core
-- * @core_cpu:	The cpu number associated with the core
-+ * @prio:	Priority of @cpu
-+ * @cpu:	The CPU number
-  *
-  * The pstate driver will find out the max boost frequency
-  * and call this function to set a priority proportional
-- * to the max boost frequency. CPU with higher boost
-+ * to the max boost frequency. CPUs with higher boost
-  * frequency will receive higher priority.
-  *
-  * No need to rebuild sched domain after updating
-  * the CPU priorities. The sched domains have no
-  * dependency on CPU priorities.
-  */
--void sched_set_itmt_core_prio(int prio, int core_cpu)
-+void sched_set_itmt_core_prio(int prio, int cpu)
- {
--	int cpu, i = 1;
--
--	for_each_cpu(cpu, topology_sibling_cpumask(core_cpu)) {
--		int smt_prio;
--
--		/*
--		 * Ensure that the siblings are moved to the end
--		 * of the priority chain and only used when
--		 * all other high priority cpus are out of capacity.
--		 */
--		smt_prio = prio * smp_num_siblings / (i * i);
--		per_cpu(sched_core_priority, cpu) = smt_prio;
--		i++;
--	}
-+	per_cpu(sched_core_priority, cpu) = prio;
- }
--- 
-2.40.1
-
-
-From 63cae0dc1aec457f4ad7a4861900584a8e512cdf Mon Sep 17 00:00:00 2001
+From bb9d1637b5a8a4d57accee177b2fbb97cbc17d6a Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 5 Oct 2020 04:41:59 -0700
-Subject: [PATCH 11/34] sched/task_struct: Introduce IPC classes of tasks
+Subject: [PATCH 01/24] sched/task_struct: Introduce IPC classes of tasks
 
 On hybrid processors, the architecture differences between the types of
 CPUs lead to different instructions-per-cycle (IPC) on each type of CPU.
@@ -986,10 +109,10 @@ index 2028ed4d50f5..a1e29c8fe963 100644
 2.40.1
 
 
-From b94bdd72015e617e9622f94166d4bf927ffbe2f3 Mon Sep 17 00:00:00 2001
+From 409e27aeda953f1d3bdae1b43487095f7e4e26eb Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 04:14:11 -0700
-Subject: [PATCH 12/34] sched: Add interfaces for IPC classes
+Subject: [PATCH 02/24] sched: Add interfaces for IPC classes
 
 Add the interfaces that architectures shall implement to convey the data
 to support IPC classes.
@@ -1063,10 +186,10 @@ index 816df6cc444e..5b084d3c9ad1 100644
 +
  #endif /* _LINUX_SCHED_TOPOLOGY_H */
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 5f18460f62f0..ab2743b21449 100644
+index 4634285663c5..4b8a3b94968e 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
-@@ -2512,6 +2512,72 @@ void arch_scale_freq_tick(void)
+@@ -2528,6 +2528,72 @@ void arch_scale_freq_tick(void)
  }
  #endif
  
@@ -1163,10 +286,10 @@ index 8739c2a5a54e..60e03d15f58c 100644
 2.40.1
 
 
-From 00766a9298f050d0d4e04818ed5619799b421db7 Mon Sep 17 00:00:00 2001
+From 0f2d2999569601625a96ea1391f420034ab442f4 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 30 Dec 2021 17:27:52 -0800
-Subject: [PATCH 13/34] sched/core: Initialize the IPC class of a new task
+Subject: [PATCH 03/24] sched/core: Initialize the IPC class of a new task
 
 New tasks shall start life as unclassified. They will be classified by
 hardware when they run.
@@ -1216,10 +339,10 @@ index b23dcbeacdf3..7f2de817982a 100644
 2.40.1
 
 
-From f976cb37a26d91c38f246a1e937733322a45c26e Mon Sep 17 00:00:00 2001
+From 21b46ec27fb9313bbd2def967604b3d325dae65f Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 23 May 2022 16:58:08 -0700
-Subject: [PATCH 14/34] sched/core: Add user_tick as argument to
+Subject: [PATCH 04/24] sched/core: Add user_tick as argument to
  scheduler_tick()
 
 Differentiate between user and kernel ticks so that the scheduler updates
@@ -1298,10 +421,10 @@ index 717fcb9fb14a..b444b6f5f585 100644
 2.40.1
 
 
-From a209094b23800bff5eb0db843f39c93ac7ab8402 Mon Sep 17 00:00:00 2001
+From 69879f07a92ff04b35fd5da1187fc04e2b54fca2 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 19:31:42 -0700
-Subject: [PATCH 15/34] sched/core: Update the IPC class of the current task
+Subject: [PATCH 05/24] sched/core: Update the IPC class of the current task
 
 When supported, hardware monitors the instruction stream to classify the
 current task. Hence, at userspace tick, we are ready to read the most
@@ -1353,10 +476,10 @@ index f3b331f69171..ae0548bc81f4 100644
 2.40.1
 
 
-From 0b731e8c35b627519566c23e9c4371dc786172e5 Mon Sep 17 00:00:00 2001
+From 07e5897766ee9fc5d35becd33e9a1e5d203bbc79 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 6 Jun 2022 18:02:04 -0700
-Subject: [PATCH 16/34] sched/fair: Collect load-balancing stats for IPC
+Subject: [PATCH 06/24] sched/fair: Collect load-balancing stats for IPC
  classes
 
 When selecting a busiest scheduling group, the IPC class of the current
@@ -1406,7 +529,7 @@ Changes since v1:
  1 file changed, 61 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 5db215447854..b91c8b912cb1 100644
+index af6c4eb7e763..e918052a1016 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -8799,6 +8799,11 @@ struct sg_lb_stats {
@@ -1479,9 +602,9 @@ index 5db215447854..b91c8b912cb1 100644
 +#endif /* CONFIG_IPC_CLASSES */
 +
  /**
-  * asym_smt_can_pull_tasks - Check whether the load balancing CPU can pull tasks
-  * @dst_cpu:	Destination CPU of the load balancing
-@@ -9234,6 +9292,7 @@ static inline void update_sg_lb_stats(struct lb_env *env,
+  * sched_use_asym_prio - Check whether asym_packing priority must be used
+  * @sd:		The scheduling domain of the load balancing
+@@ -9236,6 +9294,7 @@ static inline void update_sg_lb_stats(struct lb_env *env,
  	int i, nr_running, local_group;
  
  	memset(sgs, 0, sizeof(*sgs));
@@ -1489,7 +612,7 @@ index 5db215447854..b91c8b912cb1 100644
  
  	local_group = group == sds->local;
  
-@@ -9283,6 +9342,8 @@ static inline void update_sg_lb_stats(struct lb_env *env,
+@@ -9285,6 +9344,8 @@ static inline void update_sg_lb_stats(struct lb_env *env,
  			if (sgs->group_misfit_task_load < load)
  				sgs->group_misfit_task_load = load;
  		}
@@ -1502,10 +625,10 @@ index 5db215447854..b91c8b912cb1 100644
 2.40.1
 
 
-From 38b43ece44d63cba750a09d951e836cef85a4389 Mon Sep 17 00:00:00 2001
+From b2ae5fa5b32f3eb0e4fbcf347496027a60c22e0f Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 6 Sep 2022 13:32:52 -0700
-Subject: [PATCH 17/34] sched/fair: Compute IPC class scores for load balancing
+Subject: [PATCH 07/24] sched/fair: Compute IPC class scores for load balancing
 
 Compute the joint total (both current and prospective) IPC class score of
 a scheduling group and the local scheduling group.
@@ -1559,7 +682,7 @@ Changes since v1:
  1 file changed, 68 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index b91c8b912cb1..a35daccebbca 100644
+index e918052a1016..e60ec3bbc8a8 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -8803,6 +8803,8 @@ struct sg_lb_stats {
@@ -1648,7 +771,7 @@ index b91c8b912cb1..a35daccebbca 100644
  #endif /* CONFIG_IPC_CLASSES */
  
  /**
-@@ -9359,6 +9424,9 @@ static inline void update_sg_lb_stats(struct lb_env *env,
+@@ -9361,6 +9426,9 @@ static inline void update_sg_lb_stats(struct lb_env *env,
  
  	sgs->group_type = group_classify(env->sd->imbalance_pct, group, sgs);
  
@@ -1662,10 +785,10 @@ index b91c8b912cb1..a35daccebbca 100644
 2.40.1
 
 
-From e9932449246bd3f778aabc9dda2a1e14b0346254 Mon Sep 17 00:00:00 2001
+From 5c5a17115b90f9fbe7de05a4af8d4186380db871 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 25 Jul 2022 13:36:02 -0700
-Subject: [PATCH 18/34] sched/fair: Use IPCC stats to break ties between
+Subject: [PATCH 08/24] sched/fair: Use IPCC stats to break ties between
  asym_packing sched groups
 
 As it iterates, update_sd_pick_busiest() keeps on selecting as busiest
@@ -1711,7 +834,7 @@ Changes since v1:
  1 file changed, 72 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index a35daccebbca..cdbb2c8cd49f 100644
+index e60ec3bbc8a8..e6e220dde2d6 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -9247,6 +9247,60 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
@@ -1790,7 +913,7 @@ index a35daccebbca..cdbb2c8cd49f 100644
  #endif /* CONFIG_IPC_CLASSES */
  
  /**
-@@ -9498,6 +9560,16 @@ static bool update_sd_pick_busiest(struct lb_env *env,
+@@ -9500,6 +9562,16 @@ static bool update_sd_pick_busiest(struct lb_env *env,
  		/* Prefer to move from lowest priority CPU's work */
  		if (sched_asym_prefer(sg->asym_prefer_cpu, sds->busiest->asym_prefer_cpu))
  			return false;
@@ -1811,10 +934,10 @@ index a35daccebbca..cdbb2c8cd49f 100644
 2.40.1
 
 
-From 1af75a83660fc58ba4935128bdfaba39ffa32cbb Mon Sep 17 00:00:00 2001
+From 850c1cc64b5d88bf14fcc2fd84c30b4f6e5cb49a Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Fri, 20 Jan 2023 15:08:37 -0800
-Subject: [PATCH 19/34] sched/fair: Use IPCC stats to break ties between
+Subject: [PATCH 09/24] sched/fair: Use IPCC stats to break ties between
  fully_busy SMT groups
 
 IPCC statistics are used during idle load balancing. After balancing one
@@ -1857,7 +980,7 @@ Changes since v1:
  1 file changed, 20 insertions(+), 3 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index cdbb2c8cd49f..4b9da56dc1a7 100644
+index e6e220dde2d6..da7f9f547e24 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -9317,6 +9317,12 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
@@ -1873,7 +996,7 @@ index cdbb2c8cd49f..4b9da56dc1a7 100644
  static bool sched_asym_ipcc_pick(struct sched_group *a,
  				 struct sched_group *b,
  				 struct sg_lb_stats *a_stats,
-@@ -9600,10 +9606,21 @@ static bool update_sd_pick_busiest(struct lb_env *env,
+@@ -9602,10 +9608,21 @@ static bool update_sd_pick_busiest(struct lb_env *env,
  		if (sgs->avg_load == busiest->avg_load) {
  			/*
  			 * SMT sched groups need more help than non-SMT groups.
@@ -1902,10 +1025,10 @@ index cdbb2c8cd49f..4b9da56dc1a7 100644
 2.40.1
 
 
-From 05c62977fdf8ceafa2c727f563de94bcac052fb7 Mon Sep 17 00:00:00 2001
+From c0c6a40cbfa3b129a1738316a8fbe8f9de16f699 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 10 Aug 2022 14:43:11 -0700
-Subject: [PATCH 20/34] sched/fair: Use IPCC scores to select a busiest
+Subject: [PATCH 10/24] sched/fair: Use IPCC scores to select a busiest
  runqueue
 
 For two runqueues of equal priority and equal number of running of tasks,
@@ -1950,7 +1073,7 @@ Changes since v1:
  1 file changed, 64 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 4b9da56dc1a7..156b18f29981 100644
+index da7f9f547e24..e8d92e9bc8f6 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -9301,6 +9301,37 @@ static bool sched_asym_ipcc_pick(struct sched_group *a,
@@ -2003,7 +1126,7 @@ index 4b9da56dc1a7..156b18f29981 100644
  #endif /* CONFIG_IPC_CLASSES */
  
  /**
-@@ -10501,6 +10537,7 @@ static struct rq *find_busiest_queue(struct lb_env *env,
+@@ -10510,6 +10546,7 @@ static struct rq *find_busiest_queue(struct lb_env *env,
  {
  	struct rq *busiest = NULL, *rq;
  	unsigned long busiest_util = 0, busiest_load = 0, busiest_capacity = 1;
@@ -2011,7 +1134,7 @@ index 4b9da56dc1a7..156b18f29981 100644
  	unsigned int busiest_nr = 0;
  	int i;
  
-@@ -10617,8 +10654,35 @@ static struct rq *find_busiest_queue(struct lb_env *env,
+@@ -10624,8 +10661,35 @@ static struct rq *find_busiest_queue(struct lb_env *env,
  
  		case migrate_task:
  			if (busiest_nr < nr_running) {
@@ -2051,10 +1174,10 @@ index 4b9da56dc1a7..156b18f29981 100644
 2.40.1
 
 
-From d226a847372a1915defd28761c73a886f790cee1 Mon Sep 17 00:00:00 2001
+From 4354931c63d28853117231a4e03fc538786ea39f Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 16 Dec 2021 17:40:00 -0800
-Subject: [PATCH 21/34] thermal: intel: hfi: Introduce Intel Thread Director
+Subject: [PATCH 11/24] thermal: intel: hfi: Introduce Intel Thread Director
  classes
 
 On Intel hybrid parts, each type of CPU has specific performance and
@@ -2184,10 +1307,10 @@ index 6e604bda2b93..2527ae3836c7 100644
 2.40.1
 
 
-From 4f8dee98dd423ed9227a1e2f28ed6a354ba304dd Mon Sep 17 00:00:00 2001
+From ea1f609d8905c0b4f2c1ff35a684416d8be6b31b Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 23 Sep 2020 14:57:59 -0700
-Subject: [PATCH 22/34] x86/cpufeatures: Add the Intel Thread Director feature
+Subject: [PATCH 12/24] x86/cpufeatures: Add the Intel Thread Director feature
  definitions
 
 Intel Thread Director (ITD) provides hardware resources to classify
@@ -2283,10 +1406,10 @@ index c881bcafba7d..f6f8a3cd4f2c 100644
 2.40.1
 
 
-From 3d72d889aa775f9d4922ebe1e8b9b69183c8b672 Mon Sep 17 00:00:00 2001
+From dcba22fd33052f9d806009138640b111047d0886 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 14 Nov 2022 08:23:41 -0800
-Subject: [PATCH 23/34] thermal: intel: hfi: Store per-CPU IPCC scores
+Subject: [PATCH 13/24] thermal: intel: hfi: Store per-CPU IPCC scores
 
 The scheduler reads the IPCC scores when balancing load. These reads can
 be quite frequent. Hardware can also update the HFI table frequently.
@@ -2409,10 +1532,10 @@ index 2527ae3836c7..b06021828892 100644
 2.40.1
 
 
-From 969c551f101de7f86d91ad2ac5821140cff75c6b Mon Sep 17 00:00:00 2001
+From bf96e9842a7c8c782f011f5ac6a4d1b9631d34ff Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 14 Dec 2020 11:33:57 -0800
-Subject: [PATCH 24/34] thermal: intel: hfi: Update the IPC class of the
+Subject: [PATCH 14/24] thermal: intel: hfi: Update the IPC class of the
  current task
 
 Use Intel Thread Director classification to update the IPC class of a
@@ -2523,10 +1646,10 @@ index b06021828892..530dcf57e06e 100644
 2.40.1
 
 
-From 50691d2e9f0678d9fc5ad80fbe1ff7054899586a Mon Sep 17 00:00:00 2001
+From f3be7201a3c9fb22120f5e5b6ed738fab7430894 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 25 May 2022 04:41:40 -0700
-Subject: [PATCH 25/34] thermal: intel: hfi: Report the IPC class score of a
+Subject: [PATCH 15/24] thermal: intel: hfi: Report the IPC class score of a
  CPU
 
 Implement the arch_get_ipcc_score() interface of the scheduler. Use the
@@ -2620,10 +1743,10 @@ index 530dcf57e06e..fa9b4a678d92 100644
 2.40.1
 
 
-From d19db162e6fd218e4cbef58ff15af59080e956ba Mon Sep 17 00:00:00 2001
+From 2077736bed7fffd0d08d9414c2e5ee2875f508bf Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 18 Aug 2022 13:24:41 -0700
-Subject: [PATCH 26/34] thermal: intel: hfi: Define a default class for
+Subject: [PATCH 16/24] thermal: intel: hfi: Define a default class for
  unclassified tasks
 
 A task may be unclassified if it has been recently created, spend most of
@@ -2701,10 +1824,10 @@ index fa9b4a678d92..7ea6acce7107 100644
 2.40.1
 
 
-From cec913c253762765095591c0d5a0341d3fe3280d Mon Sep 17 00:00:00 2001
+From 75b0e986175f75f2927257da92800f4a498b0942 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 12 Oct 2020 16:58:58 -0700
-Subject: [PATCH 27/34] thermal: intel: hfi: Enable the Intel Thread Director
+Subject: [PATCH 17/24] thermal: intel: hfi: Enable the Intel Thread Director
 
 Enable Intel Thread Director from the CPU hotplug callback: globally from
 CPU0 and then enable the thread-classification hardware in each logical
@@ -2841,10 +1964,10 @@ index 7ea6acce7107..35d947f47550 100644
 2.40.1
 
 
-From 24d0ebdebe0329057edc21721677c78f988ae388 Mon Sep 17 00:00:00 2001
+From 5c0966960eff3863be065a12d347ab7ee58ccfaa Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Fri, 22 Jul 2022 17:17:38 -0700
-Subject: [PATCH 28/34] sched/task_struct: Add helpers for IPC classification
+Subject: [PATCH 18/24] sched/task_struct: Add helpers for IPC classification
 
 The unprocessed classification that hardware provides for a task may not
 be usable by the scheduler: the classification may change too frequently or
@@ -2912,10 +2035,10 @@ index e58dc7503864..63c2f88f0168 100644
 2.40.1
 
 
-From 641c4a365881e44a856a99e57b992750cc5d0b22 Mon Sep 17 00:00:00 2001
+From dbe9f264fc03931dbfd45aa25169c8d91c540908 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 2 Aug 2022 04:01:15 -0700
-Subject: [PATCH 29/34] sched/core: Initialize helpers of task classification
+Subject: [PATCH 19/24] sched/core: Initialize helpers of task classification
 
 Just as tasks start life unclassified, initialize the classification
 auxiliar variables.
@@ -2964,10 +2087,10 @@ index ae0548bc81f4..c2dd106fefaa 100644
 2.40.1
 
 
-From 2b62d3802bc35cfe441bae8f5a383269336536ba Mon Sep 17 00:00:00 2001
+From ed35029db962bcd327468710331a79ceb3f88024 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 03:48:37 -0700
-Subject: [PATCH 30/34] sched/fair: Introduce sched_smt_siblings_idle()
+Subject: [PATCH 20/24] sched/fair: Introduce sched_smt_siblings_idle()
 
 X86 needs to know the idle state of the SMT siblings of a CPU to improve
 the accuracy of IPCC classification. X86 implements support for IPC classes
@@ -3024,8 +2147,8 @@ Changes since v1:
  * Dropped this patch.
 ---
  include/linux/sched.h |  2 ++
- kernel/sched/fair.c   | 21 +++++++++++++++------
- 2 files changed, 17 insertions(+), 6 deletions(-)
+ kernel/sched/fair.c   | 14 +++++++++++---
+ 2 files changed, 13 insertions(+), 3 deletions(-)
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
 index 63c2f88f0168..b049584f4c1a 100644
@@ -3039,7 +2162,7 @@ index 63c2f88f0168..b049584f4c1a 100644
 +
  #endif
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 156b18f29981..b4ed73b807a9 100644
+index e8d92e9bc8f6..7f6839da2b41 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -1049,7 +1049,14 @@ update_stats_curr_start(struct cfs_rq *cfs_rq, struct sched_entity *se)
@@ -3067,52 +2190,24 @@ index 156b18f29981..b4ed73b807a9 100644
  		idle_core = cpu;
  
  	return idle_core;
-@@ -9420,7 +9427,8 @@ sched_asym(struct lb_env *env, struct sd_lb_stats *sds,  struct sg_lb_stats *sgs
- 	 * If the destination CPU has SMT siblings, env->idle != CPU_NOT_IDLE
- 	 * is not sufficient. We need to make sure the whole core is idle.
- 	 */
--	if (sds->local->flags & SD_SHARE_CPUCAPACITY && !is_core_idle(env->dst_cpu))
-+	if (sds->local->flags & SD_SHARE_CPUCAPACITY &&
-+	    !sched_smt_siblings_idle(env->dst_cpu))
- 		return false;
+@@ -9386,7 +9393,8 @@ static bool sched_use_asym_prio(struct sched_domain *sd, int cpu)
+ 	if (!sched_smt_active())
+ 		return true;
  
- 	/* Only do SMT checks if either local or candidate have SMT siblings. */
-@@ -10599,7 +10607,8 @@ static struct rq *find_busiest_queue(struct lb_env *env,
- 		    sched_asym_prefer(i, env->dst_cpu) &&
- 		    nr_running == 1) {
- 			if (env->sd->flags & SD_SHARE_CPUCAPACITY ||
--			    (!(env->sd->flags & SD_SHARE_CPUCAPACITY) && is_core_idle(i)))
-+			    (!(env->sd->flags & SD_SHARE_CPUCAPACITY) &&
-+			     sched_smt_siblings_idle(i)))
- 				continue;
- 		}
- 
-@@ -10728,7 +10737,7 @@ asym_active_balance(struct lb_env *env)
- 		 * busy sibling.
- 		 */
- 		return sched_asym_prefer(env->dst_cpu, env->src_cpu) ||
--		       !is_core_idle(env->src_cpu);
-+		       !sched_smt_siblings_idle(env->src_cpu);
- 	}
- 
- 	return false;
-@@ -11475,7 +11484,7 @@ static void nohz_balancer_kick(struct rq *rq)
- 				 */
- 				if (sd->flags & SD_SHARE_CPUCAPACITY ||
- 				    (!(sd->flags & SD_SHARE_CPUCAPACITY) &&
--				     is_core_idle(i))) {
-+				     sched_smt_siblings_idle(i))) {
- 					flags = NOHZ_STATS_KICK | NOHZ_BALANCE_KICK;
- 					goto unlock;
- 				}
+-	return sd->flags & SD_SHARE_CPUCAPACITY || is_core_idle(cpu);
++	return sd->flags & SD_SHARE_CPUCAPACITY ||
++		sched_smt_siblings_idle(cpu);
+ #else
+ 	return true;
+ #endif
 -- 
 2.40.1
 
 
-From 07ae3c33378694e7effd4429569600a5510a5dcc Mon Sep 17 00:00:00 2001
+From 6be063be959a27fc7e591b9e3a7609750dfd389e Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 21 Jun 2022 16:52:44 -0700
-Subject: [PATCH 31/34] thermal: intel: hfi: Implement model-specific checks
+Subject: [PATCH 21/24] thermal: intel: hfi: Implement model-specific checks
  for task classification
 
 In Alder Lake and Raptor Lake, the result of thread classification is more
@@ -3246,10 +2341,10 @@ index 35d947f47550..fdb53e4cabc1 100644
 2.40.1
 
 
-From 5c92feaa21cf380e144b71cf7b9db1b37ab70a2b Mon Sep 17 00:00:00 2001
+From dbdd2812084538f6e6c11b897c1f368e456db5a7 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 22 Sep 2020 13:14:07 -0700
-Subject: [PATCH 32/34] x86/cpufeatures: Add feature bit for HRESET
+Subject: [PATCH 22/24] x86/cpufeatures: Add feature bit for HRESET
 
 The HRESET instruction prevents the classification of the current task
 from influencing the classification of the next task when running serially
@@ -3333,10 +2428,10 @@ index fc01f81f6e2a..b8ad312d3694 100644
 2.40.1
 
 
-From 2d20c3ec109166c481cb0333361b927b8514d1e3 Mon Sep 17 00:00:00 2001
+From 182d23f4b3a004cc7348fbba91718040b68d9537 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 14 Oct 2020 09:33:43 -0700
-Subject: [PATCH 33/34] x86/hreset: Configure history reset
+Subject: [PATCH 23/24] x86/hreset: Configure history reset
 
 Configure the MSR that controls the behavior of HRESET on each logical
 processor.
@@ -3417,10 +2512,10 @@ index c34bdba57993..98b48cf80ec2 100644
 2.40.1
 
 
-From 2b15a13378e881425352144a39ddf965ac54985f Mon Sep 17 00:00:00 2001
+From 9f4384b1d876cecf1b1327fa3ecdbf093914af1d Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 23 May 2022 09:36:27 -0700
-Subject: [PATCH 34/34] x86/process: Reset hardware history in context switch
+Subject: [PATCH 24/24] x86/process: Reset hardware history in context switch
 
 Reset the classification history of the current task when switching to the
 next task. Hardware will start the classification of the next task from
