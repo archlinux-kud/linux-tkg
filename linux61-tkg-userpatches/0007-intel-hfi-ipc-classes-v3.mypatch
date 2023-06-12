@@ -1,4 +1,4 @@
-From bb9d1637b5a8a4d57accee177b2fbb97cbc17d6a Mon Sep 17 00:00:00 2001
+From 6422db45c18ddd96fa4ea7e0a8bd7ab0bf6faf6b Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 5 Oct 2020 04:41:59 -0700
 Subject: [PATCH 01/24] sched/task_struct: Introduce IPC classes of tasks
@@ -55,7 +55,7 @@ Changes since v1:
  2 files changed, 22 insertions(+)
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index ffb6eb55cd13..ca0c32bf796f 100644
+index 160343f676cf..d996dfa50f41 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
 @@ -127,6 +127,8 @@ struct task_group;
@@ -67,7 +67,7 @@ index ffb6eb55cd13..ca0c32bf796f 100644
  #define task_is_running(task)		(READ_ONCE((task)->__state) == TASK_RUNNING)
  
  #define task_is_traced(task)		((READ_ONCE(task->jobctl) & JOBCTL_TRACED) != 0)
-@@ -1528,6 +1530,14 @@ struct task_struct {
+@@ -1538,6 +1540,14 @@ struct task_struct {
  	union rv_task_monitor		rv[RV_PER_TASK_MONITORS];
  #endif
  
@@ -83,7 +83,7 @@ index ffb6eb55cd13..ca0c32bf796f 100644
  	 * New fields for task_struct should be added above here, so that
  	 * they are included in the randomized portion of task_struct.
 diff --git a/init/Kconfig b/init/Kconfig
-index 2028ed4d50f5..a1e29c8fe963 100644
+index 0898fd9728a1..3afcac004465 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
 @@ -865,6 +865,18 @@ config UCLAMP_BUCKETS_COUNT
@@ -106,10 +106,10 @@ index 2028ed4d50f5..a1e29c8fe963 100644
  
  #
 -- 
-2.40.1
+2.41.0
 
 
-From 409e27aeda953f1d3bdae1b43487095f7e4e26eb Mon Sep 17 00:00:00 2001
+From ea169310532160f886d07faf6629334b6e186329 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 04:14:11 -0700
 Subject: [PATCH 02/24] sched: Add interfaces for IPC classes
@@ -283,10 +283,10 @@ index 8739c2a5a54e..60e03d15f58c 100644
  {
  	struct sched_domain_shared *sds = NULL;
 -- 
-2.40.1
+2.41.0
 
 
-From 0f2d2999569601625a96ea1391f420034ab442f4 Mon Sep 17 00:00:00 2001
+From 7bc9bcf28a187661ea54c5e5a1575075d6bb42a7 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 30 Dec 2021 17:27:52 -0800
 Subject: [PATCH 03/24] sched/core: Initialize the IPC class of a new task
@@ -322,24 +322,24 @@ Changes since v1:
  1 file changed, 3 insertions(+)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index b23dcbeacdf3..7f2de817982a 100644
+index 83e301bfa751..14e4c0aa6362 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -4380,6 +4380,9 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
+@@ -4431,6 +4431,9 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
  	p->se.prev_sum_exec_runtime	= 0;
  	p->se.nr_migrations		= 0;
  	p->se.vruntime			= 0;
 +#ifdef CONFIG_IPC_CLASSES
 +	p->ipcc				= IPC_CLASS_UNCLASSIFIED;
 +#endif
- 	INIT_LIST_HEAD(&p->se.group_node);
- 
- #ifdef CONFIG_FAIR_GROUP_SCHED
+ #ifdef CONFIG_SCHED_BORE
+ 	__sched_fork_bore(p);
+ #endif // CONFIG_SCHED_BORE
 -- 
-2.40.1
+2.41.0
 
 
-From 21b46ec27fb9313bbd2def967604b3d325dae65f Mon Sep 17 00:00:00 2001
+From 641f8a4dba0d2c30efa55c700fcd9e36607280d7 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 23 May 2022 16:58:08 -0700
 Subject: [PATCH 04/24] sched/core: Add user_tick as argument to
@@ -379,7 +379,7 @@ Changes since v1:
  3 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index ca0c32bf796f..e58dc7503864 100644
+index d996dfa50f41..74b3605a9980 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
 @@ -293,7 +293,7 @@ enum {
@@ -392,10 +392,10 @@ index ca0c32bf796f..e58dc7503864 100644
  #define	MAX_SCHEDULE_TIMEOUT		LONG_MAX
  
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 7f2de817982a..f3b331f69171 100644
+index 14e4c0aa6362..7440b813078d 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -5495,7 +5495,7 @@ static inline u64 cpu_resched_latency(struct rq *rq) { return 0; }
+@@ -5552,7 +5552,7 @@ static inline u64 cpu_resched_latency(struct rq *rq) { return 0; }
   * This function gets called by the timer code, with HZ frequency.
   * We call it with interrupts disabled.
   */
@@ -418,10 +418,10 @@ index 717fcb9fb14a..b444b6f5f585 100644
  		run_posix_cpu_timers();
  }
 -- 
-2.40.1
+2.41.0
 
 
-From 69879f07a92ff04b35fd5da1187fc04e2b54fca2 Mon Sep 17 00:00:00 2001
+From f73a0dac5b820089e470effe2b205cadcad6db9c Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 19:31:42 -0700
 Subject: [PATCH 05/24] sched/core: Update the IPC class of the current task
@@ -459,10 +459,10 @@ Changes since v1:
  1 file changed, 3 insertions(+)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index f3b331f69171..ae0548bc81f4 100644
+index 7440b813078d..8aa51444f145 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -5507,6 +5507,9 @@ void scheduler_tick(bool user_tick)
+@@ -5564,6 +5564,9 @@ void scheduler_tick(bool user_tick)
  	if (housekeeping_cpu(cpu, HK_TYPE_TICK))
  		arch_scale_freq_tick();
  
@@ -473,10 +473,10 @@ index f3b331f69171..ae0548bc81f4 100644
  
  	rq_lock(rq, &rf);
 -- 
-2.40.1
+2.41.0
 
 
-From 07e5897766ee9fc5d35becd33e9a1e5d203bbc79 Mon Sep 17 00:00:00 2001
+From 6a9ff402ec63c48ea48a04ca10e4cf1b82243c93 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 6 Jun 2022 18:02:04 -0700
 Subject: [PATCH 06/24] sched/fair: Collect load-balancing stats for IPC
@@ -529,10 +529,10 @@ Changes since v1:
  1 file changed, 61 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index af6c4eb7e763..e918052a1016 100644
+index ffff740b5af3..33c33c3eed12 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -8799,6 +8799,11 @@ struct sg_lb_stats {
+@@ -8935,6 +8935,11 @@ struct sg_lb_stats {
  	unsigned int nr_numa_running;
  	unsigned int nr_preferred_running;
  #endif
@@ -544,7 +544,7 @@ index af6c4eb7e763..e918052a1016 100644
  };
  
  /*
-@@ -9142,6 +9147,59 @@ group_type group_classify(unsigned int imbalance_pct,
+@@ -9278,6 +9283,59 @@ group_type group_classify(unsigned int imbalance_pct,
  	return group_has_spare;
  }
  
@@ -604,7 +604,7 @@ index af6c4eb7e763..e918052a1016 100644
  /**
   * sched_use_asym_prio - Check whether asym_packing priority must be used
   * @sd:		The scheduling domain of the load balancing
-@@ -9236,6 +9294,7 @@ static inline void update_sg_lb_stats(struct lb_env *env,
+@@ -9372,6 +9430,7 @@ static inline void update_sg_lb_stats(struct lb_env *env,
  	int i, nr_running, local_group;
  
  	memset(sgs, 0, sizeof(*sgs));
@@ -612,7 +612,7 @@ index af6c4eb7e763..e918052a1016 100644
  
  	local_group = group == sds->local;
  
-@@ -9285,6 +9344,8 @@ static inline void update_sg_lb_stats(struct lb_env *env,
+@@ -9421,6 +9480,8 @@ static inline void update_sg_lb_stats(struct lb_env *env,
  			if (sgs->group_misfit_task_load < load)
  				sgs->group_misfit_task_load = load;
  		}
@@ -622,10 +622,10 @@ index af6c4eb7e763..e918052a1016 100644
  
  	sgs->group_capacity = group->sgc->capacity;
 -- 
-2.40.1
+2.41.0
 
 
-From b2ae5fa5b32f3eb0e4fbcf347496027a60c22e0f Mon Sep 17 00:00:00 2001
+From 4237fca0ac2e1173b91b838837acaf0715e364da Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 6 Sep 2022 13:32:52 -0700
 Subject: [PATCH 07/24] sched/fair: Compute IPC class scores for load balancing
@@ -682,10 +682,10 @@ Changes since v1:
  1 file changed, 68 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index e918052a1016..e60ec3bbc8a8 100644
+index 33c33c3eed12..e56f09ccde43 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -8803,6 +8803,8 @@ struct sg_lb_stats {
+@@ -8939,6 +8939,8 @@ struct sg_lb_stats {
  	unsigned long min_score; /* Min(score(rq->curr->ipcc)) */
  	unsigned short min_ipcc; /* Class of the task with the minimum IPCC score in the rq */
  	unsigned long sum_score; /* Sum(score(rq->curr->ipcc)) */
@@ -694,7 +694,7 @@ index e918052a1016..e60ec3bbc8a8 100644
  #endif
  };
  
-@@ -9189,6 +9191,62 @@ static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
+@@ -9325,6 +9327,62 @@ static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
  	}
  }
  
@@ -757,7 +757,7 @@ index e918052a1016..e60ec3bbc8a8 100644
  #else /* CONFIG_IPC_CLASSES */
  static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
  				    struct rq *rq)
-@@ -9198,6 +9256,13 @@ static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
+@@ -9334,6 +9392,13 @@ static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
  static void init_rq_ipcc_stats(struct sg_lb_stats *sgs)
  {
  }
@@ -771,7 +771,7 @@ index e918052a1016..e60ec3bbc8a8 100644
  #endif /* CONFIG_IPC_CLASSES */
  
  /**
-@@ -9361,6 +9426,9 @@ static inline void update_sg_lb_stats(struct lb_env *env,
+@@ -9497,6 +9562,9 @@ static inline void update_sg_lb_stats(struct lb_env *env,
  
  	sgs->group_type = group_classify(env->sd->imbalance_pct, group, sgs);
  
@@ -782,10 +782,10 @@ index e918052a1016..e60ec3bbc8a8 100644
  	if (sgs->group_type == group_overloaded)
  		sgs->avg_load = (sgs->group_load * SCHED_CAPACITY_SCALE) /
 -- 
-2.40.1
+2.41.0
 
 
-From 5c5a17115b90f9fbe7de05a4af8d4186380db871 Mon Sep 17 00:00:00 2001
+From 905211354a6d91a72863b76b6c30962b90f9fab0 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 25 Jul 2022 13:36:02 -0700
 Subject: [PATCH 08/24] sched/fair: Use IPCC stats to break ties between
@@ -834,10 +834,10 @@ Changes since v1:
  1 file changed, 72 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index e60ec3bbc8a8..e6e220dde2d6 100644
+index e56f09ccde43..7c24a7bbb386 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -9247,6 +9247,60 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
+@@ -9383,6 +9383,60 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
  	sgs->ipcc_score_before = before;
  }
  
@@ -898,7 +898,7 @@ index e60ec3bbc8a8..e6e220dde2d6 100644
  #else /* CONFIG_IPC_CLASSES */
  static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
  				    struct rq *rq)
-@@ -9263,6 +9317,14 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
+@@ -9399,6 +9453,14 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
  {
  }
  
@@ -913,7 +913,7 @@ index e60ec3bbc8a8..e6e220dde2d6 100644
  #endif /* CONFIG_IPC_CLASSES */
  
  /**
-@@ -9500,6 +9562,16 @@ static bool update_sd_pick_busiest(struct lb_env *env,
+@@ -9636,6 +9698,16 @@ static bool update_sd_pick_busiest(struct lb_env *env,
  		/* Prefer to move from lowest priority CPU's work */
  		if (sched_asym_prefer(sg->asym_prefer_cpu, sds->busiest->asym_prefer_cpu))
  			return false;
@@ -931,10 +931,10 @@ index e60ec3bbc8a8..e6e220dde2d6 100644
  
  	case group_misfit_task:
 -- 
-2.40.1
+2.41.0
 
 
-From 850c1cc64b5d88bf14fcc2fd84c30b4f6e5cb49a Mon Sep 17 00:00:00 2001
+From 83207db15dfd571b30c78a42e04051cdafcc4c4e Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Fri, 20 Jan 2023 15:08:37 -0800
 Subject: [PATCH 09/24] sched/fair: Use IPCC stats to break ties between
@@ -980,10 +980,10 @@ Changes since v1:
  1 file changed, 20 insertions(+), 3 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index e6e220dde2d6..da7f9f547e24 100644
+index 7c24a7bbb386..9ab302800276 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -9317,6 +9317,12 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
+@@ -9453,6 +9453,12 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
  {
  }
  
@@ -996,7 +996,7 @@ index e6e220dde2d6..da7f9f547e24 100644
  static bool sched_asym_ipcc_pick(struct sched_group *a,
  				 struct sched_group *b,
  				 struct sg_lb_stats *a_stats,
-@@ -9602,10 +9608,21 @@ static bool update_sd_pick_busiest(struct lb_env *env,
+@@ -9738,10 +9744,21 @@ static bool update_sd_pick_busiest(struct lb_env *env,
  		if (sgs->avg_load == busiest->avg_load) {
  			/*
  			 * SMT sched groups need more help than non-SMT groups.
@@ -1022,10 +1022,10 @@ index e6e220dde2d6..da7f9f547e24 100644
  
  		break;
 -- 
-2.40.1
+2.41.0
 
 
-From c0c6a40cbfa3b129a1738316a8fbe8f9de16f699 Mon Sep 17 00:00:00 2001
+From dd95ee5b47c408c347050b52d18221739f96e4fc Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 10 Aug 2022 14:43:11 -0700
 Subject: [PATCH 10/24] sched/fair: Use IPCC scores to select a busiest
@@ -1073,10 +1073,10 @@ Changes since v1:
  1 file changed, 64 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index da7f9f547e24..e8d92e9bc8f6 100644
+index 9ab302800276..963acf946677 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -9301,6 +9301,37 @@ static bool sched_asym_ipcc_pick(struct sched_group *a,
+@@ -9437,6 +9437,37 @@ static bool sched_asym_ipcc_pick(struct sched_group *a,
  	return sched_asym_ipcc_prefer(a_stats, b_stats);
  }
  
@@ -1114,7 +1114,7 @@ index da7f9f547e24..e8d92e9bc8f6 100644
  #else /* CONFIG_IPC_CLASSES */
  static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
  				    struct rq *rq)
-@@ -9331,6 +9362,11 @@ static bool sched_asym_ipcc_pick(struct sched_group *a,
+@@ -9467,6 +9498,11 @@ static bool sched_asym_ipcc_pick(struct sched_group *a,
  	return false;
  }
  
@@ -1126,7 +1126,7 @@ index da7f9f547e24..e8d92e9bc8f6 100644
  #endif /* CONFIG_IPC_CLASSES */
  
  /**
-@@ -10510,6 +10546,7 @@ static struct rq *find_busiest_queue(struct lb_env *env,
+@@ -10646,6 +10682,7 @@ static struct rq *find_busiest_queue(struct lb_env *env,
  {
  	struct rq *busiest = NULL, *rq;
  	unsigned long busiest_util = 0, busiest_load = 0, busiest_capacity = 1;
@@ -1134,7 +1134,7 @@ index da7f9f547e24..e8d92e9bc8f6 100644
  	unsigned int busiest_nr = 0;
  	int i;
  
-@@ -10624,8 +10661,35 @@ static struct rq *find_busiest_queue(struct lb_env *env,
+@@ -10760,8 +10797,35 @@ static struct rq *find_busiest_queue(struct lb_env *env,
  
  		case migrate_task:
  			if (busiest_nr < nr_running) {
@@ -1171,10 +1171,10 @@ index da7f9f547e24..e8d92e9bc8f6 100644
  			break;
  
 -- 
-2.40.1
+2.41.0
 
 
-From 4354931c63d28853117231a4e03fc538786ea39f Mon Sep 17 00:00:00 2001
+From d9df3b64c28d8d78520c2ecef294880ffdaaa27c Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 16 Dec 2021 17:40:00 -0800
 Subject: [PATCH 11/24] thermal: intel: hfi: Introduce Intel Thread Director
@@ -1304,10 +1304,10 @@ index 6e604bda2b93..2527ae3836c7 100644
  	return 0;
  }
 -- 
-2.40.1
+2.41.0
 
 
-From ea1f609d8905c0b4f2c1ff35a684416d8be6b31b Mon Sep 17 00:00:00 2001
+From 0c7a264103db4f84dc7844a739cd3ad465906215 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 23 Sep 2020 14:57:59 -0700
 Subject: [PATCH 12/24] x86/cpufeatures: Add the Intel Thread Director feature
@@ -1403,10 +1403,10 @@ index c881bcafba7d..f6f8a3cd4f2c 100644
  };
  
 -- 
-2.40.1
+2.41.0
 
 
-From dcba22fd33052f9d806009138640b111047d0886 Mon Sep 17 00:00:00 2001
+From 6a7109baa598b1b9095ad36a9f90669d361996a3 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 14 Nov 2022 08:23:41 -0800
 Subject: [PATCH 13/24] thermal: intel: hfi: Store per-CPU IPCC scores
@@ -1529,10 +1529,10 @@ index 2527ae3836c7..b06021828892 100644
  	for (j = 0; j < i; ++j) {
  		hfi_instance = &hfi_instances[j];
 -- 
-2.40.1
+2.41.0
 
 
-From bf96e9842a7c8c782f011f5ac6a4d1b9631d34ff Mon Sep 17 00:00:00 2001
+From 7db87696e62cb0728c23a5ca53efc67aaff436bf Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 14 Dec 2020 11:33:57 -0800
 Subject: [PATCH 14/24] thermal: intel: hfi: Update the IPC class of the
@@ -1643,10 +1643,10 @@ index b06021828892..530dcf57e06e 100644
  {
  	if (!cpu_feature_enabled(X86_FEATURE_ITD))
 -- 
-2.40.1
+2.41.0
 
 
-From f3be7201a3c9fb22120f5e5b6ed738fab7430894 Mon Sep 17 00:00:00 2001
+From 0fff34c6cb1bf3700cf8d5d0eefad03a0d7a5f12 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 25 May 2022 04:41:40 -0700
 Subject: [PATCH 15/24] thermal: intel: hfi: Report the IPC class score of a
@@ -1740,10 +1740,10 @@ index 530dcf57e06e..fa9b4a678d92 100644
  {
  	if (!cpu_feature_enabled(X86_FEATURE_ITD))
 -- 
-2.40.1
+2.41.0
 
 
-From 2077736bed7fffd0d08d9414c2e5ee2875f508bf Mon Sep 17 00:00:00 2001
+From 8cab98ce5a22a360ea8b7ab827a752e3433aaab9 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 18 Aug 2022 13:24:41 -0700
 Subject: [PATCH 16/24] thermal: intel: hfi: Define a default class for
@@ -1821,10 +1821,10 @@ index fa9b4a678d92..7ea6acce7107 100644
  	/*
  	 * Scheduler IPC classes start at 1. HFI classes start at 0.
 -- 
-2.40.1
+2.41.0
 
 
-From 75b0e986175f75f2927257da92800f4a498b0942 Mon Sep 17 00:00:00 2001
+From 39f3ddf62f91b29b791420e78b70308987226ecc Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 12 Oct 2020 16:58:58 -0700
 Subject: [PATCH 17/24] thermal: intel: hfi: Enable the Intel Thread Director
@@ -1961,10 +1961,10 @@ index 7ea6acce7107..35d947f47550 100644
  	/*
  	 * The header contains change indications for each supported feature.
 -- 
-2.40.1
+2.41.0
 
 
-From 5c0966960eff3863be065a12d347ab7ee58ccfaa Mon Sep 17 00:00:00 2001
+From 563e2715d14b3549cc9fd1bd1a04d331411d1a59 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Fri, 22 Jul 2022 17:17:38 -0700
 Subject: [PATCH 18/24] sched/task_struct: Add helpers for IPC classification
@@ -2009,10 +2009,10 @@ Changes since v1:
  1 file changed, 11 insertions(+), 1 deletion(-)
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index e58dc7503864..63c2f88f0168 100644
+index 74b3605a9980..e745496e69a1 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -1535,7 +1535,17 @@ struct task_struct {
+@@ -1545,7 +1545,17 @@ struct task_struct {
  	 * A hardware-defined classification of task that reflects but is
  	 * not identical to the number of instructions per cycle.
  	 */
@@ -2032,10 +2032,10 @@ index e58dc7503864..63c2f88f0168 100644
  
  	/*
 -- 
-2.40.1
+2.41.0
 
 
-From dbe9f264fc03931dbfd45aa25169c8d91c540908 Mon Sep 17 00:00:00 2001
+From 348ec5ace9cfb280eb15b4a21be1b304c399913d Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 2 Aug 2022 04:01:15 -0700
 Subject: [PATCH 19/24] sched/core: Initialize helpers of task classification
@@ -2071,23 +2071,23 @@ Changes since v1:
  1 file changed, 2 insertions(+)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index ae0548bc81f4..c2dd106fefaa 100644
+index 8aa51444f145..3c3d31f8362d 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -4382,6 +4382,8 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
+@@ -4433,6 +4433,8 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
  	p->se.vruntime			= 0;
  #ifdef CONFIG_IPC_CLASSES
  	p->ipcc				= IPC_CLASS_UNCLASSIFIED;
 +	p->ipcc_tmp			= IPC_CLASS_UNCLASSIFIED;
 +	p->ipcc_cntr			= 0;
  #endif
- 	INIT_LIST_HEAD(&p->se.group_node);
- 
+ #ifdef CONFIG_SCHED_BORE
+ 	__sched_fork_bore(p);
 -- 
-2.40.1
+2.41.0
 
 
-From ed35029db962bcd327468710331a79ceb3f88024 Mon Sep 17 00:00:00 2001
+From 6b36a02c799a91f80cb7bf8171f1c520ee8be2cb Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 03:48:37 -0700
 Subject: [PATCH 20/24] sched/fair: Introduce sched_smt_siblings_idle()
@@ -2151,10 +2151,10 @@ Changes since v1:
  2 files changed, 13 insertions(+), 3 deletions(-)
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 63c2f88f0168..b049584f4c1a 100644
+index e745496e69a1..9928881d4ccf 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -2446,4 +2446,6 @@ static inline void sched_core_fork(struct task_struct *p) { }
+@@ -2456,4 +2456,6 @@ static inline void sched_core_fork(struct task_struct *p) { }
  
  extern void sched_set_stop_task(int cpu, struct task_struct *stop);
  
@@ -2162,10 +2162,10 @@ index 63c2f88f0168..b049584f4c1a 100644
 +
  #endif
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index e8d92e9bc8f6..7f6839da2b41 100644
+index 963acf946677..3840be98ea53 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -1049,7 +1049,14 @@ update_stats_curr_start(struct cfs_rq *cfs_rq, struct sched_entity *se)
+@@ -1168,7 +1168,14 @@ update_stats_curr_start(struct cfs_rq *cfs_rq, struct sched_entity *se)
   * Scheduling class queueing methods:
   */
  
@@ -2181,7 +2181,7 @@ index e8d92e9bc8f6..7f6839da2b41 100644
  {
  #ifdef CONFIG_SCHED_SMT
  	int sibling;
-@@ -1755,7 +1762,7 @@ static inline int numa_idle_core(int idle_core, int cpu)
+@@ -1874,7 +1881,7 @@ static inline int numa_idle_core(int idle_core, int cpu)
  	 * Prefer cores instead of packing HT siblings
  	 * and triggering future load balancing.
  	 */
@@ -2190,7 +2190,7 @@ index e8d92e9bc8f6..7f6839da2b41 100644
  		idle_core = cpu;
  
  	return idle_core;
-@@ -9386,7 +9393,8 @@ static bool sched_use_asym_prio(struct sched_domain *sd, int cpu)
+@@ -9522,7 +9529,8 @@ static bool sched_use_asym_prio(struct sched_domain *sd, int cpu)
  	if (!sched_smt_active())
  		return true;
  
@@ -2201,10 +2201,10 @@ index e8d92e9bc8f6..7f6839da2b41 100644
  	return true;
  #endif
 -- 
-2.40.1
+2.41.0
 
 
-From 6be063be959a27fc7e591b9e3a7609750dfd389e Mon Sep 17 00:00:00 2001
+From c77a104bcf74c7dbc4e8b2d18cb8d348e01cf0de Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 21 Jun 2022 16:52:44 -0700
 Subject: [PATCH 21/24] thermal: intel: hfi: Implement model-specific checks
@@ -2338,10 +2338,10 @@ index 35d947f47550..fdb53e4cabc1 100644
  
  unsigned long intel_hfi_get_ipcc_score(unsigned short ipcc, int cpu)
 -- 
-2.40.1
+2.41.0
 
 
-From dbdd2812084538f6e6c11b897c1f368e456db5a7 Mon Sep 17 00:00:00 2001
+From bfd2f005378876867f227c92b24fb8e1f2be9289 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 22 Sep 2020 13:14:07 -0700
 Subject: [PATCH 22/24] x86/cpufeatures: Add feature bit for HRESET
@@ -2425,10 +2425,10 @@ index fc01f81f6e2a..b8ad312d3694 100644
  	{ X86_FEATURE_CQM_OCCUP_LLC,	CPUID_EDX,  0, 0x0000000f, 1 },
  	{ X86_FEATURE_CQM_MBM_TOTAL,	CPUID_EDX,  1, 0x0000000f, 1 },
 -- 
-2.40.1
+2.41.0
 
 
-From 182d23f4b3a004cc7348fbba91718040b68d9537 Mon Sep 17 00:00:00 2001
+From 284429c5bf3c4fc8a52b17757088a2a37b3621c8 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 14 Oct 2020 09:33:43 -0700
 Subject: [PATCH 23/24] x86/hreset: Configure history reset
@@ -2509,10 +2509,10 @@ index c34bdba57993..98b48cf80ec2 100644
  	/* Enable FSGSBASE instructions if available. */
  	if (cpu_has(c, X86_FEATURE_FSGSBASE)) {
 -- 
-2.40.1
+2.41.0
 
 
-From 9f4384b1d876cecf1b1327fa3ecdbf093914af1d Mon Sep 17 00:00:00 2001
+From 6af0447ac24cb95c230add9196a4dd433440b3a5 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 23 May 2022 09:36:27 -0700
 Subject: [PATCH 24/24] x86/process: Reset hardware history in context switch
@@ -2677,5 +2677,5 @@ index 7f94dbbc397b..d0d3c3323747 100644
  }
  
 -- 
-2.40.1
+2.41.0
 
