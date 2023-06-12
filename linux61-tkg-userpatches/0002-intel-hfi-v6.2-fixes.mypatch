@@ -1,4 +1,4 @@
-From 8f8106a1f04946c7578471823407a05ad03a0a3e Mon Sep 17 00:00:00 2001
+From f3ce43e7a6de27962fdd695efc275444b7cf8ee6 Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Tue, 15 Nov 2022 18:54:16 -0800
 Subject: [PATCH 1/6] thermal: intel: Prevent accidental clearing of HFI status
@@ -39,10 +39,10 @@ index 8352083b87c7..9e8ab31d756e 100644
  static void clear_therm_status_log(int level)
  {
 -- 
-2.40.1
+2.41.0
 
 
-From 22dc43494b7cde92c1aac97278855d03f7425bba Mon Sep 17 00:00:00 2001
+From 796dc5b9c1fb2a39ee1e972246491cc418d10c75 Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Tue, 15 Nov 2022 18:54:17 -0800
 Subject: [PATCH 2/6] thermal: intel: Protect clearing of thermal status bits
@@ -213,10 +213,10 @@ index a0e234fce71a..84c3a116ed04 100644
  	enable_pkg_thres_interrupt();
  	raw_spin_unlock_irq(&pkg_temp_lock);
 -- 
-2.40.1
+2.41.0
 
 
-From eb4d1ba7150cee7b3855b62561cd0b9a5f4f6ca5 Mon Sep 17 00:00:00 2001
+From 24598bb8976c4fe9390cf80db99007480b880c2e Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Wed, 16 Nov 2022 15:14:59 -0800
 Subject: [PATCH 3/6] thermal: intel: hfi: ACK HFI for the same timestamp
@@ -367,10 +367,10 @@ index c9e0827c9ebe..c543a967cd50 100644
  			   HFI_UPDATE_INTERVAL);
  }
 -- 
-2.40.1
+2.41.0
 
 
-From 3ec5f7a25848967e0a2342bcb502176ef002d111 Mon Sep 17 00:00:00 2001
+From feea6879c8a0288efb3706528577593ac33efc87 Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Tue, 13 Dec 2022 18:06:51 -0800
 Subject: [PATCH 4/6] thermal: intel: Don't set HFI status bit to 1
@@ -414,10 +414,10 @@ index 4bb7fddaa143..2e22bb82b738 100644
  
  	msr_val &= ~bit_mask;
 -- 
-2.40.1
+2.41.0
 
 
-From 4592be150688a2beed4067cbcecd146bd298798d Mon Sep 17 00:00:00 2001
+From 0380f26bd62d8b13a4947dafe5d69ea9bf7f3b16 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 18 Oct 2022 04:22:40 -0700
 Subject: [PATCH 5/6] thermal: intel: hfi: Improve the type of
@@ -452,10 +452,10 @@ index c543a967cd50..90a11eef44f7 100644
  	unsigned int	hdr_size;
  };
 -- 
-2.40.1
+2.41.0
 
 
-From 18e1621877b61fc7ccff4541433dbecb0e6887c5 Mon Sep 17 00:00:00 2001
+From 30d9d054e24126650906e5c5324e3bdd9e085107 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 28 Nov 2022 08:20:01 -0800
 Subject: [PATCH 6/6] thermal: intel: hfi: Remove a pointless die_id check
@@ -485,5 +485,5 @@ index 90a11eef44f7..6e604bda2b93 100644
  
  		hfi_instance = &hfi_instances[die_id];
 -- 
-2.40.1
+2.41.0
 
