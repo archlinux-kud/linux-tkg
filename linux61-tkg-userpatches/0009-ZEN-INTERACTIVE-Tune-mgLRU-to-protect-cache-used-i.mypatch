@@ -1,4 +1,4 @@
-From a48f5d6b83213a58abfce57ba48a98203755e252 Mon Sep 17 00:00:00 2001
+From a29081c8daefbe61212f98428e4cbc48dc61505d Mon Sep 17 00:00:00 2001
 From: Steven Barrett <steven@liquorix.net>
 Date: Wed, 11 Aug 2021 18:47:46 -0500
 Subject: [PATCH] ZEN: INTERACTIVE: Tune mgLRU to protect cache used in the
@@ -16,10 +16,10 @@ that don't know they need it.
  1 file changed, 4 insertions(+)
 
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index dc66f6715bfc..a6e83dbeefd7 100644
+index 91ac65dff3ce..cf91d00d5297 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -4529,7 +4529,11 @@ static bool age_lruvec(struct lruvec *lruvec, struct scan_control *sc, unsigned
+@@ -4533,7 +4533,11 @@ static bool age_lruvec(struct lruvec *lruvec, struct scan_control *sc, unsigned
  }
  
  /* to protect the working set of the last N jiffies */
@@ -32,5 +32,5 @@ index dc66f6715bfc..a6e83dbeefd7 100644
  static void lru_gen_age_node(struct pglist_data *pgdat, struct scan_control *sc)
  {
 -- 
-2.40.0
+2.40.1
 
