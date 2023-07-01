@@ -1,4 +1,4 @@
-From e009f35af837fa7fa5a5ade501514e7d18a4a72f Mon Sep 17 00:00:00 2001
+From 50296d7f1f7ee65d5017a8e402d3372269dce82f Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:37 -0700
 Subject: [PATCH 01/12] sched/fair: Move is_core_idle() out of CONFIG_NUMA
@@ -90,7 +90,7 @@ index d431f3c26da3..faae78325b1a 100644
 2.41.0
 
 
-From b6685147d7ffd825507141c61c50bfc9f2b2e060 Mon Sep 17 00:00:00 2001
+From 490b9f56cba709f051af4a009161480453c0d58d Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:38 -0700
 Subject: [PATCH 02/12] sched/fair: Only do asym_packing load balancing from
@@ -262,7 +262,7 @@ index faae78325b1a..61c2231b393c 100644
 2.41.0
 
 
-From c33a3954bd7a5fcea07d5310e060bf6e2e8c077b Mon Sep 17 00:00:00 2001
+From 1bbd9712a08add957e18ab3cf86914f7fbdad59b Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:39 -0700
 Subject: [PATCH 03/12] sched/fair: Simplify asym_packing logic for SMT cores
@@ -380,7 +380,7 @@ index 61c2231b393c..1acb50e26617 100644
 2.41.0
 
 
-From b88e2d57ede54815dd75fe2e5deab3e44f1c7fa1 Mon Sep 17 00:00:00 2001
+From d1e2485e2d9a86aeba3e81f7553d4ef2efd2fb9b Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:40 -0700
 Subject: [PATCH 04/12] sched/fair: Let low-priority cores help high-priority
@@ -472,7 +472,7 @@ index 1acb50e26617..c23311f26f6a 100644
 2.41.0
 
 
-From b9b2fe4d6da10dff2a8a6a12600ebec90ea95b11 Mon Sep 17 00:00:00 2001
+From fe121cb1cefa99fcc56df3af476501c37ac7edae Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:41 -0700
 Subject: [PATCH 05/12] sched/fair: Keep a fully_busy SMT sched group as
@@ -543,7 +543,7 @@ index c23311f26f6a..3871b4259b4a 100644
 2.41.0
 
 
-From 8b6146d70d192fcc862e2d9d232466505b30019e Mon Sep 17 00:00:00 2001
+From b577d37de22772b6d44e097d8ff9891af7b92772 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:42 -0700
 Subject: [PATCH 06/12] sched/fair: Use the busiest group to set prefer_sibling
@@ -637,7 +637,7 @@ index 3871b4259b4a..e487345389d9 100644
 2.41.0
 
 
-From f33377dcbf8f91b01f57c369d00db553d1bb4f7f Mon Sep 17 00:00:00 2001
+From ed7fa5f86b1ad2f12a5f1f60821db9b0c0129cc6 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:43 -0700
 Subject: [PATCH 07/12] sched/fair: Do not even the number of busy CPUs via
@@ -797,7 +797,7 @@ index e487345389d9..af0c893021e3 100644
 2.41.0
 
 
-From e8629b8f0e51e02ed3af1e1ca6d36c2118a4f2f6 Mon Sep 17 00:00:00 2001
+From a17cfb023f758d062b11a52f64298c603408066f Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:44 -0700
 Subject: [PATCH 08/12] sched/topology: Check SDF_SHARED_CHILD in
@@ -885,7 +885,7 @@ index 5f18460f62f0..4634285663c5 100644
 2.41.0
 
 
-From 4145d54b4187948d49c6b7e8bc657d18404b1800 Mon Sep 17 00:00:00 2001
+From 3fbe57773045e4df3e2b38aca13724d83e58f846 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:45 -0700
 Subject: [PATCH 09/12] sched/topology: Remove SHARED_CHILD from ASYM_PACKING
@@ -957,7 +957,7 @@ index 57bde66d95f7..fad77b5172e2 100644
 2.41.0
 
 
-From 2415479f70ab4ee79ad8a4f86578202213f95306 Mon Sep 17 00:00:00 2001
+From 4713c0b3f797c846a7290bb6792b6026ed7b60fc Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:46 -0700
 Subject: [PATCH 10/12] x86/sched: Remove SD_ASYM_PACKING from the SMT domain
@@ -995,10 +995,10 @@ Changes since v1:
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/x86/kernel/smpboot.c b/arch/x86/kernel/smpboot.c
-index 3f3ea0287f69..c3de98224cb4 100644
+index f32ee967414e..a6606b5f70e5 100644
 --- a/arch/x86/kernel/smpboot.c
 +++ b/arch/x86/kernel/smpboot.c
-@@ -545,7 +545,7 @@ static int x86_core_flags(void)
+@@ -564,7 +564,7 @@ static int x86_core_flags(void)
  #ifdef CONFIG_SCHED_SMT
  static int x86_smt_flags(void)
  {
@@ -1011,7 +1011,7 @@ index 3f3ea0287f69..c3de98224cb4 100644
 2.41.0
 
 
-From db23e88365e2f144ac9241aec18de986879eb71c Mon Sep 17 00:00:00 2001
+From d53cdf74a9d397fb20d7aca9a9b7664d227a7e5f Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:47 -0700
 Subject: [PATCH 11/12] x86/sched/itmt: Give all SMT siblings of a core the
@@ -1096,7 +1096,7 @@ index 9ff480e94511..6510883c5e81 100644
 2.41.0
 
 
-From 477d188c559d2a9bb0f656baf9e978c4a4984960 Mon Sep 17 00:00:00 2001
+From 080ac28244cf888e2715c54794bca8d128ba15ff Mon Sep 17 00:00:00 2001
 From: Chen Yu <yu.c.chen@intel.com>
 Date: Thu, 6 Apr 2023 13:31:48 -0700
 Subject: [PATCH 12/12] x86/sched: Add the SD_ASYM_PACKING flag to the die
@@ -1136,10 +1136,10 @@ Changes since v1:
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/x86/kernel/smpboot.c b/arch/x86/kernel/smpboot.c
-index c3de98224cb4..b332b145218c 100644
+index a6606b5f70e5..493bd34aa3dc 100644
 --- a/arch/x86/kernel/smpboot.c
 +++ b/arch/x86/kernel/smpboot.c
-@@ -590,7 +590,7 @@ static struct sched_domain_topology_level x86_topology[] = {
+@@ -609,7 +609,7 @@ static struct sched_domain_topology_level x86_topology[] = {
  #ifdef CONFIG_SCHED_MC
  	{ cpu_coregroup_mask, x86_core_flags, SD_INIT_NAME(MC) },
  #endif
