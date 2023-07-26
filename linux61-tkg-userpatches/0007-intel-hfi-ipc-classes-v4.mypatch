@@ -1,4 +1,4 @@
-From 3a25377a3bd6ceee27b6b30b2a1649b6f5a2464e Mon Sep 17 00:00:00 2001
+From 71c13dce2cc11ad8ee6741fd2671e733c105b566 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 5 Oct 2020 04:41:59 -0700
 Subject: [PATCH 01/24] sched/task_struct: Introduce IPC classes of tasks
@@ -40,6 +40,9 @@ Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * Changed the type of task_struct::ipcc to unsigned short. A subsequent
    patch uses bit fields to use 9 bits, along with other auxiliary
@@ -109,7 +112,7 @@ index e945ca317fa4..da24147db2c7 100644
 2.41.0
 
 
-From 0e071dac3809e3b7dda3af3bf60e201cf63d9df0 Mon Sep 17 00:00:00 2001
+From 2c1317b3d8a20890ee14f866afeabea211bcd95a Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 04:14:11 -0700
 Subject: [PATCH 02/24] sched: Add interfaces for IPC classes
@@ -148,6 +151,9 @@ Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * Clarified the properties of the IPC score: abstract, and linear. It can
    normalized when needed. (Ionela)
@@ -286,7 +292,7 @@ index 8739c2a5a54e..60e03d15f58c 100644
 2.41.0
 
 
-From 0fc4f92e36031c5f0a2ffd34dd80ecd320420055 Mon Sep 17 00:00:00 2001
+From 604e408efdba7d9cf01208036cd2475d6c672344 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 30 Dec 2021 17:27:52 -0800
 Subject: [PATCH 03/24] sched/core: Initialize the IPC class of a new task
@@ -312,6 +318,9 @@ Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * None
 
@@ -339,7 +348,7 @@ index 83e301bfa751..14e4c0aa6362 100644
 2.41.0
 
 
-From 54bc7634fc8531ae9c8a05543656aa7f23711ae5 Mon Sep 17 00:00:00 2001
+From b979405e7e03f55fc9ee95caba7454c4bd5096a9 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 23 May 2022 16:58:08 -0700
 Subject: [PATCH 04/24] sched/core: Add user_tick as argument to
@@ -366,6 +375,9 @@ Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * Corrected error in the changeset description: the IPC class of the
    current task is updated at user tick. (Dietmar)
@@ -421,7 +433,7 @@ index 717fcb9fb14a..b444b6f5f585 100644
 2.41.0
 
 
-From a702a932547ba9fdd8bf6b0fdc27947cd097be83 Mon Sep 17 00:00:00 2001
+From 05e6da38952b40f5ea516e2d54c08c9502e6e8fb Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 19:31:42 -0700
 Subject: [PATCH 05/24] sched/core: Update the IPC class of the current task
@@ -448,6 +460,9 @@ Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * None
 
@@ -476,24 +491,28 @@ index 7440b813078d..8aa51444f145 100644
 2.41.0
 
 
-From 14f366734dd42c5c232c391283e7e570fd653e34 Mon Sep 17 00:00:00 2001
+From 3f4b5ec5795d900905006854cf10e03af406990f Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 6 Jun 2022 18:02:04 -0700
 Subject: [PATCH 06/24] sched/fair: Collect load-balancing stats for IPC
  classes
 
-When selecting a busiest scheduling group, the IPC class of the current
-task can be used to select between two scheduling groups of types asym_
-packing or fully_busy that are otherwise identical.
+When selecting the busiest scheduling group between two otherwise identical
+groups of types asym_packing or fully_busy, IPC classes can be used to
+break the tie.
 
-Compute the IPC class performance score for a scheduling group. It
-is the sum of the scores of the current tasks of all the runqueues.
+Compute the IPC class performance score for a scheduling group. It is
+defined as the sum of the IPC scores of the tasks at the back of each
+runqueue in the group. Load balancing starts by pulling tasks from the back
+of the runqueue first, making this tiebreaker more useful.
 
-Also, keep track of the class of the task with the lowest IPC class score
-in the scheduling group.
+Also, track the IPC class with the lowest score in the scheduling group. A
+task of this class will be pulled when the destination CPU has lower
+priority than the fully_busy busiest group.
 
 These two metrics will be used during idle load balancing to compute the
-current and the prospective IPC class score of a scheduling group.
+current and the potential IPC class score of a scheduling group in a
+subsequent changeset.
 
 Cc: Ben Segall <bsegall@google.com>
 Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
@@ -503,16 +522,23 @@ Cc: Joel Fernandes (Google) <joel@joelfernandes.org>
 Cc: Len Brown <len.brown@intel.com>
 Cc: Lukasz Luba <lukasz.luba@arm.com>
 Cc: Mel Gorman <mgorman@suse.de>
+Cc: Perry Yuan <Perry.Yuan@amd.com>
 Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Tim C. Chen <tim.c.chen@intel.com>
 Cc: Valentin Schneider <vschneid@redhat.com>
+Cc: Zhao Liu <zhao1.liu@linux.intel.com>
 Cc: x86@kernel.org
 Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * Do not compute the IPCC stats using the current tasks of runqueues.
+   Instead, use the tasks at the back of the queue. These are the tasks
+   that will be pulled first during load balance. (Vincent)
+
 Changes since v2:
  * Also excluded deadline and realtime tasks from IPCC stats. (Dietmar)
  * Also excluded tasks that cannot run on the destination CPU from the
@@ -525,11 +551,11 @@ Changes since v1:
  * Implemented cleanups and reworks from PeterZ. Thanks!
  * Used the new interface names.
 ---
- kernel/sched/fair.c | 61 +++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 61 insertions(+)
+ kernel/sched/fair.c | 79 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 79 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index af0c893021e3..e47b4249cbed 100644
+index af0c893021e3..f448611cf4f7 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -8953,6 +8953,11 @@ struct sg_lb_stats {
@@ -544,7 +570,7 @@ index af0c893021e3..e47b4249cbed 100644
  };
  
  /*
-@@ -9296,6 +9301,59 @@ group_type group_classify(unsigned int imbalance_pct,
+@@ -9296,6 +9301,77 @@ group_type group_classify(unsigned int imbalance_pct,
  	return group_has_spare;
  }
  
@@ -555,24 +581,42 @@ index af0c893021e3..e47b4249cbed 100644
 +	sgs->min_score = ULONG_MAX;
 +}
 +
++static int rq_last_task_ipcc(int dst_cpu, struct rq *rq, unsigned short *ipcc)
++{
++	struct list_head *tasks = &rq->cfs_tasks;
++	struct task_struct *p;
++	struct rq_flags rf;
++	int ret = -EINVAL;
++
++	rq_lock_irqsave(rq, &rf);
++	if (list_empty(tasks))
++		goto out;
++
++	p = list_last_entry(tasks, struct task_struct, se.group_node);
++	if (p->flags & PF_EXITING || is_idle_task(p) ||
++	    !cpumask_test_cpu(dst_cpu, p->cpus_ptr))
++		goto out;
++
++	ret = 0;
++	*ipcc = p->ipcc;
++out:
++	rq_unlock(rq, &rf);
++	return ret;
++}
++
 +/* Called only if cpu_of(@rq) is not idle and has tasks running. */
 +static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
 +				    struct rq *rq)
 +{
-+	struct task_struct *curr;
 +	unsigned short ipcc;
 +	unsigned long score;
 +
 +	if (!sched_ipcc_enabled())
 +		return;
 +
-+	curr = rcu_dereference(rq->curr);
-+	if (!curr || (curr->flags & PF_EXITING) || is_idle_task(curr) ||
-+	    task_is_realtime(curr) ||
-+	    !cpumask_test_cpu(dst_cpu, curr->cpus_ptr))
++	if (rq_last_task_ipcc(dst_cpu, rq, &ipcc))
 +		return;
 +
-+	ipcc = curr->ipcc;
 +	score = arch_get_ipcc_score(ipcc, cpu_of(rq));
 +
 +	/*
@@ -604,7 +648,7 @@ index af0c893021e3..e47b4249cbed 100644
  /**
   * sched_use_asym_prio - Check whether asym_packing priority must be used
   * @sd:		The scheduling domain of the load balancing
-@@ -9390,6 +9448,7 @@ static inline void update_sg_lb_stats(struct lb_env *env,
+@@ -9390,6 +9466,7 @@ static inline void update_sg_lb_stats(struct lb_env *env,
  	int i, nr_running, local_group;
  
  	memset(sgs, 0, sizeof(*sgs));
@@ -612,7 +656,7 @@ index af0c893021e3..e47b4249cbed 100644
  
  	local_group = group == sds->local;
  
-@@ -9439,6 +9498,8 @@ static inline void update_sg_lb_stats(struct lb_env *env,
+@@ -9439,6 +9516,8 @@ static inline void update_sg_lb_stats(struct lb_env *env,
  			if (sgs->group_misfit_task_load < load)
  				sgs->group_misfit_task_load = load;
  		}
@@ -625,7 +669,7 @@ index af0c893021e3..e47b4249cbed 100644
 2.41.0
 
 
-From 2bc7261da9eab7271ee235a54606b1da6a67d816 Mon Sep 17 00:00:00 2001
+From fffb4ab912776b98503b080dde57613052600871 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 6 Sep 2022 13:32:52 -0700
 Subject: [PATCH 07/24] sched/fair: Compute IPC class scores for load balancing
@@ -664,6 +708,9 @@ Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * Also collect IPCC stats for fully_busy sched groups.
  * Restrict use of IPCC stats to SD_ASYM_PACKING. (Ionela)
@@ -682,7 +729,7 @@ Changes since v1:
  1 file changed, 68 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index e47b4249cbed..7b6658fc0761 100644
+index f448611cf4f7..ec3ebd8f0fab 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -8957,6 +8957,8 @@ struct sg_lb_stats {
@@ -694,7 +741,7 @@ index e47b4249cbed..7b6658fc0761 100644
  #endif
  };
  
-@@ -9343,6 +9345,62 @@ static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
+@@ -9361,6 +9363,62 @@ static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
  	}
  }
  
@@ -757,7 +804,7 @@ index e47b4249cbed..7b6658fc0761 100644
  #else /* CONFIG_IPC_CLASSES */
  static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
  				    struct rq *rq)
-@@ -9352,6 +9410,13 @@ static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
+@@ -9370,6 +9428,13 @@ static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
  static void init_rq_ipcc_stats(struct sg_lb_stats *sgs)
  {
  }
@@ -771,7 +818,7 @@ index e47b4249cbed..7b6658fc0761 100644
  #endif /* CONFIG_IPC_CLASSES */
  
  /**
-@@ -9515,6 +9580,9 @@ static inline void update_sg_lb_stats(struct lb_env *env,
+@@ -9533,6 +9598,9 @@ static inline void update_sg_lb_stats(struct lb_env *env,
  
  	sgs->group_type = group_classify(env->sd->imbalance_pct, group, sgs);
  
@@ -785,7 +832,7 @@ index e47b4249cbed..7b6658fc0761 100644
 2.41.0
 
 
-From eb6b99c55e069ed125101a37643aaa47333f970d Mon Sep 17 00:00:00 2001
+From 27166f5cd0a6dfdc907406dd68dea25cd2d2adc2 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 25 Jul 2022 13:36:02 -0700
 Subject: [PATCH 08/24] sched/fair: Use IPCC stats to break ties between
@@ -819,6 +866,9 @@ Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * None
 
@@ -834,10 +884,10 @@ Changes since v1:
  1 file changed, 72 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 7b6658fc0761..a3644b82198b 100644
+index ec3ebd8f0fab..1d724bb13d9f 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -9401,6 +9401,60 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
+@@ -9419,6 +9419,60 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
  	sgs->ipcc_score_before = before;
  }
  
@@ -898,7 +948,7 @@ index 7b6658fc0761..a3644b82198b 100644
  #else /* CONFIG_IPC_CLASSES */
  static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
  				    struct rq *rq)
-@@ -9417,6 +9471,14 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
+@@ -9435,6 +9489,14 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
  {
  }
  
@@ -913,7 +963,7 @@ index 7b6658fc0761..a3644b82198b 100644
  #endif /* CONFIG_IPC_CLASSES */
  
  /**
-@@ -9654,6 +9716,16 @@ static bool update_sd_pick_busiest(struct lb_env *env,
+@@ -9672,6 +9734,16 @@ static bool update_sd_pick_busiest(struct lb_env *env,
  		/* Prefer to move from lowest priority CPU's work */
  		if (sched_asym_prefer(sg->asym_prefer_cpu, sds->busiest->asym_prefer_cpu))
  			return false;
@@ -934,7 +984,7 @@ index 7b6658fc0761..a3644b82198b 100644
 2.41.0
 
 
-From c2478b5d0412572dc14d9e1bcef054e7d60e8409 Mon Sep 17 00:00:00 2001
+From 10afee5036a5a645545c64f1fdb9e8bb809525a8 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Fri, 20 Jan 2023 15:08:37 -0800
 Subject: [PATCH 09/24] sched/fair: Use IPCC stats to break ties between
@@ -970,6 +1020,9 @@ Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * Introduced this patch.
 
@@ -980,10 +1033,10 @@ Changes since v1:
  1 file changed, 20 insertions(+), 3 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index a3644b82198b..0fd516085fa2 100644
+index 1d724bb13d9f..55764b1f1a11 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -9471,6 +9471,12 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
+@@ -9489,6 +9489,12 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
  {
  }
  
@@ -996,7 +1049,7 @@ index a3644b82198b..0fd516085fa2 100644
  static bool sched_asym_ipcc_pick(struct sched_group *a,
  				 struct sched_group *b,
  				 struct sg_lb_stats *a_stats,
-@@ -9756,10 +9762,21 @@ static bool update_sd_pick_busiest(struct lb_env *env,
+@@ -9774,10 +9780,21 @@ static bool update_sd_pick_busiest(struct lb_env *env,
  		if (sgs->avg_load == busiest->avg_load) {
  			/*
  			 * SMT sched groups need more help than non-SMT groups.
@@ -1025,18 +1078,19 @@ index a3644b82198b..0fd516085fa2 100644
 2.41.0
 
 
-From 3a615383ad91423c9b0e7f8f5c7a05e327c3c10f Mon Sep 17 00:00:00 2001
+From 2af370257649f0c38fe09ba6b73c93e87a9c3f95 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 10 Aug 2022 14:43:11 -0700
 Subject: [PATCH 10/24] sched/fair: Use IPCC scores to select a busiest
  runqueue
 
-For two runqueues of equal priority and equal number of running of tasks,
-select the one whose current task would have the highest IPC class score
-if placed on the destination CPU.
+Use IPCC scores to break a tie between two runqueues with the same priority
+and number of running tasks: select the runqueue of which the task enqueued
+last would get a higher IPC boost when migrated to the destination CPU.
+(These tasks are migrated first during load balance.)
 
-For now, use IPCC scores only for scheduling domains with the
-SD_ASYM_PACKING flag.
+For now, restrict the utilization of IPCC scores to scheduling domains
+marked with the SD_ASYM_PACKING flag.
 
 Cc: Ben Segall <bsegall@google.com>
 Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
@@ -1046,16 +1100,23 @@ Cc: Joel Fernandes (Google) <joel@joelfernandes.org>
 Cc: Len Brown <len.brown@intel.com>
 Cc: Lukasz Luba <lukasz.luba@arm.com>
 Cc: Mel Gorman <mgorman@suse.de>
+Cc: Perry Yuan <Perry.Yuan@amd.com>
 Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Tim C. Chen <tim.c.chen@intel.com>
 Cc: Valentin Schneider <vschneid@redhat.com>
+Cc: Zhao Liu <zhao1.liu@linux.intel.com>
 Cc: x86@kernel.org
 Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * Do not compute the IPCC stats using the current tasks of runqueues.
+   Instead, use the tasks at the back of the queue. These are the tasks
+   that will be pulled first during load balance. (Vincent)
+
 Changes since v2:
  * Only use IPCC scores to break ties if the sched domain uses
    asym_packing. (Ionela)
@@ -1069,29 +1130,30 @@ Changes since v1:
    (PeterZ)
  * Used the new interface names.
 ---
- kernel/sched/fair.c | 64 +++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 64 insertions(+)
+ kernel/sched/fair.c | 61 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 61 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 0fd516085fa2..5eb68c9c875e 100644
+index 55764b1f1a11..4fbf87705952 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -9455,6 +9455,37 @@ static bool sched_asym_ipcc_pick(struct sched_group *a,
+@@ -9473,6 +9473,41 @@ static bool sched_asym_ipcc_pick(struct sched_group *a,
  	return sched_asym_ipcc_prefer(a_stats, b_stats);
  }
  
 +/**
 + * ipcc_score_delta - Get the IPCC score delta wrt the load balance's dst_cpu
-+ * @p:		A task
++ * @rq:		A runqueue
 + * @env:	Load balancing environment
 + *
-+ * Returns: The IPCC score delta that @p would get if placed in the destination
-+ * CPU of @env. LONG_MIN to indicate that the delta should not be used.
++ * Returns: The IPCC score delta that the last task enqueued in @rq would get
++ * if placed in the destination CPU of @env. LONG_MIN to indicate that the
++ * delta should not be used.
 + */
-+static long ipcc_score_delta(struct task_struct *p, struct lb_env *env)
++static long ipcc_score_delta(struct rq *rq, struct lb_env *env)
 +{
 +	unsigned long score_src, score_dst;
-+	unsigned short ipcc = p->ipcc;
++	unsigned short ipcc;
 +
 +	if (!sched_ipcc_enabled())
 +		return LONG_MIN;
@@ -1100,11 +1162,14 @@ index 0fd516085fa2..5eb68c9c875e 100644
 +	if (!(env->sd->flags & SD_ASYM_PACKING))
 +		return LONG_MIN;
 +
++	if (rq_last_task_ipcc(env->dst_cpu, rq, &ipcc))
++		return LONG_MIN;
++
 +	score_dst = arch_get_ipcc_score(ipcc, env->dst_cpu);
 +	if (IS_ERR_VALUE(score_dst))
 +		return LONG_MIN;
 +
-+	score_src = arch_get_ipcc_score(ipcc, task_cpu(p));
++	score_src = arch_get_ipcc_score(ipcc, cpu_of(rq));
 +	if (IS_ERR_VALUE(score_src))
 +		return LONG_MIN;
 +
@@ -1114,11 +1179,11 @@ index 0fd516085fa2..5eb68c9c875e 100644
  #else /* CONFIG_IPC_CLASSES */
  static void update_sg_lb_ipcc_stats(int dst_cpu, struct sg_lb_stats *sgs,
  				    struct rq *rq)
-@@ -9485,6 +9516,11 @@ static bool sched_asym_ipcc_pick(struct sched_group *a,
+@@ -9503,6 +9538,11 @@ static bool sched_asym_ipcc_pick(struct sched_group *a,
  	return false;
  }
  
-+static long ipcc_score_delta(struct task_struct *p, struct lb_env *env)
++static long ipcc_score_delta(struct rq *rq, struct lb_env *env)
 +{
 +	return LONG_MIN;
 +}
@@ -1126,7 +1191,7 @@ index 0fd516085fa2..5eb68c9c875e 100644
  #endif /* CONFIG_IPC_CLASSES */
  
  /**
-@@ -10664,6 +10700,7 @@ static struct rq *find_busiest_queue(struct lb_env *env,
+@@ -10682,6 +10722,7 @@ static struct rq *find_busiest_queue(struct lb_env *env,
  {
  	struct rq *busiest = NULL, *rq;
  	unsigned long busiest_util = 0, busiest_load = 0, busiest_capacity = 1;
@@ -1134,33 +1199,24 @@ index 0fd516085fa2..5eb68c9c875e 100644
  	unsigned int busiest_nr = 0;
  	int i;
  
-@@ -10778,8 +10815,35 @@ static struct rq *find_busiest_queue(struct lb_env *env,
- 
- 		case migrate_task:
+@@ -10798,6 +10839,26 @@ static struct rq *find_busiest_queue(struct lb_env *env,
  			if (busiest_nr < nr_running) {
-+				struct task_struct *curr;
-+
  				busiest_nr = nr_running;
  				busiest = rq;
 +
 +				/*
-+				 * Remember the IPCC score delta of busiest::curr.
-+				 * We may need it to break a tie with other queues
-+				 * with equal nr_running.
++				 * Remember the IPCC score of the busiest
++				 * runqueue. We may need it to break a tie with
++				 * other queues with equal nr_running.
 +				 */
-+				curr = rcu_dereference(busiest->curr);
-+				busiest_ipcc_delta = ipcc_score_delta(curr, env);
++				busiest_ipcc_delta = ipcc_score_delta(busiest, env);
 +			/*
-+			 * If rq and busiest have the same number of running
-+			 * tasks and IPC classes are supported, pick rq if doing
-+			 * so would give rq::curr a bigger IPC boost on dst_cpu.
++			 * For ties, select @rq if doing would give its last
++			 * queued task a bigger IPC boost when migrated to
++			 * dst_cpu.
 +			 */
 +			} else if (busiest_nr == nr_running) {
-+				struct task_struct *curr;
-+				long delta;
-+
-+				curr = rcu_dereference(rq->curr);
-+				delta = ipcc_score_delta(curr, env);
++				long delta = ipcc_score_delta(rq, env);
 +
 +				if (busiest_ipcc_delta < delta) {
 +					busiest_ipcc_delta = delta;
@@ -1174,7 +1230,7 @@ index 0fd516085fa2..5eb68c9c875e 100644
 2.41.0
 
 
-From 9074aa813fc0ebffb2aeaa9d632110b13a317964 Mon Sep 17 00:00:00 2001
+From c27010b62dfa8cd6e31c2c1affed45043af86449 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 16 Dec 2021 17:40:00 -0800
 Subject: [PATCH 11/24] thermal: intel: hfi: Introduce Intel Thread Director
@@ -1203,8 +1259,12 @@ Cc: Valentin Schneider <vschneid@redhat.com>
 Cc: x86@kernel.org
 Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
+Acked-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * Added Acked-by tag from Rafael.
+
 Changes since v2:
  * None
 
@@ -1307,7 +1367,7 @@ index 6e604bda2b93..2527ae3836c7 100644
 2.41.0
 
 
-From f1ab1c44a493e32f24e65b410099233af634a58f Mon Sep 17 00:00:00 2001
+From 0a8f644c1136a0c73c849d695c2a11a2f2d0f66f Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 23 Sep 2020 14:57:59 -0700
 Subject: [PATCH 12/24] x86/cpufeatures: Add the Intel Thread Director feature
@@ -1339,6 +1399,9 @@ Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * None
 
@@ -1406,18 +1469,26 @@ index c881bcafba7d..f6f8a3cd4f2c 100644
 2.41.0
 
 
-From e1b88208880e1fcad86008ba252db4b6eb67dc3f Mon Sep 17 00:00:00 2001
+From 0af327708e61bcc9178564293267749f9aa641bf Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Mon, 14 Nov 2022 08:23:41 -0800
-Subject: [PATCH 13/24] thermal: intel: hfi: Store per-CPU IPCC scores
+Date: Mon, 14 Dec 2020 11:33:57 -0800
+Subject: [PATCH 13/24] x86/sched: Update the IPC class of the current task
 
-The scheduler reads the IPCC scores when balancing load. These reads can
-be quite frequent. Hardware can also update the HFI table frequently.
-Concurrent access may cause a lot of lock contention. It gets worse as the
-number of CPUs increases.
+Intel Thread Director provides a classification value based on the type of
+instructions that CPU is currently executing. Use this classification to
+update the IPC class of the current task.
 
-Instead, create separate per-CPU IPCC scores that the scheduler can read
-without the HFI table lock.
+The responsibility for configuring and enabling both the Hardware Feedback
+Interface and Intel Thread Director lies with the HFI driver, but it should
+not directly handle tasks.
+
+Update the HFI driver to read the register that provides the classification
+result. Implement the arch_update_ipcc() interface of the scheduler under
+arch/x86 code to update the IPC class of individual tasks.
+
+Task classification only makes sense when used along with the HFI driver.
+Make HFI driver select CONFIG_IPC_CLASSES. However, users may still select
+CONFIG_IPC_CLASSES. Add function stubs to prevent build errors.
 
 Cc: Ben Segall <bsegall@google.com>
 Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
@@ -1427,17 +1498,258 @@ Cc: Joel Fernandes (Google) <joel@joelfernandes.org>
 Cc: Len Brown <len.brown@intel.com>
 Cc: Lukasz Luba <lukasz.luba@arm.com>
 Cc: Mel Gorman <mgorman@suse.de>
+Cc: Perry Yuan <Perry.Yuan@amd.com>
 Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Tim C. Chen <tim.c.chen@intel.com>
 Cc: Valentin Schneider <vschneid@redhat.com>
+Cc: Zhao Liu <zhao1.liu@linux.intel.com>
+Cc: x86@kernel.org
+Cc: linux-pm@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+---
+Changes since v3:
+ * Relocated the implementation of arch_update_ipcc() from drivers/thermal
+   to arch/x86. (Rafael)
+ * Moved the definition of MSR_IA32_HW_FEEDBACK_CHAR into this patch.
+   (Reported-by: kernel test robot <lkp@intel.com>)
+ * Select CONFIG_IPC_CLASSES when CONFIG_INTEL_HFI_THERMAL is selected to
+   reduce the configuration burden of the user/administrator. (Srinivas)
+
+Changes since v2:
+ * Removed the implementation of arch_has_ipc_classes().
+
+Changes since v1:
+ * Adjusted the result the classification of Intel Thread Director to start
+   at class 1. Class 0 for the scheduler means that the task is
+   unclassified.
+ * Redefined union hfi_thread_feedback_char_msr to ensure all
+   bit-fields are packed. (PeterZ)
+ * Removed CONFIG_INTEL_THREAD_DIRECTOR. (PeterZ)
+ * Shortened the names of the functions that implement IPC classes.
+ * Removed argument smt_siblings_idle from intel_hfi_update_ipcc().
+   (PeterZ)
+---
+ arch/x86/include/asm/msr-index.h  |  1 +
+ arch/x86/include/asm/topology.h   | 11 +++++++++
+ arch/x86/kernel/Makefile          |  2 ++
+ arch/x86/kernel/sched_ipcc.c      | 35 +++++++++++++++++++++++++++++
+ drivers/thermal/intel/Kconfig     |  1 +
+ drivers/thermal/intel/intel_hfi.c | 37 +++++++++++++++++++++++++++++++
+ 6 files changed, 87 insertions(+)
+ create mode 100644 arch/x86/kernel/sched_ipcc.c
+
+diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
+index 846067e1ee8b..476ace571147 100644
+--- a/arch/x86/include/asm/msr-index.h
++++ b/arch/x86/include/asm/msr-index.h
+@@ -1090,6 +1090,7 @@
+ /* Hardware Feedback Interface */
+ #define MSR_IA32_HW_FEEDBACK_PTR        0x17d0
+ #define MSR_IA32_HW_FEEDBACK_CONFIG     0x17d1
++#define MSR_IA32_HW_FEEDBACK_CHAR	0x17d2
+ 
+ /* x2APIC locked status */
+ #define MSR_IA32_XAPIC_DISABLE_STATUS	0xBD
+diff --git a/arch/x86/include/asm/topology.h b/arch/x86/include/asm/topology.h
+index 458c891a8273..389ddfad88e2 100644
+--- a/arch/x86/include/asm/topology.h
++++ b/arch/x86/include/asm/topology.h
+@@ -227,4 +227,15 @@ void init_freq_invariance_cppc(void);
+ #define arch_init_invariance_cppc init_freq_invariance_cppc
+ #endif
+ 
++#ifdef CONFIG_INTEL_HFI_THERMAL
++int intel_hfi_read_classid(u8 *classid);
++#else
++static inline int intel_hfi_read_classid(u8 *classid) { return -ENODEV; }
++#endif
++
++#ifdef CONFIG_IPC_CLASSES
++void intel_update_ipcc(struct task_struct *curr);
++#define arch_update_ipcc intel_update_ipcc
++#endif
++
+ #endif /* _ASM_X86_TOPOLOGY_H */
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index 42b5540dac58..d6854d5e6950 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -144,6 +144,8 @@ obj-$(CONFIG_AMD_MEM_ENCRYPT)		+= sev.o
+ 
+ obj-$(CONFIG_CFI_CLANG)			+= cfi.o
+ 
++obj-$(CONFIG_IPC_CLASSES)		+= sched_ipcc.o
++
+ ###
+ # 64 bit specific files
+ ifeq ($(CONFIG_X86_64),y)
+diff --git a/arch/x86/kernel/sched_ipcc.c b/arch/x86/kernel/sched_ipcc.c
+new file mode 100644
+index 000000000000..685e7b3b5375
+--- /dev/null
++++ b/arch/x86/kernel/sched_ipcc.c
+@@ -0,0 +1,35 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Intel support for scheduler IPC classes
++ *
++ * Copyright (c) 2023, Intel Corporation.
++ *
++ * Author: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
++ *
++ * On hybrid processors, the architecture differences between types of CPUs
++ * lead to different number of retired instructions per cycle (IPC). IPCs may
++ * differ further by classes of instructions.
++ *
++ * The scheduler assigns an IPC class to every task with arch_update_ipcc()
++ * from data that hardware provides. Implement this interface for x86.
++ *
++ * See kernel/sched/sched.h for details.
++ */
++
++#include <linux/sched.h>
++
++#include <asm/topology.h>
++
++void intel_update_ipcc(struct task_struct *curr)
++{
++	u8 hfi_class;
++
++	if (intel_hfi_read_classid(&hfi_class))
++		return;
++
++	/*
++	 * 0 is a valid classification for Intel Thread Director. A scheduler
++	 * IPCC class of 0 means that the task is unclassified. Adjust.
++	 */
++	curr->ipcc = hfi_class + 1;
++}
+diff --git a/drivers/thermal/intel/Kconfig b/drivers/thermal/intel/Kconfig
+index e3cfad10d5dd..eac04f5f61a5 100644
+--- a/drivers/thermal/intel/Kconfig
++++ b/drivers/thermal/intel/Kconfig
+@@ -107,6 +107,7 @@ config INTEL_HFI_THERMAL
+ 	depends on CPU_SUP_INTEL
+ 	depends on X86_THERMAL_VECTOR
+ 	select THERMAL_NETLINK
++	select IPC_CLASSES
+ 	help
+ 	  Select this option to enable the Hardware Feedback Interface. If
+ 	  selected, hardware provides guidance to the operating system on
+diff --git a/drivers/thermal/intel/intel_hfi.c b/drivers/thermal/intel/intel_hfi.c
+index 2527ae3836c7..166ddf5a8e4b 100644
+--- a/drivers/thermal/intel/intel_hfi.c
++++ b/drivers/thermal/intel/intel_hfi.c
+@@ -71,6 +71,15 @@ union cpuid6_edx {
+ 	u32 full;
+ };
+ 
++union hfi_thread_feedback_char_msr {
++	struct {
++		u64	classid : 8;
++		u64	__reserved : 55;
++		u64	valid : 1;
++	} split;
++	u64 full;
++};
++
+ /**
+  * struct hfi_cpu_data - HFI capabilities per CPU
+  * @perf_cap:		Performance capability
+@@ -170,6 +179,34 @@ static struct workqueue_struct *hfi_updates_wq;
+ #define HFI_UPDATE_INTERVAL		HZ
+ #define HFI_MAX_THERM_NOTIFY_COUNT	16
+ 
++/**
++ * intel_hfi_read_classid() - Read the currrent classid
++ * @classid:	Variable to which the classid will be written.
++ *
++ * Read the classification that Intel Thread Director has produced when this
++ * function is called. Thread classification must be enabled before calling
++ * this function.
++ *
++ * Return: 0 if the produced classification is valid. Error otherwise.
++ */
++int intel_hfi_read_classid(u8 *classid)
++{
++	union hfi_thread_feedback_char_msr msr;
++
++	/* We should not be here if ITD is not supported. */
++	if (!cpu_feature_enabled(X86_FEATURE_ITD)) {
++		pr_warn_once("task classification requested but not supported!");
++		return -ENODEV;
++	}
++
++	rdmsrl(MSR_IA32_HW_FEEDBACK_CHAR, msr.full);
++	if (!msr.split.valid)
++		return -EINVAL;
++
++	*classid = msr.split.classid;
++	return 0;
++}
++
+ static void get_hfi_caps(struct hfi_instance *hfi_instance,
+ 			 struct thermal_genl_cpu_caps *cpu_caps)
+ {
+-- 
+2.41.0
+
+
+From 439447f4ebcca1cb19509dbe615ae0217ea90130 Mon Sep 17 00:00:00 2001
+From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Date: Mon, 14 Nov 2022 08:23:41 -0800
+Subject: [PATCH 14/24] thermal: intel: hfi: Store per-CPU IPCC scores
+
+The scheduler reads the IPCC scores when balancing load. These reads can
+occur frequently and originate from many CPUs. Hardware may also
+occasionally update the HFI table. Controlling access with locks would
+cause contention.
+
+Cache the IPCC scores in separate per-CPU variables that the scheduler can
+use. Use a seqcount to synchronize memory accesses to these cached values.
+This eliminates the need for locks, as the sequence counter provides the
+memory ordering required to prevent the use of stale data.
+
+The HFI delayed workqueue guarantees that only one CPU writes the cached
+IPCC scores. The frequency of updates is low (every CONFIG_HZ jiffies or
+less), and the number of writes per update is in the order of tens. Writes
+should not starve reads.
+
+Only cache IPCC scores in this changeset. A subsequent changeset will
+use these scores.
+
+Cc: Ben Segall <bsegall@google.com>
+Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
+Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
+Cc: Ionela Voinescu <ionela.voinescu@arm.com>
+Cc: Joel Fernandes (Google) <joel@joelfernandes.org>
+Cc: Len Brown <len.brown@intel.com>
+Cc: Lukasz Luba <lukasz.luba@arm.com>
+Cc: Mel Gorman <mgorman@suse.de>
+Cc: Perry Yuan <Perry.Yuan@amd.com>
+Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Tim C. Chen <tim.c.chen@intel.com>
+Cc: Valentin Schneider <vschneid@redhat.com>
+Cc: Zhao Liu <zhao1.liu@linux.intel.com>
 Cc: x86@kernel.org
 Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Suggested-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * As Rafael requested, I reworked the memory ordering of the cached IPCC
+   scores. I selected a seqcount as is less expensive than a memory
+   barrier, which is not necessary anyways.
+ * Made alloc_hfi_ipcc_scores() return -ENOMEM on allocation failure.
+   (Rafael)
+ * Added a comment to describe hfi_ipcc_scores. (Rafael)
+
 Changes since v2:
  * Only create these per-CPU variables when Intel Thread Director is
    supported.
@@ -1445,14 +1757,14 @@ Changes since v2:
 Changes since v1:
  * Added this patch.
 ---
- drivers/thermal/intel/intel_hfi.c | 46 +++++++++++++++++++++++++++++++
- 1 file changed, 46 insertions(+)
+ drivers/thermal/intel/intel_hfi.c | 66 +++++++++++++++++++++++++++++++
+ 1 file changed, 66 insertions(+)
 
 diff --git a/drivers/thermal/intel/intel_hfi.c b/drivers/thermal/intel/intel_hfi.c
-index 2527ae3836c7..b06021828892 100644
+index 166ddf5a8e4b..28de9e6102b8 100644
 --- a/drivers/thermal/intel/intel_hfi.c
 +++ b/drivers/thermal/intel/intel_hfi.c
-@@ -29,6 +29,7 @@
+@@ -29,9 +29,11 @@
  #include <linux/kernel.h>
  #include <linux/math.h>
  #include <linux/mutex.h>
@@ -1460,12 +1772,18 @@ index 2527ae3836c7..b06021828892 100644
  #include <linux/percpu-defs.h>
  #include <linux/printk.h>
  #include <linux/processor.h>
-@@ -170,6 +171,43 @@ static struct workqueue_struct *hfi_updates_wq;
++#include <linux/seqlock.h>
+ #include <linux/slab.h>
+ #include <linux/spinlock.h>
+ #include <linux/string.h>
+@@ -179,6 +181,62 @@ static struct workqueue_struct *hfi_updates_wq;
  #define HFI_UPDATE_INTERVAL		HZ
  #define HFI_MAX_THERM_NOTIFY_COUNT	16
  
-+#ifdef CONFIG_IPC_CLASSES
++/* A cache of the HFI perf capabilities for lockless access. */
 +static int __percpu *hfi_ipcc_scores;
++/* Sequence counter for hfi_ipcc_scores */
++static seqcount_t hfi_ipcc_seqcount = SEQCNT_ZERO(hfi_ipcc_seqcount);
 +
 +static int alloc_hfi_ipcc_scores(void)
 +{
@@ -1476,44 +1794,61 @@ index 2527ae3836c7..b06021828892 100644
 +					 hfi_features.nr_classes,
 +					 sizeof(*hfi_ipcc_scores));
 +
-+	return !hfi_ipcc_scores;
++	return hfi_ipcc_scores ? 0 : -ENOMEM;
 +}
 +
-+static void set_hfi_ipcc_score(void *caps, int cpu)
++static void set_hfi_ipcc_scores(struct hfi_instance *hfi_instance)
 +{
-+	int i, *hfi_class;
++	int cpu;
 +
 +	if (!cpu_feature_enabled(X86_FEATURE_ITD))
 +		return;
 +
-+	hfi_class = per_cpu_ptr(hfi_ipcc_scores, cpu);
++	/*
++	 * Serialize with writes to the HFI table. It also protects the write
++	 * loop against seqcount readers running in interrupt context.
++	 */
++	raw_spin_lock_irq(&hfi_instance->table_lock);
++	/*
++	 * The seqcount implies store-release semantics to order stores with
++	 * lockless loads from the seqcount read side. It also implies a
++	 * compiler barrier.
++	 */
++	write_seqcount_begin(&hfi_ipcc_seqcount);
++	for_each_cpu(cpu, hfi_instance->cpus) {
++		int c, *scores;
++		s16 index;
 +
-+	for (i = 0;  i < hfi_features.nr_classes; i++) {
-+		struct hfi_cpu_data *class_caps;
++		index = per_cpu(hfi_cpu_info, cpu).index;
++		scores = per_cpu_ptr(hfi_ipcc_scores, cpu);
 +
-+		class_caps = caps + i * hfi_features.class_stride;
-+		WRITE_ONCE(hfi_class[i], class_caps->perf_cap);
++		for (c = 0;  c < hfi_features.nr_classes; c++) {
++			struct hfi_cpu_data *caps;
++
++			caps = hfi_instance->data +
++			       index * hfi_features.cpu_stride +
++			       c * hfi_features.class_stride;
++			scores[c] = caps->perf_cap;
++		}
 +	}
++
++	write_seqcount_end(&hfi_ipcc_seqcount);
++	raw_spin_unlock_irq(&hfi_instance->table_lock);
 +}
 +
-+#else
-+static int alloc_hfi_ipcc_scores(void) { return 0; }
-+static void set_hfi_ipcc_score(void *caps, int cpu) { }
-+#endif /* CONFIG_IPC_CLASSES */
-+
- static void get_hfi_caps(struct hfi_instance *hfi_instance,
- 			 struct thermal_genl_cpu_caps *cpu_caps)
- {
-@@ -192,6 +230,8 @@ static void get_hfi_caps(struct hfi_instance *hfi_instance,
- 		cpu_caps[i].efficiency = caps->ee_cap << 2;
+ /**
+  * intel_hfi_read_classid() - Read the currrent classid
+  * @classid:	Variable to which the classid will be written.
+@@ -274,6 +332,8 @@ static void update_capabilities(struct hfi_instance *hfi_instance)
+ 		thermal_genl_cpu_capability_event(cpu_count, &cpu_caps[i]);
  
- 		++i;
+ 	kfree(cpu_caps);
 +
-+		set_hfi_ipcc_score(caps, cpu);
- 	}
- 	raw_spin_unlock_irq(&hfi_instance->table_lock);
++	set_hfi_ipcc_scores(hfi_instance);
+ out:
+ 	mutex_unlock(&hfi_instance_lock);
  }
-@@ -580,8 +620,14 @@ void __init intel_hfi_init(void)
+@@ -617,8 +677,14 @@ void __init intel_hfi_init(void)
  	if (!hfi_updates_wq)
  		goto err_nomem;
  
@@ -1532,121 +1867,7 @@ index 2527ae3836c7..b06021828892 100644
 2.41.0
 
 
-From e5370b7985dff0ec126843320ef848114bc5ec4b Mon Sep 17 00:00:00 2001
-From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Mon, 14 Dec 2020 11:33:57 -0800
-Subject: [PATCH 14/24] thermal: intel: hfi: Update the IPC class of the
- current task
-
-Use Intel Thread Director classification to update the IPC class of a
-task. Implement the arch_update_ipcc() interface of the scheduler.
-
-Cc: Ben Segall <bsegall@google.com>
-Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc: Ionela Voinescu <ionela.voinescu@arm.com>
-Cc: Joel Fernandes (Google) <joel@joelfernandes.org>
-Cc: Len Brown <len.brown@intel.com>
-Cc: Lukasz Luba <lukasz.luba@arm.com>
-Cc: Mel Gorman <mgorman@suse.de>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Tim C. Chen <tim.c.chen@intel.com>
-Cc: Valentin Schneider <vschneid@redhat.com>
-Cc: x86@kernel.org
-Cc: linux-pm@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
-Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
----
-Changes since v2:
- * Removed the implementation of arch_has_ipc_classes().
-
-Changes since v1:
- * Adjusted the result the classification of Intel Thread Director to start
-   at class 1. Class 0 for the scheduler means that the task is
-   unclassified.
- * Redefined union hfi_thread_feedback_char_msr to ensure all
-   bit-fields are packed. (PeterZ)
- * Removed CONFIG_INTEL_THREAD_DIRECTOR. (PeterZ)
- * Shortened the names of the functions that implement IPC classes.
- * Removed argument smt_siblings_idle from intel_hfi_update_ipcc().
-   (PeterZ)
----
- arch/x86/include/asm/topology.h   |  6 ++++++
- drivers/thermal/intel/intel_hfi.c | 32 +++++++++++++++++++++++++++++++
- 2 files changed, 38 insertions(+)
-
-diff --git a/arch/x86/include/asm/topology.h b/arch/x86/include/asm/topology.h
-index 458c891a8273..ffcdac3f398f 100644
---- a/arch/x86/include/asm/topology.h
-+++ b/arch/x86/include/asm/topology.h
-@@ -227,4 +227,10 @@ void init_freq_invariance_cppc(void);
- #define arch_init_invariance_cppc init_freq_invariance_cppc
- #endif
- 
-+#if defined(CONFIG_IPC_CLASSES) && defined(CONFIG_INTEL_HFI_THERMAL)
-+void intel_hfi_update_ipcc(struct task_struct *curr);
-+
-+#define arch_update_ipcc intel_hfi_update_ipcc
-+#endif /* defined(CONFIG_IPC_CLASSES) && defined(CONFIG_INTEL_HFI_THERMAL) */
-+
- #endif /* _ASM_X86_TOPOLOGY_H */
-diff --git a/drivers/thermal/intel/intel_hfi.c b/drivers/thermal/intel/intel_hfi.c
-index b06021828892..530dcf57e06e 100644
---- a/drivers/thermal/intel/intel_hfi.c
-+++ b/drivers/thermal/intel/intel_hfi.c
-@@ -72,6 +72,17 @@ union cpuid6_edx {
- 	u32 full;
- };
- 
-+#ifdef CONFIG_IPC_CLASSES
-+union hfi_thread_feedback_char_msr {
-+	struct {
-+		u64	classid : 8;
-+		u64	__reserved : 55;
-+		u64	valid : 1;
-+	} split;
-+	u64 full;
-+};
-+#endif
-+
- /**
-  * struct hfi_cpu_data - HFI capabilities per CPU
-  * @perf_cap:		Performance capability
-@@ -174,6 +185,27 @@ static struct workqueue_struct *hfi_updates_wq;
- #ifdef CONFIG_IPC_CLASSES
- static int __percpu *hfi_ipcc_scores;
- 
-+void intel_hfi_update_ipcc(struct task_struct *curr)
-+{
-+	union hfi_thread_feedback_char_msr msr;
-+
-+	/* We should not be here if ITD is not supported. */
-+	if (!cpu_feature_enabled(X86_FEATURE_ITD)) {
-+		pr_warn_once("task classification requested but not supported!");
-+		return;
-+	}
-+
-+	rdmsrl(MSR_IA32_HW_FEEDBACK_CHAR, msr.full);
-+	if (!msr.split.valid)
-+		return;
-+
-+	/*
-+	 * 0 is a valid classification for Intel Thread Director. A scheduler
-+	 * IPCC class of 0 means that the task is unclassified. Adjust.
-+	 */
-+	curr->ipcc = msr.split.classid + 1;
-+}
-+
- static int alloc_hfi_ipcc_scores(void)
- {
- 	if (!cpu_feature_enabled(X86_FEATURE_ITD))
--- 
-2.41.0
-
-
-From cc179f382c3981b8b530e529bfd2254580c9a34e Mon Sep 17 00:00:00 2001
+From 80ebc572853e61d93437dc6a15bdb5768bde859a Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 25 May 2022 04:41:40 -0700
 Subject: [PATCH 15/24] thermal: intel: hfi: Report the IPC class score of a
@@ -1656,6 +1877,9 @@ Implement the arch_get_ipcc_score() interface of the scheduler. Use the
 performance capabilities of the extended Hardware Feedback Interface table
 as the IPC score.
 
+Use the cached per-CPU IPCC scores. A seqcount provides lockless access and
+the required memory ordering to avoid stale data.
+
 Cc: Ben Segall <bsegall@google.com>
 Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
 Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
@@ -1664,16 +1888,23 @@ Cc: Joel Fernandes (Google) <joel@joelfernandes.org>
 Cc: Len Brown <len.brown@intel.com>
 Cc: Lukasz Luba <lukasz.luba@arm.com>
 Cc: Mel Gorman <mgorman@suse.de>
+Cc: Perry Yuan <Perry.Yuan@amd.com>
 Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Tim C. Chen <tim.c.chen@intel.com>
 Cc: Valentin Schneider <vschneid@redhat.com>
+Cc: Zhao Liu <zhao1.liu@linux.intel.com>
 Cc: x86@kernel.org
 Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * Ordered memory loads using a seqcount.
+ * Removed local variable hfi_class from intel_hfi_get_ipcc_score().
+   (Rafael).
+
 Changes since v2:
  * None
 
@@ -1682,37 +1913,48 @@ Changes since v1:
    scheduler IPCC class (which starts at 1). (PeterZ)
  * Used the new interface names.
 ---
- arch/x86/include/asm/topology.h   |  2 ++
- drivers/thermal/intel/intel_hfi.c | 27 +++++++++++++++++++++++++++
- 2 files changed, 29 insertions(+)
+ arch/x86/include/asm/topology.h   |  4 ++++
+ drivers/thermal/intel/intel_hfi.c | 40 +++++++++++++++++++++++++++++--
+ 2 files changed, 42 insertions(+), 2 deletions(-)
 
 diff --git a/arch/x86/include/asm/topology.h b/arch/x86/include/asm/topology.h
-index ffcdac3f398f..c4fcd9c3c634 100644
+index 389ddfad88e2..e14f6932ccb5 100644
 --- a/arch/x86/include/asm/topology.h
 +++ b/arch/x86/include/asm/topology.h
-@@ -229,8 +229,10 @@ void init_freq_invariance_cppc(void);
+@@ -229,13 +229,17 @@ void init_freq_invariance_cppc(void);
  
- #if defined(CONFIG_IPC_CLASSES) && defined(CONFIG_INTEL_HFI_THERMAL)
- void intel_hfi_update_ipcc(struct task_struct *curr);
+ #ifdef CONFIG_INTEL_HFI_THERMAL
+ int intel_hfi_read_classid(u8 *classid);
 +unsigned long intel_hfi_get_ipcc_score(unsigned short ipcc, int cpu);
+ #else
+ static inline int intel_hfi_read_classid(u8 *classid) { return -ENODEV; }
++static inline unsigned long
++intel_hfi_get_ipcc_score(unsigned short ipcc, int cpu) { return -ENODEV; }
+ #endif
  
- #define arch_update_ipcc intel_hfi_update_ipcc
+ #ifdef CONFIG_IPC_CLASSES
+ void intel_update_ipcc(struct task_struct *curr);
+ #define arch_update_ipcc intel_update_ipcc
 +#define arch_get_ipcc_score intel_hfi_get_ipcc_score
- #endif /* defined(CONFIG_IPC_CLASSES) && defined(CONFIG_INTEL_HFI_THERMAL) */
+ #endif
  
  #endif /* _ASM_X86_TOPOLOGY_H */
 diff --git a/drivers/thermal/intel/intel_hfi.c b/drivers/thermal/intel/intel_hfi.c
-index 530dcf57e06e..fa9b4a678d92 100644
+index 28de9e6102b8..25012777f2b1 100644
 --- a/drivers/thermal/intel/intel_hfi.c
 +++ b/drivers/thermal/intel/intel_hfi.c
-@@ -206,6 +206,33 @@ void intel_hfi_update_ipcc(struct task_struct *curr)
- 	curr->ipcc = msr.split.classid + 1;
+@@ -198,6 +198,42 @@ static int alloc_hfi_ipcc_scores(void)
+ 	return hfi_ipcc_scores ? 0 : -ENOMEM;
  }
  
 +unsigned long intel_hfi_get_ipcc_score(unsigned short ipcc, int cpu)
 +{
-+	unsigned short hfi_class;
-+	int *scores;
++	int *scores, score;
++	unsigned long seq;
++
++	scores = per_cpu_ptr(hfi_ipcc_scores, cpu);
++	if (!scores)
++		return -ENODEV;
 +
 +	if (cpu < 0 || cpu >= nr_cpu_ids)
 +		return -EINVAL;
@@ -1724,26 +1966,42 @@ index 530dcf57e06e..fa9b4a678d92 100644
 +	 * Scheduler IPC classes start at 1. HFI classes start at 0.
 +	 * See note intel_hfi_update_ipcc().
 +	 */
-+	hfi_class = ipcc - 1;
-+
-+	if (hfi_class >= hfi_features.nr_classes)
++	if (ipcc >= hfi_features.nr_classes + 1)
 +		return -EINVAL;
 +
-+	scores = per_cpu_ptr(hfi_ipcc_scores, cpu);
-+	if (!scores)
-+		return -ENODEV;
++	/*
++	 * The seqcount implies load-acquire semantics to order loads with
++	 * lockless stores of the write side in set_hfi_ipcc_score(). It
++	 * also implies a compiler barrier.
++	 */
++	do {
++		seq = read_seqcount_begin(&hfi_ipcc_seqcount);
++		/* @ipcc is never 0. */
++		score = scores[ipcc - 1];
++	} while (read_seqcount_retry(&hfi_ipcc_seqcount, seq));
 +
-+	return READ_ONCE(scores[hfi_class]);
++	return score;
 +}
 +
- static int alloc_hfi_ipcc_scores(void)
+ static void set_hfi_ipcc_scores(struct hfi_instance *hfi_instance)
  {
- 	if (!cpu_feature_enabled(X86_FEATURE_ITD))
+ 	int cpu;
+@@ -212,8 +248,8 @@ static void set_hfi_ipcc_scores(struct hfi_instance *hfi_instance)
+ 	raw_spin_lock_irq(&hfi_instance->table_lock);
+ 	/*
+ 	 * The seqcount implies store-release semantics to order stores with
+-	 * lockless loads from the seqcount read side. It also implies a
+-	 * compiler barrier.
++	 * lockless loads from the seqcount read side in
++	 * intel_hfi_get_ipcc_score(). It also implies a compiler barrier.
+ 	 */
+ 	write_seqcount_begin(&hfi_ipcc_seqcount);
+ 	for_each_cpu(cpu, hfi_instance->cpus) {
 -- 
 2.41.0
 
 
-From 12e4ea10672c1b6351eead308ed1a7faf1d1a2d6 Mon Sep 17 00:00:00 2001
+From eb90024b7675be0f4cd0eb55885fed41c4b1431c Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 18 Aug 2022 13:24:41 -0700
 Subject: [PATCH 16/24] thermal: intel: hfi: Define a default class for
@@ -1776,8 +2034,12 @@ Cc: Valentin Schneider <vschneid@redhat.com>
 Cc: x86@kernel.org
 Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
+Acked-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * Added Acked-by tag from Rafael.
+
 Changes since v2:
  * None
 
@@ -1788,12 +2050,12 @@ Changes since v1:
  1 file changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/thermal/intel/intel_hfi.c b/drivers/thermal/intel/intel_hfi.c
-index fa9b4a678d92..7ea6acce7107 100644
+index 25012777f2b1..197b55cd6ba5 100644
 --- a/drivers/thermal/intel/intel_hfi.c
 +++ b/drivers/thermal/intel/intel_hfi.c
-@@ -185,6 +185,19 @@ static struct workqueue_struct *hfi_updates_wq;
- #ifdef CONFIG_IPC_CLASSES
- static int __percpu *hfi_ipcc_scores;
+@@ -181,6 +181,19 @@ static struct workqueue_struct *hfi_updates_wq;
+ #define HFI_UPDATE_INTERVAL		HZ
+ #define HFI_MAX_THERM_NOTIFY_COUNT	16
  
 +/*
 + * A task may be unclassified if it has been recently created, spend most of
@@ -1808,10 +2070,10 @@ index fa9b4a678d92..7ea6acce7107 100644
 + */
 +#define HFI_UNCLASSIFIED_DEFAULT 1
 +
- void intel_hfi_update_ipcc(struct task_struct *curr)
- {
- 	union hfi_thread_feedback_char_msr msr;
-@@ -215,7 +228,7 @@ unsigned long intel_hfi_get_ipcc_score(unsigned short ipcc, int cpu)
+ /* A cache of the HFI perf capabilities for lockless access. */
+ static int __percpu *hfi_ipcc_scores;
+ /* Sequence counter for hfi_ipcc_scores */
+@@ -211,7 +224,7 @@ unsigned long intel_hfi_get_ipcc_score(unsigned short ipcc, int cpu)
  		return -EINVAL;
  
  	if (ipcc == IPC_CLASS_UNCLASSIFIED)
@@ -1824,7 +2086,7 @@ index fa9b4a678d92..7ea6acce7107 100644
 2.41.0
 
 
-From 8ab7b829e40fb96094c6947ed089d044cd635f36 Mon Sep 17 00:00:00 2001
+From 26881f7f3d01f9f69609a5bf0fdcb173d9ca6d1a Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 12 Oct 2020 16:58:58 -0700
 Subject: [PATCH 17/24] thermal: intel: hfi: Enable the Intel Thread Director
@@ -1845,16 +2107,25 @@ Cc: Joel Fernandes (Google) <joel@joelfernandes.org>
 Cc: Len Brown <len.brown@intel.com>
 Cc: Lukasz Luba <lukasz.luba@arm.com>
 Cc: Mel Gorman <mgorman@suse.de>
+Cc: Perry Yuan <Perry.Yuan@amd.com>
 Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Tim C. Chen <tim.c.chen@intel.com>
 Cc: Valentin Schneider <vschneid@redhat.com>
+Cc: Zhao Liu <zhao1.liu@linux.intel.com>
 Cc: x86@kernel.org
 Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
+Acked-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com> # intel_hfi.c
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * Dropped the definition of MSR_IA32_HW_FEEDBACK_CHAR. It is now added in
+   patch 14 to fix a build break during bisection.
+   (Reported-by: kernel test robot <lkp@intel.com>).
+ * Added Acked-by from Rafael.
+
 Changes since v2:
  * Use the new sched_enable_ipc_classes() interface to enable the use of
    IPC classes in the scheduler.
@@ -1862,28 +2133,35 @@ Changes since v2:
 Changes since v1:
  * None
 ---
- arch/x86/include/asm/msr-index.h  |  2 ++
- drivers/thermal/intel/intel_hfi.c | 40 +++++++++++++++++++++++++++++--
+ arch/x86/include/asm/msr-index.h  |  1 +
+ drivers/thermal/intel/intel_hfi.c | 41 +++++++++++++++++++++++++++++--
  2 files changed, 40 insertions(+), 2 deletions(-)
 
 diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
-index 117e4e977b55..b4a5de303b88 100644
+index 476ace571147..c5821e276f04 100644
 --- a/arch/x86/include/asm/msr-index.h
 +++ b/arch/x86/include/asm/msr-index.h
-@@ -1089,6 +1089,8 @@
+@@ -1090,6 +1090,7 @@
  /* Hardware Feedback Interface */
  #define MSR_IA32_HW_FEEDBACK_PTR        0x17d0
  #define MSR_IA32_HW_FEEDBACK_CONFIG     0x17d1
 +#define MSR_IA32_HW_FEEDBACK_THREAD_CONFIG 0x17d4
-+#define MSR_IA32_HW_FEEDBACK_CHAR	0x17d2
+ #define MSR_IA32_HW_FEEDBACK_CHAR	0x17d2
  
  /* x2APIC locked status */
- #define MSR_IA32_XAPIC_DISABLE_STATUS	0xBD
 diff --git a/drivers/thermal/intel/intel_hfi.c b/drivers/thermal/intel/intel_hfi.c
-index 7ea6acce7107..35d947f47550 100644
+index 197b55cd6ba5..c22a31546494 100644
 --- a/drivers/thermal/intel/intel_hfi.c
 +++ b/drivers/thermal/intel/intel_hfi.c
-@@ -48,6 +48,8 @@
+@@ -33,6 +33,7 @@
+ #include <linux/percpu-defs.h>
+ #include <linux/printk.h>
+ #include <linux/processor.h>
++#include <linux/sched/topology.h>
+ #include <linux/seqlock.h>
+ #include <linux/slab.h>
+ #include <linux/spinlock.h>
+@@ -49,6 +50,8 @@
  /* Hardware Feedback Interface MSR configuration bits */
  #define HW_FEEDBACK_PTR_VALID_BIT		BIT(0)
  #define HW_FEEDBACK_CONFIG_HFI_ENABLE_BIT	BIT(0)
@@ -1892,7 +2170,7 @@ index 7ea6acce7107..35d947f47550 100644
  
  /* CPUID detection and enumeration definitions for HFI */
  
-@@ -72,6 +74,15 @@ union cpuid6_edx {
+@@ -73,6 +76,15 @@ union cpuid6_edx {
  	u32 full;
  };
  
@@ -1905,10 +2183,10 @@ index 7ea6acce7107..35d947f47550 100644
 +	u32 full;
 +};
 +
- #ifdef CONFIG_IPC_CLASSES
  union hfi_thread_feedback_char_msr {
  	struct {
-@@ -506,6 +517,11 @@ void intel_hfi_online(unsigned int cpu)
+ 		u64	classid : 8;
+@@ -540,6 +552,11 @@ void intel_hfi_online(unsigned int cpu)
  
  	init_hfi_cpu_index(info);
  
@@ -1920,7 +2198,7 @@ index 7ea6acce7107..35d947f47550 100644
  	/*
  	 * Now check if the HFI instance of the package/die of @cpu has been
  	 * initialized (by checking its header). In such case, all we have to
-@@ -561,8 +577,22 @@ void intel_hfi_online(unsigned int cpu)
+@@ -595,8 +612,22 @@ void intel_hfi_online(unsigned int cpu)
  	 */
  	rdmsrl(MSR_IA32_HW_FEEDBACK_CONFIG, msr_val);
  	msr_val |= HW_FEEDBACK_CONFIG_HFI_ENABLE_BIT;
@@ -1943,7 +2221,7 @@ index 7ea6acce7107..35d947f47550 100644
  unlock:
  	mutex_unlock(&hfi_instance_lock);
  	return;
-@@ -640,8 +670,14 @@ static __init int hfi_parse_features(void)
+@@ -674,8 +705,14 @@ static __init int hfi_parse_features(void)
  	 */
  	hfi_features.class_stride = nr_capabilities;
  
@@ -1964,7 +2242,7 @@ index 7ea6acce7107..35d947f47550 100644
 2.41.0
 
 
-From 4d9094a05a729a9c9bf010f8e86c154e7e14184a Mon Sep 17 00:00:00 2001
+From 35e7b0af23017fd9f7471032950e1956ab5efaf9 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Fri, 22 Jul 2022 17:17:38 -0700
 Subject: [PATCH 18/24] sched/task_struct: Add helpers for IPC classification
@@ -1996,6 +2274,9 @@ Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * None
 
@@ -2035,7 +2316,7 @@ index 74b3605a9980..e745496e69a1 100644
 2.41.0
 
 
-From 84b1fea2e1de96ef2cf2efc74eb475b63d63598e Mon Sep 17 00:00:00 2001
+From 29fae7031e399dbf6a54aab706c50e516fd6d79f Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 2 Aug 2022 04:01:15 -0700
 Subject: [PATCH 19/24] sched/core: Initialize helpers of task classification
@@ -2061,6 +2342,9 @@ Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * None
 
@@ -2087,7 +2371,7 @@ index 8aa51444f145..3c3d31f8362d 100644
 2.41.0
 
 
-From c629f8c8f113399b2c183381796841cafef2a04b Mon Sep 17 00:00:00 2001
+From fe87906b827c13018586ab25eb79bf8eda12e70d Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 03:48:37 -0700
 Subject: [PATCH 20/24] sched/fair: Introduce sched_smt_siblings_idle()
@@ -2137,6 +2421,9 @@ percentage of the average.
 
 All metrics are similar for the inline and non-inline cases.
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * Brought back this previously dropped patch.
  * Profiled inline vs non-inline is_core_idle(). I found not major penalty.
@@ -2162,7 +2449,7 @@ index e745496e69a1..9928881d4ccf 100644
 +
  #endif
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 5eb68c9c875e..5929970a6a61 100644
+index 4fbf87705952..6eea0d2a3156 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -1186,7 +1186,14 @@ update_stats_curr_start(struct cfs_rq *cfs_rq, struct sched_entity *se)
@@ -2190,7 +2477,7 @@ index 5eb68c9c875e..5929970a6a61 100644
  		idle_core = cpu;
  
  	return idle_core;
-@@ -9540,7 +9547,8 @@ static bool sched_use_asym_prio(struct sched_domain *sd, int cpu)
+@@ -9562,7 +9569,8 @@ static bool sched_use_asym_prio(struct sched_domain *sd, int cpu)
  	if (!sched_smt_active())
  		return true;
  
@@ -2204,18 +2491,21 @@ index 5eb68c9c875e..5929970a6a61 100644
 2.41.0
 
 
-From eda5d51272444f8e1850f061799dea04fcbef1cf Mon Sep 17 00:00:00 2001
+From 4dd3d3297a3fdc77598c0a40c57b423feed4096b Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 21 Jun 2022 16:52:44 -0700
-Subject: [PATCH 21/24] thermal: intel: hfi: Implement model-specific checks
- for task classification
+Subject: [PATCH 21/24] x86/sched/ipcc: Implement model-specific checks for
+ task classification
 
 In Alder Lake and Raptor Lake, the result of thread classification is more
 accurate when only one SMT sibling is busy. Classification results for
 class 2 and 3 are always reliable.
 
-To avoid unnecessary migrations, only update the class of a task if it has
-been the same during 4 consecutive user ticks.
+Changing the classification of a task too frequently may lead to
+unnecessary migrations.
+
+Only update the class of a task if it is considered accurate and has been
+constant during four consecutive user ticks.
 
 Cc: Ben Segall <bsegall@google.com>
 Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
@@ -2225,16 +2515,21 @@ Cc: Joel Fernandes (Google) <joel@joelfernandes.org>
 Cc: Len Brown <len.brown@intel.com>
 Cc: Lukasz Luba <lukasz.luba@arm.com>
 Cc: Mel Gorman <mgorman@suse.de>
+Cc: Perry Yuan <Perry.Yuan@amd.com>
 Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Tim C. Chen <tim.c.chen@intel.com>
 Cc: Valentin Schneider <vschneid@redhat.com>
+Cc: Zhao Liu <zhao1.liu@linux.intel.com>
 Cc: x86@kernel.org
 Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * Relocated this code to arch/x86/kernel/sched_ipcc.c (Rafael)
+
 Changes since v2:
  * None
 
@@ -2246,24 +2541,19 @@ Changes since v1:
  * Reworked helper functions to use sched_smt_siblings_idle() to query
    the idle state of the SMT siblings of a CPU.
 ---
- drivers/thermal/intel/intel_hfi.c | 60 ++++++++++++++++++++++++++++++-
+ arch/x86/kernel/sched_ipcc.c | 60 +++++++++++++++++++++++++++++++++++-
  1 file changed, 59 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/thermal/intel/intel_hfi.c b/drivers/thermal/intel/intel_hfi.c
-index 35d947f47550..fdb53e4cabc1 100644
---- a/drivers/thermal/intel/intel_hfi.c
-+++ b/drivers/thermal/intel/intel_hfi.c
-@@ -40,6 +40,7 @@
- #include <linux/workqueue.h>
+diff --git a/arch/x86/kernel/sched_ipcc.c b/arch/x86/kernel/sched_ipcc.c
+index 685e7b3b5375..dd73fc8be49b 100644
+--- a/arch/x86/kernel/sched_ipcc.c
++++ b/arch/x86/kernel/sched_ipcc.c
+@@ -18,11 +18,67 @@
  
- #include <asm/msr.h>
+ #include <linux/sched.h>
+ 
 +#include <asm/intel-family.h>
- 
- #include "../thermal_core.h"
- #include "intel_hfi.h"
-@@ -209,9 +210,64 @@ static int __percpu *hfi_ipcc_scores;
-  */
- #define HFI_UNCLASSIFIED_DEFAULT 1
+ #include <asm/topology.h>
  
 +#define CLASS_DEBOUNCER_SKIPS 4
 +
@@ -2315,40 +2605,38 @@ index 35d947f47550..fdb53e4cabc1 100644
 +		return false;
 +
 +	default:
-+		return true;
++		return false;
 +	}
 +}
 +
- void intel_hfi_update_ipcc(struct task_struct *curr)
+ void intel_update_ipcc(struct task_struct *curr)
  {
- 	union hfi_thread_feedback_char_msr msr;
+ 	u8 hfi_class;
 +	bool idle;
  
- 	/* We should not be here if ITD is not supported. */
- 	if (!cpu_feature_enabled(X86_FEATURE_ITD)) {
-@@ -227,7 +283,9 @@ void intel_hfi_update_ipcc(struct task_struct *curr)
+ 	if (intel_hfi_read_classid(&hfi_class))
+ 		return;
+@@ -31,5 +87,7 @@ void intel_update_ipcc(struct task_struct *curr)
  	 * 0 is a valid classification for Intel Thread Director. A scheduler
  	 * IPCC class of 0 means that the task is unclassified. Adjust.
  	 */
--	curr->ipcc = msr.split.classid + 1;
+-	curr->ipcc = hfi_class + 1;
 +	idle = sched_smt_siblings_idle(task_cpu(curr));
-+	if (classification_is_accurate(msr.split.classid, idle))
-+		debounce_and_update_class(curr, msr.split.classid + 1);
++	if (classification_is_accurate(hfi_class, idle))
++		debounce_and_update_class(curr, hfi_class + 1);
  }
- 
- unsigned long intel_hfi_get_ipcc_score(unsigned short ipcc, int cpu)
 -- 
 2.41.0
 
 
-From a43d84c9a8c3e3f5626e82ffa2b8a584a257d783 Mon Sep 17 00:00:00 2001
+From f419e221bd03bfad9649e35ad581e517e9fa080d Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 22 Sep 2020 13:14:07 -0700
 Subject: [PATCH 22/24] x86/cpufeatures: Add feature bit for HRESET
 
-The HRESET instruction prevents the classification of the current task
-from influencing the classification of the next task when running serially
-on the same logical processor.
+The HRESET instruction isolates the classification of individual
+tasks when they run sequentially on the same logical processor. It resets
+the classification history that the logical processor maintains.
 
 Cc: Ben Segall <bsegall@google.com>
 Cc: Daniel Bristot de Oliveira <bristot@redhat.com>
@@ -2358,45 +2646,48 @@ Cc: Joel Fernandes (Google) <joel@joelfernandes.org>
 Cc: Len Brown <len.brown@intel.com>
 Cc: Lukasz Luba <lukasz.luba@arm.com>
 Cc: Mel Gorman <mgorman@suse.de>
+Cc: Perry Yuan <Perry.Yuan@amd.com>
 Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 Cc: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Tim C. Chen <tim.c.chen@intel.com>
 Cc: Valentin Schneider <vschneid@redhat.com>
+Cc: Zhao Liu <zhao1.liu@linux.intel.com>
 Cc: x86@kernel.org
 Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * Moved definition of HRESET to its correct leaf: CPUID_7_1_EAX (Zhao)
+
 Changes since v2:
  * None
 
 Changes since v1:
  * None
 ---
- arch/x86/include/asm/cpufeatures.h | 2 ++
- arch/x86/include/asm/msr-index.h   | 4 +++-
- arch/x86/kernel/cpu/scattered.c    | 1 +
- 3 files changed, 6 insertions(+), 1 deletion(-)
+ arch/x86/include/asm/cpufeatures.h | 1 +
+ arch/x86/include/asm/msr-index.h   | 3 +++
+ 2 files changed, 4 insertions(+)
 
 diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
-index 02f10cd5c753..abb1487945fe 100644
+index 02f10cd5c753..e32281b3a3db 100644
 --- a/arch/x86/include/asm/cpufeatures.h
 +++ b/arch/x86/include/asm/cpufeatures.h
-@@ -308,6 +308,8 @@
- 
- #define X86_FEATURE_MSR_TSX_CTRL	(11*32+20) /* "" MSR IA32_TSX_CTRL (Intel) implemented */
- 
-+#define X86_FEATURE_HRESET		(11*32+23) /* Hardware history reset instruction */
-+
+@@ -311,6 +311,7 @@
  /* Intel-defined CPU features, CPUID level 0x00000007:1 (EAX), word 12 */
  #define X86_FEATURE_AVX_VNNI		(12*32+ 4) /* AVX VNNI instructions */
  #define X86_FEATURE_AVX512_BF16		(12*32+ 5) /* AVX512 BFLOAT16 instructions */
++#define X86_FEATURE_HRESET		(12*32+22) /* Hardware history reset instruction */
+ 
+ /* AMD-defined CPU features, CPUID level 0x80000008 (EBX), word 13 */
+ #define X86_FEATURE_CLZERO		(13*32+ 0) /* CLZERO instruction */
 diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
-index b4a5de303b88..4ef01ce8eadb 100644
+index c5821e276f04..373bca6c7dae 100644
 --- a/arch/x86/include/asm/msr-index.h
 +++ b/arch/x86/include/asm/msr-index.h
-@@ -1092,6 +1092,9 @@
+@@ -1093,6 +1093,9 @@
  #define MSR_IA32_HW_FEEDBACK_THREAD_CONFIG 0x17d4
  #define MSR_IA32_HW_FEEDBACK_CHAR	0x17d2
  
@@ -2406,29 +2697,11 @@ index b4a5de303b88..4ef01ce8eadb 100644
  /* x2APIC locked status */
  #define MSR_IA32_XAPIC_DISABLE_STATUS	0xBD
  #define LEGACY_XAPIC_DISABLED		BIT(0) /*
-@@ -1099,5 +1102,4 @@
- 						* disabling x2APIC will cause
- 						* a #GP
- 						*/
--
- #endif /* _ASM_X86_MSR_INDEX_H */
-diff --git a/arch/x86/kernel/cpu/scattered.c b/arch/x86/kernel/cpu/scattered.c
-index fc01f81f6e2a..b8ad312d3694 100644
---- a/arch/x86/kernel/cpu/scattered.c
-+++ b/arch/x86/kernel/cpu/scattered.c
-@@ -28,6 +28,7 @@ static const struct cpuid_bit cpuid_bits[] = {
- 	{ X86_FEATURE_EPB,		CPUID_ECX,  3, 0x00000006, 0 },
- 	{ X86_FEATURE_INTEL_PPIN,	CPUID_EBX,  0, 0x00000007, 1 },
- 	{ X86_FEATURE_RRSBA_CTRL,	CPUID_EDX,  2, 0x00000007, 2 },
-+	{ X86_FEATURE_HRESET,		CPUID_EAX, 22, 0x00000007, 1 },
- 	{ X86_FEATURE_CQM_LLC,		CPUID_EDX,  1, 0x0000000f, 0 },
- 	{ X86_FEATURE_CQM_OCCUP_LLC,	CPUID_EDX,  0, 0x0000000f, 1 },
- 	{ X86_FEATURE_CQM_MBM_TOTAL,	CPUID_EDX,  1, 0x0000000f, 1 },
 -- 
 2.41.0
 
 
-From 487fbd28cea3618f465ead12fa5a49151ae3a8eb Mon Sep 17 00:00:00 2001
+From dd09649eabf5cc64197e3e640faa23858d362862 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 14 Oct 2020 09:33:43 -0700
 Subject: [PATCH 23/24] x86/hreset: Configure history reset
@@ -2454,6 +2727,9 @@ Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * None
 
@@ -2465,7 +2741,7 @@ Changes since v1:
  1 file changed, 22 insertions(+), 1 deletion(-)
 
 diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index c34bdba57993..98b48cf80ec2 100644
+index d298d70f74ce..2a356188e707 100644
 --- a/arch/x86/kernel/cpu/common.c
 +++ b/arch/x86/kernel/cpu/common.c
 @@ -411,6 +411,26 @@ static __always_inline void setup_umip(struct cpuinfo_x86 *c)
@@ -2512,7 +2788,7 @@ index c34bdba57993..98b48cf80ec2 100644
 2.41.0
 
 
-From a92d365ffc08571e345f6a1336a703283ab562bc Mon Sep 17 00:00:00 2001
+From acacea92906d884f06e1bec5633c4d9c04066880 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 23 May 2022 09:36:27 -0700
 Subject: [PATCH 24/24] x86/process: Reset hardware history in context switch
@@ -2539,6 +2815,9 @@ Cc: linux-pm@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
+Changes since v3:
+ * None
+
 Changes since v2:
  * None
 
@@ -2610,7 +2889,7 @@ index 000000000000..d68ca2fb8642
 +
 +#endif /* _ASM_X86_HRESET_H */
 diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index 98b48cf80ec2..67bf6fbae082 100644
+index 2a356188e707..5e0210acee98 100644
 --- a/arch/x86/kernel/cpu/common.c
 +++ b/arch/x86/kernel/cpu/common.c
 @@ -52,6 +52,7 @@
