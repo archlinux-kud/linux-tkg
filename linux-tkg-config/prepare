@@ -822,21 +822,7 @@ _tkg_srcprep() {
     fi
   elif [ "${_cpusched}" = "bore" ]; then
     _msg="Applying BORE patch"
-    case $_kver in
-      515)
-        _commit=f750b274a20c4e933cfb551b9516cd8b9a79cccb
-        _bore_ver=bore2.0.1
-        curl "https://raw.githubusercontent.com/firelzrd/bore-scheduler/${_commit}/stable/0001-linux-5.15.y-${_bore_ver}.patch" > "$srcdir"/0001-bore.patch
-        ;;
-      601)
-        _commit=95ad58eef4b52100afd7c2be749e716bb4a6c9ac
-        _bore_ver=bore2.4.1
-        curl "https://raw.githubusercontent.com/firelzrd/bore-scheduler/${_commit}/bore-stable/0001-linux6.1.y-${_bore_ver}.patch" > "$srcdir"/0001-bore.patch
-        ;;
-      *)
-        curl "https://raw.githubusercontent.com/CachyOS/kernel-patches/master/${_basekernel}/sched/0001-bore.patch" > "$srcdir"/0001-bore.patch
-        ;;
-    esac
+    curl "https://raw.githubusercontent.com/CachyOS/kernel-patches/master/${_basekernel}/sched/0001-bore.patch" > "$srcdir"/0001-bore.patch
     tkgpatch="$srcdir/0001-bore.patch" && _tkg_patcher
   elif [ "${_cpusched}" = "cfs" ]; then
     _msg="Applying Glitched CFS additions patch"
