@@ -1,4 +1,4 @@
-From e2c8f3ae3deaf7ccc21d8969a4b8b672c3e82fd9 Mon Sep 17 00:00:00 2001
+From 1026be2c739a420131dd4887196a2a7a41c8dfce Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 5 Oct 2020 04:41:59 -0700
 Subject: [PATCH 01/24] sched/task_struct: Introduce IPC classes of tasks
@@ -112,7 +112,7 @@ index e945ca317fa4..da24147db2c7 100644
 2.41.0
 
 
-From 59b8285f579e0914ab67de92d1c53b13d663a441 Mon Sep 17 00:00:00 2001
+From dd65ebc5a4f17474cee50830d67fd19c72e4e645 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 04:14:11 -0700
 Subject: [PATCH 02/24] sched: Add interfaces for IPC classes
@@ -292,7 +292,7 @@ index 8739c2a5a54e..60e03d15f58c 100644
 2.41.0
 
 
-From e03f56e9498ff28649f78d81b36b77ef747e727e Mon Sep 17 00:00:00 2001
+From 5dcd50cde3f89caa072238ff300152ca8f889c0c Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 30 Dec 2021 17:27:52 -0800
 Subject: [PATCH 03/24] sched/core: Initialize the IPC class of a new task
@@ -348,7 +348,7 @@ index 1e6e7267283e..305f08977b13 100644
 2.41.0
 
 
-From 0c4b702ec4f8882c12f7b9689b183a1d8aa1a871 Mon Sep 17 00:00:00 2001
+From 6470c940ca3361aab8ce3a8f3e513c2b75479127 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 23 May 2022 16:58:08 -0700
 Subject: [PATCH 04/24] sched/core: Add user_tick as argument to
@@ -433,7 +433,7 @@ index 717fcb9fb14a..b444b6f5f585 100644
 2.41.0
 
 
-From 2a2a9f2673a5a13e60db6033c5a0185f810d70b3 Mon Sep 17 00:00:00 2001
+From a71e4d9a88ee3ce0803f21d3ec728c18ae7e3feb Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 19:31:42 -0700
 Subject: [PATCH 05/24] sched/core: Update the IPC class of the current task
@@ -491,7 +491,7 @@ index c4cc278360a8..196542adea87 100644
 2.41.0
 
 
-From d4b6b0fd19b34f1411a4dfcdc5dc927cab1c6152 Mon Sep 17 00:00:00 2001
+From 4aa97dc3642569a83d04ed4f90f6901459903687 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 6 Jun 2022 18:02:04 -0700
 Subject: [PATCH 06/24] sched/fair: Collect load-balancing stats for IPC
@@ -555,7 +555,7 @@ Changes since v1:
  1 file changed, 79 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index be86822f643a..240b8c1609e3 100644
+index c7b1ab9d89d7..ffc94dc5f6ff 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -8963,6 +8963,11 @@ struct sg_lb_stats {
@@ -669,7 +669,7 @@ index be86822f643a..240b8c1609e3 100644
 2.41.0
 
 
-From c37e89ad9f64f71d457a7a89352ae69c73a697e0 Mon Sep 17 00:00:00 2001
+From e9a80f49b4118d9e6eae2f44d9d5dfe8b97e167a Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 6 Sep 2022 13:32:52 -0700
 Subject: [PATCH 07/24] sched/fair: Compute IPC class scores for load balancing
@@ -729,7 +729,7 @@ Changes since v1:
  1 file changed, 68 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 240b8c1609e3..c8e8a5cab471 100644
+index ffc94dc5f6ff..6784c38d743d 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -8967,6 +8967,8 @@ struct sg_lb_stats {
@@ -832,7 +832,7 @@ index 240b8c1609e3..c8e8a5cab471 100644
 2.41.0
 
 
-From 99a2bdcbb4b41321c1d7f15d149c3604e84d917f Mon Sep 17 00:00:00 2001
+From 16561e97b7a01258d32ace0cff305f0c78e77dba Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 25 Jul 2022 13:36:02 -0700
 Subject: [PATCH 08/24] sched/fair: Use IPCC stats to break ties between
@@ -884,7 +884,7 @@ Changes since v1:
  1 file changed, 72 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index c8e8a5cab471..710102858ad9 100644
+index 6784c38d743d..b27419531671 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -9429,6 +9429,60 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
@@ -984,7 +984,7 @@ index c8e8a5cab471..710102858ad9 100644
 2.41.0
 
 
-From 982819dd24b09cf037d3c3ca8f035592f7f94a81 Mon Sep 17 00:00:00 2001
+From 44580324b7812c9f109cd75e8b4705028259d3b4 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Fri, 20 Jan 2023 15:08:37 -0800
 Subject: [PATCH 09/24] sched/fair: Use IPCC stats to break ties between
@@ -1033,7 +1033,7 @@ Changes since v1:
  1 file changed, 20 insertions(+), 3 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 710102858ad9..de5e1157c142 100644
+index b27419531671..9bd12848dcc0 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -9499,6 +9499,12 @@ static void update_sg_lb_stats_scores(struct sg_lb_stats *sgs,
@@ -1078,7 +1078,7 @@ index 710102858ad9..de5e1157c142 100644
 2.41.0
 
 
-From c1be16cf1ccd43b1ca02374e9c9549b28d658ade Mon Sep 17 00:00:00 2001
+From 0db190244663ae81b3cbc3520c86bc6f5e145c88 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 10 Aug 2022 14:43:11 -0700
 Subject: [PATCH 10/24] sched/fair: Use IPCC scores to select a busiest
@@ -1134,7 +1134,7 @@ Changes since v1:
  1 file changed, 61 insertions(+)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index de5e1157c142..903b455a86a0 100644
+index 9bd12848dcc0..a2f4030b148a 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -9483,6 +9483,41 @@ static bool sched_asym_ipcc_pick(struct sched_group *a,
@@ -1230,7 +1230,7 @@ index de5e1157c142..903b455a86a0 100644
 2.41.0
 
 
-From 4117eecd3bdbb87ec29aa0071409b801ca7491f5 Mon Sep 17 00:00:00 2001
+From a129d87d73ff855d7ccbf6ef08628583ec30b87b Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 16 Dec 2021 17:40:00 -0800
 Subject: [PATCH 11/24] thermal: intel: hfi: Introduce Intel Thread Director
@@ -1367,7 +1367,7 @@ index 6e604bda2b93..2527ae3836c7 100644
 2.41.0
 
 
-From 9252efbd8858e5367b77c605a60543f8255d3457 Mon Sep 17 00:00:00 2001
+From 55aab875539d8937ed4a86b1bc1cf31ae1626447 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 23 Sep 2020 14:57:59 -0700
 Subject: [PATCH 12/24] x86/cpufeatures: Add the Intel Thread Director feature
@@ -1416,10 +1416,10 @@ Changes since v1:
  3 files changed, 9 insertions(+), 1 deletion(-)
 
 diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
-index 92729c38853d..02f10cd5c753 100644
+index e721b8426c24..cd6857287412 100644
 --- a/arch/x86/include/asm/cpufeatures.h
 +++ b/arch/x86/include/asm/cpufeatures.h
-@@ -342,6 +342,7 @@
+@@ -346,6 +346,7 @@
  #define X86_FEATURE_HWP_EPP		(14*32+10) /* HWP Energy Perf. Preference */
  #define X86_FEATURE_HWP_PKG_REQ		(14*32+11) /* HWP Package Level Request */
  #define X86_FEATURE_HFI			(14*32+19) /* Hardware Feedback Interface */
@@ -1428,7 +1428,7 @@ index 92729c38853d..02f10cd5c753 100644
  /* AMD SVM Feature Identification, CPUID level 0x8000000a (EDX), word 15 */
  #define X86_FEATURE_NPT			(15*32+ 0) /* Nested Page Table support */
 diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
-index 33d2cd04d254..7a668f6d0502 100644
+index 000037078db4..b7a4d6fbb1a4 100644
 --- a/arch/x86/include/asm/disabled-features.h
 +++ b/arch/x86/include/asm/disabled-features.h
 @@ -87,6 +87,12 @@
@@ -1469,7 +1469,7 @@ index c881bcafba7d..f6f8a3cd4f2c 100644
 2.41.0
 
 
-From 654ec87322dd0e08f26f79246bad4929b553d625 Mon Sep 17 00:00:00 2001
+From 518e3775fb2eaf468ec7fb22dc200b2d36feab04 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 14 Dec 2020 11:33:57 -0800
 Subject: [PATCH 13/24] x86/sched: Update the IPC class of the current task
@@ -1542,10 +1542,10 @@ Changes since v1:
  create mode 100644 arch/x86/kernel/sched_ipcc.c
 
 diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
-index 846067e1ee8b..476ace571147 100644
+index 52d8c67d9308..1652307be129 100644
 --- a/arch/x86/include/asm/msr-index.h
 +++ b/arch/x86/include/asm/msr-index.h
-@@ -1090,6 +1090,7 @@
+@@ -1102,6 +1102,7 @@
  /* Hardware Feedback Interface */
  #define MSR_IA32_HW_FEEDBACK_PTR        0x17d0
  #define MSR_IA32_HW_FEEDBACK_CONFIG     0x17d1
@@ -1698,7 +1698,7 @@ index 2527ae3836c7..166ddf5a8e4b 100644
 2.41.0
 
 
-From a862e5d7841411ba0aa9a0333141ccd76813e67e Mon Sep 17 00:00:00 2001
+From 4b62633ae70256e4f96d53b616d07f5524026577 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 14 Nov 2022 08:23:41 -0800
 Subject: [PATCH 14/24] thermal: intel: hfi: Store per-CPU IPCC scores
@@ -1867,7 +1867,7 @@ index 166ddf5a8e4b..28de9e6102b8 100644
 2.41.0
 
 
-From ed55f02ffb75427463e74d2b0135dfe3ce3f6af7 Mon Sep 17 00:00:00 2001
+From fae261e28ed0fe862cd5d94c3420e2b5d57dcb6d Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 25 May 2022 04:41:40 -0700
 Subject: [PATCH 15/24] thermal: intel: hfi: Report the IPC class score of a
@@ -2001,7 +2001,7 @@ index 28de9e6102b8..25012777f2b1 100644
 2.41.0
 
 
-From 425d6c0a8ac78cfe0d9b42204f1365b0ed6a6a7a Mon Sep 17 00:00:00 2001
+From adba9a390f3627bd7aa727e150adf716f84f091e Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 18 Aug 2022 13:24:41 -0700
 Subject: [PATCH 16/24] thermal: intel: hfi: Define a default class for
@@ -2086,7 +2086,7 @@ index 25012777f2b1..197b55cd6ba5 100644
 2.41.0
 
 
-From 8f1fc27e81e6ff705af499530f0420a0eabfbcdb Mon Sep 17 00:00:00 2001
+From 06d76fccdd671dcba4064f60b671b534141dc366 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 12 Oct 2020 16:58:58 -0700
 Subject: [PATCH 17/24] thermal: intel: hfi: Enable the Intel Thread Director
@@ -2138,10 +2138,10 @@ Changes since v1:
  2 files changed, 40 insertions(+), 2 deletions(-)
 
 diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
-index 476ace571147..c5821e276f04 100644
+index 1652307be129..bdb6b380d691 100644
 --- a/arch/x86/include/asm/msr-index.h
 +++ b/arch/x86/include/asm/msr-index.h
-@@ -1090,6 +1090,7 @@
+@@ -1102,6 +1102,7 @@
  /* Hardware Feedback Interface */
  #define MSR_IA32_HW_FEEDBACK_PTR        0x17d0
  #define MSR_IA32_HW_FEEDBACK_CONFIG     0x17d1
@@ -2242,7 +2242,7 @@ index 197b55cd6ba5..c22a31546494 100644
 2.41.0
 
 
-From 74f8d063f20c05734dca07ee875a88c0a72126ef Mon Sep 17 00:00:00 2001
+From 44d827a2a3838513911fd3355adb681ecabb23e5 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Fri, 22 Jul 2022 17:17:38 -0700
 Subject: [PATCH 18/24] sched/task_struct: Add helpers for IPC classification
@@ -2316,7 +2316,7 @@ index 74b3605a9980..e745496e69a1 100644
 2.41.0
 
 
-From c507fbf461cc99da90566265f5e31a38432529ae Mon Sep 17 00:00:00 2001
+From 1d5c92c5d9baa0ae60cdcfc614e35629fa6a5281 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 2 Aug 2022 04:01:15 -0700
 Subject: [PATCH 19/24] sched/core: Initialize helpers of task classification
@@ -2371,7 +2371,7 @@ index 196542adea87..ddfefbc18a8e 100644
 2.41.0
 
 
-From 0ad7d067ba5c14008eb7b035c79ee3c6724c5aba Mon Sep 17 00:00:00 2001
+From 604fc27819c7d6b95d9c2702d17669576b297412 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 03:48:37 -0700
 Subject: [PATCH 20/24] sched/fair: Introduce sched_smt_siblings_idle()
@@ -2449,7 +2449,7 @@ index e745496e69a1..9928881d4ccf 100644
 +
  #endif
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 903b455a86a0..9876ad5f0a2a 100644
+index a2f4030b148a..77a1f53ad934 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -1196,7 +1196,14 @@ update_stats_curr_start(struct cfs_rq *cfs_rq, struct sched_entity *se)
@@ -2491,7 +2491,7 @@ index 903b455a86a0..9876ad5f0a2a 100644
 2.41.0
 
 
-From 93b5ee41bda3bc54c1c7c4bc1ea1ef6088e9bd89 Mon Sep 17 00:00:00 2001
+From c2596d7ccd45d0113f994340bde69e25b0e85b68 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 21 Jun 2022 16:52:44 -0700
 Subject: [PATCH 21/24] x86/sched/ipcc: Implement model-specific checks for
@@ -2629,7 +2629,7 @@ index 685e7b3b5375..dd73fc8be49b 100644
 2.41.0
 
 
-From 4428f1d989aeab2d77d3c7b2688756c8d9639c07 Mon Sep 17 00:00:00 2001
+From 17b970b2665ac9edc290b275641413f25e1c47d4 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 22 Sep 2020 13:14:07 -0700
 Subject: [PATCH 22/24] x86/cpufeatures: Add feature bit for HRESET
@@ -2672,10 +2672,10 @@ Changes since v1:
  2 files changed, 4 insertions(+)
 
 diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
-index 02f10cd5c753..e32281b3a3db 100644
+index cd6857287412..9b8710648392 100644
 --- a/arch/x86/include/asm/cpufeatures.h
 +++ b/arch/x86/include/asm/cpufeatures.h
-@@ -311,6 +311,7 @@
+@@ -315,6 +315,7 @@
  /* Intel-defined CPU features, CPUID level 0x00000007:1 (EAX), word 12 */
  #define X86_FEATURE_AVX_VNNI		(12*32+ 4) /* AVX VNNI instructions */
  #define X86_FEATURE_AVX512_BF16		(12*32+ 5) /* AVX512 BFLOAT16 instructions */
@@ -2684,10 +2684,10 @@ index 02f10cd5c753..e32281b3a3db 100644
  /* AMD-defined CPU features, CPUID level 0x80000008 (EBX), word 13 */
  #define X86_FEATURE_CLZERO		(13*32+ 0) /* CLZERO instruction */
 diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
-index c5821e276f04..373bca6c7dae 100644
+index bdb6b380d691..dc82ffe7b222 100644
 --- a/arch/x86/include/asm/msr-index.h
 +++ b/arch/x86/include/asm/msr-index.h
-@@ -1093,6 +1093,9 @@
+@@ -1105,6 +1105,9 @@
  #define MSR_IA32_HW_FEEDBACK_THREAD_CONFIG 0x17d4
  #define MSR_IA32_HW_FEEDBACK_CHAR	0x17d2
  
@@ -2701,7 +2701,7 @@ index c5821e276f04..373bca6c7dae 100644
 2.41.0
 
 
-From 4113ec9ec3fd94bfb0e29c3cbb61a4033c56e384 Mon Sep 17 00:00:00 2001
+From 1c0519734afd9798791717cb5289baf187837513 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 14 Oct 2020 09:33:43 -0700
 Subject: [PATCH 23/24] x86/hreset: Configure history reset
@@ -2741,10 +2741,10 @@ Changes since v1:
  1 file changed, 22 insertions(+), 1 deletion(-)
 
 diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index d298d70f74ce..2a356188e707 100644
+index d38ae25e7c01..d4751d40ce93 100644
 --- a/arch/x86/kernel/cpu/common.c
 +++ b/arch/x86/kernel/cpu/common.c
-@@ -411,6 +411,26 @@ static __always_inline void setup_umip(struct cpuinfo_x86 *c)
+@@ -415,6 +415,26 @@ static __always_inline void setup_umip(struct cpuinfo_x86 *c)
  	cr4_clear_bits(X86_CR4_UMIP);
  }
  
@@ -2771,7 +2771,7 @@ index d298d70f74ce..2a356188e707 100644
  /* These bits should not change their value after CPU init is finished. */
  static const unsigned long cr4_pinned_mask =
  	X86_CR4_SMEP | X86_CR4_SMAP | X86_CR4_UMIP |
-@@ -1828,10 +1848,11 @@ static void identify_cpu(struct cpuinfo_x86 *c)
+@@ -1853,10 +1873,11 @@ static void identify_cpu(struct cpuinfo_x86 *c)
  	/* Disable the PN if appropriate */
  	squash_the_stupid_serial_number(c);
  
@@ -2788,7 +2788,7 @@ index d298d70f74ce..2a356188e707 100644
 2.41.0
 
 
-From 601f19a20fb922ceec64479d65edbb4c4599772b Mon Sep 17 00:00:00 2001
+From dfa2fdd61c180e9b7549fdc9061ef576c0c8c46b Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 23 May 2022 09:36:27 -0700
 Subject: [PATCH 24/24] x86/process: Reset hardware history in context switch
@@ -2889,10 +2889,10 @@ index 000000000000..d68ca2fb8642
 +
 +#endif /* _ASM_X86_HRESET_H */
 diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index 2a356188e707..5e0210acee98 100644
+index d4751d40ce93..3488d0f2bf5b 100644
 --- a/arch/x86/kernel/cpu/common.c
 +++ b/arch/x86/kernel/cpu/common.c
-@@ -52,6 +52,7 @@
+@@ -56,6 +56,7 @@
  #include <asm/cpu.h>
  #include <asm/mce.h>
  #include <asm/msr.h>
@@ -2900,7 +2900,7 @@ index 2a356188e707..5e0210acee98 100644
  #include <asm/memtype.h>
  #include <asm/microcode.h>
  #include <asm/microcode_intel.h>
-@@ -413,6 +414,12 @@ static __always_inline void setup_umip(struct cpuinfo_x86 *c)
+@@ -417,6 +418,12 @@ static __always_inline void setup_umip(struct cpuinfo_x86 *c)
  
  static u32 hardware_history_features __ro_after_init;
  
