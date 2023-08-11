@@ -828,7 +828,7 @@ _tkg_srcprep() {
   elif [ "${_cpusched}" = "bore" ]; then
     _msg="Applying BORE patch"
     if [[ ${_kver} -eq 604 ]]; then
-      curl "https://raw.githubusercontent.com/firelzrd/bore-scheduler/ebdd7b445ed5/bore-stable/0001-linux${_basekernel}.y-bore3.0.1.patch" > "${srcdir}/0001-bore.patch"
+      curl "https://raw.githubusercontent.com/firelzrd/bore-scheduler/7532f0908127/bore-stable/0001-linux${_basekernel}.y-bore3.1.0.patch" > "${srcdir}/0001-bore.patch"
     else
       curl "https://raw.githubusercontent.com/CachyOS/kernel-patches/master/${_basekernel}/sched/0001-bore.patch" > "$srcdir"/0001-bore.patch
     fi
