@@ -608,12 +608,8 @@ _tkg_srcprep() {
     fi
   fi
 
-  if (( "$_kver" <= 602 )); then
-    msg2 "Setting version..."
-    scripts/setlocalversion --save-scmversion
-  fi
-
   if [ "${_distro}" = "Arch" ]; then
+    msg2 "Setting version..."
     if [ -n "$_custom_pkgbase" ]; then
       echo "-$pkgrel-tkg-${_custom_pkgbase}" > localversion.10-pkgrel
       echo -e "Version tail set to \"-$pkgrel-tkg-${_custom_pkgbase}\"\n" > "$_where"/logs/prepare.log.txt
