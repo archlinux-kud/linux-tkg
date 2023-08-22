@@ -835,7 +835,11 @@ _tkg_srcprep() {
     fi
   elif [ "${_cpusched}" = "bore" ]; then
     _msg="Applying BORE patch"
-    curl "https://raw.githubusercontent.com/CachyOS/kernel-patches/master/${_basekernel}/sched/0001-bore.patch" > "$srcdir"/0001-bore.patch
+    if [[ ${_kver} -eq 604 ]]; then
+      curl "https://raw.githubusercontent.com/firelzrd/bore-scheduler/7532f0908127/bore-stable/0001-linux${_basekernel}.y-bore3.1.0.patch" > "${srcdir}/0001-bore.patch"
+    else
+      curl "https://raw.githubusercontent.com/CachyOS/kernel-patches/master/${_basekernel}/sched/0001-bore.patch" > "$srcdir"/0001-bore.patch
+    fi
     tkgpatch="$srcdir/0001-bore.patch" && _tkg_patcher
   elif [ "${_cpusched}" = "eevdf" ]; then
     _msg="Applying Earliest Eligible Virtual Deadline First (EEVDF) scheduler patch"
