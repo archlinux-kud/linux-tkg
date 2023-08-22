@@ -1,4 +1,4 @@
-From 3073b33f58807e1dedb6823d3a2cd131b0d4d7bc Mon Sep 17 00:00:00 2001
+From 3086a5645ceaf9d44173e9fa73701d7636089dea Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:37 -0700
 Subject: [PATCH 01/12] sched/fair: Move is_core_idle() out of CONFIG_NUMA
@@ -35,10 +35,10 @@ Changes since v1:
  1 file changed, 17 insertions(+), 17 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 5b01aa2679c1..649f8224d68c 100644
+index 0bb5963e64a9..265ac36d479e 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -1196,6 +1196,23 @@ update_stats_curr_start(struct cfs_rq *cfs_rq, struct sched_entity *se)
+@@ -1211,6 +1211,23 @@ update_stats_curr_start(struct cfs_rq *cfs_rq, struct sched_entity *se)
   * Scheduling class queueing methods:
   */
  
@@ -62,7 +62,7 @@ index 5b01aa2679c1..649f8224d68c 100644
  #ifdef CONFIG_NUMA
  #define NUMA_IMBALANCE_MIN 2
  
-@@ -1835,23 +1852,6 @@ struct numa_stats {
+@@ -1850,23 +1867,6 @@ struct numa_stats {
  	int idle_cpu;
  };
  
@@ -90,7 +90,7 @@ index 5b01aa2679c1..649f8224d68c 100644
 2.41.0
 
 
-From b5aabc947a121077946d517e9bd725a00e145db8 Mon Sep 17 00:00:00 2001
+From ee966ef3e71a309fae9b6ecdb36c5ed10ed43df0 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:38 -0700
 Subject: [PATCH 02/12] sched/fair: Only do asym_packing load balancing from
@@ -142,10 +142,10 @@ Changes since v1:
  1 file changed, 44 insertions(+), 16 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 649f8224d68c..d132ea0c655d 100644
+index 265ac36d479e..daed30588d1a 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -9306,6 +9306,29 @@ group_type group_classify(unsigned int imbalance_pct,
+@@ -9317,6 +9317,29 @@ group_type group_classify(unsigned int imbalance_pct,
  	return group_has_spare;
  }
  
@@ -175,7 +175,7 @@ index 649f8224d68c..d132ea0c655d 100644
  /**
   * asym_smt_can_pull_tasks - Check whether the load balancing CPU can pull tasks
   * @dst_cpu:	Destination CPU of the load balancing
-@@ -9316,6 +9339,9 @@ group_type group_classify(unsigned int imbalance_pct,
+@@ -9327,6 +9350,9 @@ group_type group_classify(unsigned int imbalance_pct,
   * Check the state of the SMT siblings of both @sds::local and @sg and decide
   * if @dst_cpu can pull tasks.
   *
@@ -185,7 +185,7 @@ index 649f8224d68c..d132ea0c655d 100644
   * If @dst_cpu does not have SMT siblings, it can pull tasks if two or more of
   * the SMT siblings of @sg are busy. If only one CPU in @sg is busy, pull tasks
   * only if @dst_cpu has higher priority.
-@@ -9325,8 +9351,7 @@ group_type group_classify(unsigned int imbalance_pct,
+@@ -9336,8 +9362,7 @@ group_type group_classify(unsigned int imbalance_pct,
   * Bigger imbalances in the number of busy CPUs will be dealt with in
   * update_sd_pick_busiest().
   *
@@ -195,7 +195,7 @@ index 649f8224d68c..d132ea0c655d 100644
   *
   * Return: true if @dst_cpu can pull tasks, false otherwise.
   */
-@@ -9374,15 +9399,8 @@ static bool asym_smt_can_pull_tasks(int dst_cpu, struct sd_lb_stats *sds,
+@@ -9385,15 +9410,8 @@ static bool asym_smt_can_pull_tasks(int dst_cpu, struct sd_lb_stats *sds,
  		return false;
  	}
  
@@ -213,7 +213,7 @@ index 649f8224d68c..d132ea0c655d 100644
  #else
  	/* Always return false so that callers deal with non-SMT cases. */
  	return false;
-@@ -9393,7 +9411,11 @@ static inline bool
+@@ -9404,7 +9422,11 @@ static inline bool
  sched_asym(struct lb_env *env, struct sd_lb_stats *sds,  struct sg_lb_stats *sgs,
  	   struct sched_group *group)
  {
@@ -226,7 +226,7 @@ index 649f8224d68c..d132ea0c655d 100644
  	if ((sds->local->flags & SD_SHARE_CPUCAPACITY) ||
  	    (group->flags & SD_SHARE_CPUCAPACITY))
  		return asym_smt_can_pull_tasks(env->dst_cpu, sds, sgs, group);
-@@ -10608,11 +10630,13 @@ static inline bool
+@@ -10619,11 +10641,13 @@ static inline bool
  asym_active_balance(struct lb_env *env)
  {
  	/*
@@ -243,7 +243,7 @@ index 649f8224d68c..d132ea0c655d 100644
  	       sched_asym_prefer(env->dst_cpu, env->src_cpu);
  }
  
-@@ -11347,9 +11371,13 @@ static void nohz_balancer_kick(struct rq *rq)
+@@ -11358,9 +11382,13 @@ static void nohz_balancer_kick(struct rq *rq)
  		 * When ASYM_PACKING; see if there's a more preferred CPU
  		 * currently idle; in which case, kick the ILB to move tasks
  		 * around.
@@ -262,7 +262,7 @@ index 649f8224d68c..d132ea0c655d 100644
 2.41.0
 
 
-From b63dbadd7760c9e516678af0fe846d2d626c09c7 Mon Sep 17 00:00:00 2001
+From a114d40c2af63e0969d75ff25e8b7155a1b13ba8 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:39 -0700
 Subject: [PATCH 03/12] sched/fair: Simplify asym_packing logic for SMT cores
@@ -313,10 +313,10 @@ Changes since v1:
  1 file changed, 12 insertions(+), 21 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index d132ea0c655d..fa5d60c318db 100644
+index daed30588d1a..eed5ccd0e8c8 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -9346,12 +9346,9 @@ static bool sched_use_asym_prio(struct sched_domain *sd, int cpu)
+@@ -9357,12 +9357,9 @@ static bool sched_use_asym_prio(struct sched_domain *sd, int cpu)
   * the SMT siblings of @sg are busy. If only one CPU in @sg is busy, pull tasks
   * only if @dst_cpu has higher priority.
   *
@@ -332,7 +332,7 @@ index d132ea0c655d..fa5d60c318db 100644
   *
   * Return: true if @dst_cpu can pull tasks, false otherwise.
   */
-@@ -9360,12 +9357,10 @@ static bool asym_smt_can_pull_tasks(int dst_cpu, struct sd_lb_stats *sds,
+@@ -9371,12 +9368,10 @@ static bool asym_smt_can_pull_tasks(int dst_cpu, struct sd_lb_stats *sds,
  				    struct sched_group *sg)
  {
  #ifdef CONFIG_SCHED_SMT
@@ -346,7 +346,7 @@ index d132ea0c655d..fa5d60c318db 100644
  	sg_busy_cpus = sgs->group_weight - sgs->idle_cpus;
  
  	if (!local_is_smt) {
-@@ -9386,21 +9381,17 @@ static bool asym_smt_can_pull_tasks(int dst_cpu, struct sd_lb_stats *sds,
+@@ -9397,21 +9392,17 @@ static bool asym_smt_can_pull_tasks(int dst_cpu, struct sd_lb_stats *sds,
  		return sched_asym_prefer(dst_cpu, sg->asym_prefer_cpu);
  	}
  
@@ -380,7 +380,7 @@ index d132ea0c655d..fa5d60c318db 100644
 2.41.0
 
 
-From a70dcf989a4df57ed34ff117bddcf6a657698ff7 Mon Sep 17 00:00:00 2001
+From 8f8da7c2b06ee675adf73c780c394101fa68bb30 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:40 -0700
 Subject: [PATCH 04/12] sched/fair: Let low-priority cores help high-priority
@@ -431,10 +431,10 @@ Changes since v1:
  1 file changed, 14 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index fa5d60c318db..2e7479b79ddc 100644
+index eed5ccd0e8c8..334d39d6a224 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -10531,8 +10531,15 @@ static struct rq *find_busiest_queue(struct lb_env *env,
+@@ -10542,8 +10542,15 @@ static struct rq *find_busiest_queue(struct lb_env *env,
  		    nr_running == 1)
  			continue;
  
@@ -451,7 +451,7 @@ index fa5d60c318db..2e7479b79ddc 100644
  		    sched_asym_prefer(i, env->dst_cpu) &&
  		    nr_running == 1)
  			continue;
-@@ -10625,10 +10632,15 @@ asym_active_balance(struct lb_env *env)
+@@ -10636,10 +10643,15 @@ asym_active_balance(struct lb_env *env)
  	 * priority CPUs in order to pack all tasks in the highest priority
  	 * CPUs. When done between cores, do it only if the whole core if the
  	 * whole core is idle.
@@ -472,7 +472,7 @@ index fa5d60c318db..2e7479b79ddc 100644
 2.41.0
 
 
-From 6d33ea9ea5fdd775805cac7d334ccfaa409a39bf Mon Sep 17 00:00:00 2001
+From d81a53c0b41603db72df63854804887c942772fa Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:41 -0700
 Subject: [PATCH 05/12] sched/fair: Keep a fully_busy SMT sched group as
@@ -511,10 +511,10 @@ Changes since v1:
  1 file changed, 14 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 2e7479b79ddc..dd19e417e25b 100644
+index 334d39d6a224..6ee68d7c15d2 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -9599,10 +9599,22 @@ static bool update_sd_pick_busiest(struct lb_env *env,
+@@ -9610,10 +9610,22 @@ static bool update_sd_pick_busiest(struct lb_env *env,
  		 * contention when accessing shared HW resources.
  		 *
  		 * XXX for now avg_load is not computed and always 0 so we
@@ -543,7 +543,7 @@ index 2e7479b79ddc..dd19e417e25b 100644
 2.41.0
 
 
-From f9f372751e2a4c411960ef6353c697087b93bb04 Mon Sep 17 00:00:00 2001
+From ae213ca198e42779c4f9b0fdb40335b9e73bfcee Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:42 -0700
 Subject: [PATCH 06/12] sched/fair: Use the busiest group to set prefer_sibling
@@ -594,10 +594,10 @@ Changes since v1:
  1 file changed, 11 insertions(+), 4 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index dd19e417e25b..9cad449a4b31 100644
+index 6ee68d7c15d2..f4402b2efd00 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -10089,7 +10089,6 @@ static void update_idle_cpu_scan(struct lb_env *env,
+@@ -10100,7 +10100,6 @@ static void update_idle_cpu_scan(struct lb_env *env,
  
  static inline void update_sd_lb_stats(struct lb_env *env, struct sd_lb_stats *sds)
  {
@@ -605,7 +605,7 @@ index dd19e417e25b..9cad449a4b31 100644
  	struct sched_group *sg = env->sd->groups;
  	struct sg_lb_stats *local = &sds->local_stat;
  	struct sg_lb_stats tmp_sgs;
-@@ -10130,8 +10129,13 @@ static inline void update_sd_lb_stats(struct lb_env *env, struct sd_lb_stats *sd
+@@ -10141,8 +10140,13 @@ static inline void update_sd_lb_stats(struct lb_env *env, struct sd_lb_stats *sd
  		sg = sg->next;
  	} while (sg != env->sd->groups);
  
@@ -621,7 +621,7 @@ index dd19e417e25b..9cad449a4b31 100644
  
  
  	if (env->sd->flags & SD_NUMA)
-@@ -10441,7 +10445,10 @@ static struct sched_group *find_busiest_group(struct lb_env *env)
+@@ -10452,7 +10456,10 @@ static struct sched_group *find_busiest_group(struct lb_env *env)
  			goto out_balanced;
  	}
  
@@ -637,7 +637,7 @@ index dd19e417e25b..9cad449a4b31 100644
 2.41.0
 
 
-From 1664d943aa575a2dd22be004e08d873c32c3e4c7 Mon Sep 17 00:00:00 2001
+From e2a3c8840cb5140889d1aa70ccc63dd0f7522f86 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:43 -0700
 Subject: [PATCH 07/12] sched/fair: Do not even the number of busy CPUs via
@@ -683,10 +683,10 @@ Changes since v1:
  1 file changed, 21 insertions(+), 65 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 9cad449a4b31..be86822f643a 100644
+index f4402b2efd00..f4084a574dba 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -9330,74 +9330,26 @@ static bool sched_use_asym_prio(struct sched_domain *sd, int cpu)
+@@ -9341,74 +9341,26 @@ static bool sched_use_asym_prio(struct sched_domain *sd, int cpu)
  }
  
  /**
@@ -774,7 +774,7 @@ index 9cad449a4b31..be86822f643a 100644
  static inline bool
  sched_asym(struct lb_env *env, struct sd_lb_stats *sds,  struct sg_lb_stats *sgs,
  	   struct sched_group *group)
-@@ -9406,10 +9358,14 @@ sched_asym(struct lb_env *env, struct sd_lb_stats *sds,  struct sg_lb_stats *sgs
+@@ -9417,10 +9369,14 @@ sched_asym(struct lb_env *env, struct sd_lb_stats *sds,  struct sg_lb_stats *sgs
  	if (!sched_use_asym_prio(env->sd, env->dst_cpu))
  		return false;
  
@@ -797,7 +797,7 @@ index 9cad449a4b31..be86822f643a 100644
 2.41.0
 
 
-From 677b9c622e25185d233dfab5db6075b8ae564242 Mon Sep 17 00:00:00 2001
+From aa00a5c41c4b5e63827ff2ca73addcd3a96346c4 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:44 -0700
 Subject: [PATCH 08/12] sched/topology: Check SDF_SHARED_CHILD in
@@ -885,7 +885,7 @@ index 5f18460f62f0..4634285663c5 100644
 2.41.0
 
 
-From 9a3273b0e93a56ee0fd2aa646cb5aec2084b07ae Mon Sep 17 00:00:00 2001
+From 5c276ba877f8f4a6b2619d06fe320cb8f97e9ac2 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:45 -0700
 Subject: [PATCH 09/12] sched/topology: Remove SHARED_CHILD from ASYM_PACKING
@@ -957,7 +957,7 @@ index 57bde66d95f7..fad77b5172e2 100644
 2.41.0
 
 
-From 0564acdb46d4fc8c0cf5281e7a52041ed7fceb43 Mon Sep 17 00:00:00 2001
+From 84feaaf5b7f55e428207f8edafb73dcdb917ff2e Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:46 -0700
 Subject: [PATCH 10/12] x86/sched: Remove SD_ASYM_PACKING from the SMT domain
@@ -1011,7 +1011,7 @@ index f32ee967414e..a6606b5f70e5 100644
 2.41.0
 
 
-From addc537fed897398647aeff57ce95b5ff75d671b Mon Sep 17 00:00:00 2001
+From 7d3fd75071cbbfc182006f995332ef95191e06be Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 6 Apr 2023 13:31:47 -0700
 Subject: [PATCH 11/12] x86/sched/itmt: Give all SMT siblings of a core the
@@ -1096,7 +1096,7 @@ index 9ff480e94511..6510883c5e81 100644
 2.41.0
 
 
-From 8378a66295fdc0ba5ee4aae4e4b6b7ce1f71c857 Mon Sep 17 00:00:00 2001
+From cfef1993f974673437d4f9b2dcf5e700b471984d Mon Sep 17 00:00:00 2001
 From: Chen Yu <yu.c.chen@intel.com>
 Date: Thu, 6 Apr 2023 13:31:48 -0700
 Subject: [PATCH 12/12] x86/sched: Add the SD_ASYM_PACKING flag to the die

@@ -1,7 +1,7 @@
-From 6b43de9050e51e52fbbb3e286db21931ac75a849 Mon Sep 17 00:00:00 2001
+From 3fe1cb087147f4f7f089899da8b526fb775dd192 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 9 Sep 2022 19:12:31 +0300
-Subject: [PATCH 01/80] fs/ntfs3: Add comments about cluster size
+Subject: [PATCH 01/79] fs/ntfs3: Add comments about cluster size
 
 This commit adds additional info about CONFIG_NTFS3_64BIT_CLUSTER
 
@@ -79,10 +79,10 @@ index 8e2fe0f69203..d9c9dc035e46 100644
 2.41.0
 
 
-From 910825905ccdd1bef0c3a8ad939a70bd3b5d2818 Mon Sep 17 00:00:00 2001
+From 50c5a35b6035c8c6699fb161493a115f92640b10 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 12 Sep 2022 18:28:51 +0300
-Subject: [PATCH 02/80] fs/ntfs3: Add hidedotfiles option
+Subject: [PATCH 02/79] fs/ntfs3: Add hidedotfiles option
 
 With this option all files with filename[0] == '.'
 will have FILE_ATTRIBUTE_HIDDEN attribute.
@@ -155,10 +155,10 @@ index d9c9dc035e46..366606d9b856 100644
 2.41.0
 
 
-From 654f1ad406272ff7f313312e98924b122b540848 Mon Sep 17 00:00:00 2001
+From 793ded88df0ec5dce67a8faa984ad9abeee83f1c Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 12 Sep 2022 18:54:06 +0300
-Subject: [PATCH 03/80] fs/ntfs3: Change destroy_inode to free_inode
+Subject: [PATCH 03/79] fs/ntfs3: Change destroy_inode to free_inode
 
 Many filesystems already use free_inode callback,
 so we will use it too from now on.
@@ -228,10 +228,10 @@ index 366606d9b856..e3ceee6357f7 100644
 2.41.0
 
 
-From 123318bceb791a210e43e113a772b75a85246c65 Mon Sep 17 00:00:00 2001
+From 5fdb0203c7486b4c79baed468bd28a95554199ea Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 23 Sep 2022 12:42:18 +0300
-Subject: [PATCH 04/80] fs/ntfs3: Add option "nocase"
+Subject: [PATCH 04/79] fs/ntfs3: Add option "nocase"
 
 This commit adds mount option and additional functions.
 
@@ -510,10 +510,10 @@ index b5e8256fd710..7681eefacb4b 100644
 2.41.0
 
 
-From fc9032807e53e9d0268a0ddad76b1e8136932d31 Mon Sep 17 00:00:00 2001
+From 2395d5520c03b9cf3daa493dd2bc13640733a075 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 23 Sep 2022 13:35:22 +0300
-Subject: [PATCH 05/80] fs/ntfs3: Rename variables and add comment
+Subject: [PATCH 05/79] fs/ntfs3: Rename variables and add comment
 
 After renaming we don't need to split code in two lines.
 
@@ -593,10 +593,10 @@ index 00faf41d8f97..464b02265c80 100644
 2.41.0
 
 
-From 551280d1ee05e504f53a6b14f8dde58b07ce708a Mon Sep 17 00:00:00 2001
+From b8b18cabc596c765a23a7b1d0639fa74f26c9ab2 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Marc=20Aur=C3=A8le=20La=20France?= <tsi@tuyoix.net>
 Date: Wed, 10 Aug 2022 14:28:04 -0600
-Subject: [PATCH 06/80] fs/ntfs3: Fix [df]mask display in /proc/mounts
+Subject: [PATCH 06/79] fs/ntfs3: Fix [df]mask display in /proc/mounts
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -631,10 +631,10 @@ index 2b8c4c7a3bec..2fd1367a5982 100644
 2.41.0
 
 
-From 0d65ad80407249689be051450ec17cbf43cb5779 Mon Sep 17 00:00:00 2001
+From d6d40ee4a79b967195780a3c796c29eaea5d16b0 Mon Sep 17 00:00:00 2001
 From: Kenneth Lee <klee33@uw.edu>
 Date: Thu, 18 Aug 2022 22:51:17 -0700
-Subject: [PATCH 07/80] fs/ntfs3: Use kmalloc_array for allocating multiple
+Subject: [PATCH 07/79] fs/ntfs3: Use kmalloc_array for allocating multiple
  elements
 
 Prefer using kmalloc_array(a, b) over kmalloc(a * b) as this
@@ -664,10 +664,10 @@ index e0cdc91d88a8..65f599ecf7df 100644
 2.41.0
 
 
-From d1850fa9b609baecc1eb071a1d4a6be870c8fc2d Mon Sep 17 00:00:00 2001
+From f7362e0b8f4c4a117a30004fa93075edaff4f447 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Wed, 7 Sep 2022 02:45:13 +0100
-Subject: [PATCH 08/80] fs/ntfs3: Fix junction point resolution
+Subject: [PATCH 08/79] fs/ntfs3: Fix junction point resolution
 
 The ntfs3 file system driver does not convert the target path of
 junction points to a proper Linux path. As junction points targets
@@ -819,10 +819,10 @@ index aa0944b33124..f18f77201778 100644
 2.41.0
 
 
-From db1b1c9b1e671a526d119e9f6c7adbc07cd2d7a9 Mon Sep 17 00:00:00 2001
+From 616760f63e49a410b3dd9ac0cd3b93a4a06ddec5 Mon Sep 17 00:00:00 2001
 From: Yuan Can <yuancan@huawei.com>
 Date: Sat, 24 Sep 2022 06:32:04 +0000
-Subject: [PATCH 09/80] fs/ntfs3: Use strcmp to determine attribute type
+Subject: [PATCH 09/79] fs/ntfs3: Use strcmp to determine attribute type
 
 The way of determin attribute type is just matching
 name with the predefined string, do this with strcmp
@@ -926,10 +926,10 @@ index f5d3092f478c..9a6e55e9acb8 100644
 2.41.0
 
 
-From f348aae79b1d7bd2d921544a5de7251019cc708d Mon Sep 17 00:00:00 2001
+From 7669a60d3771a73e0604287ab93d706d586c10eb Mon Sep 17 00:00:00 2001
 From: Nathan Chancellor <nathan@kernel.org>
 Date: Tue, 4 Oct 2022 07:41:45 -0700
-Subject: [PATCH 10/80] fs/ntfs3: Don't use uni1 uninitialized in
+Subject: [PATCH 10/79] fs/ntfs3: Don't use uni1 uninitialized in
  ntfs_d_compare()
 
 Clang warns:
@@ -1013,10 +1013,10 @@ index b217b7510913..9ee2ff977e0e 100644
 2.41.0
 
 
-From ed560bd547b9460cdfc801b6b0821fc03c64f22e Mon Sep 17 00:00:00 2001
+From 9b1dbbef0fc63694a77e94fb48f3fe4380afc1b2 Mon Sep 17 00:00:00 2001
 From: Nathan Chancellor <nathan@kernel.org>
 Date: Tue, 4 Oct 2022 16:23:59 -0700
-Subject: [PATCH 11/80] fs/ntfs3: Eliminate unnecessary ternary operator in
+Subject: [PATCH 11/79] fs/ntfs3: Eliminate unnecessary ternary operator in
  ntfs_d_compare()
 
 'a == b ? 0 : 1' is logically equivalent to 'a != b'.
@@ -1045,10 +1045,10 @@ index 9ee2ff977e0e..68cbb953e680 100644
 2.41.0
 
 
-From 1f28eb2f722c64ff42ac9a9bfaf7c4d6cc603e9b Mon Sep 17 00:00:00 2001
+From 5c83f3af298a116fbee52214b1fccff941346abc Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:14:31 +0100
-Subject: [PATCH 12/80] fs/ntfs3: Add windows_names mount option
+Subject: [PATCH 12/79] fs/ntfs3: Add windows_names mount option
 
 When enabled, the windows_names mount option prevents the creation
 of files or directories with names not allowed by Windows. Use
@@ -1296,10 +1296,10 @@ index 2fd1367a5982..a91852b17c2d 100644
 2.41.0
 
 
-From 54ddb8e90fc6ddcc15eb56697bab7c1d73ef5a2b Mon Sep 17 00:00:00 2001
+From e631ae16b01984c4bd1491f0b5a250716eaafd93 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:16:29 +0100
-Subject: [PATCH 13/80] fs/ntfs3: Document windows_names mount option
+Subject: [PATCH 13/79] fs/ntfs3: Document windows_names mount option
 
 Add documentation for windows_names mount option.
 
@@ -1332,10 +1332,10 @@ index d67ccd22c63b..cda8e0e010d4 100644
 2.41.0
 
 
-From 725232a50699b64fda62cc524757296b3ecfda86 Mon Sep 17 00:00:00 2001
+From 8a52fc056a3920775a3d9a7985c94838e0879b8d Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:30:15 +0100
-Subject: [PATCH 14/80] fs/ntfs3: Fix hidedotfiles mount option by reversing
+Subject: [PATCH 14/79] fs/ntfs3: Fix hidedotfiles mount option by reversing
  behaviour
 
 Currently, the hidedotfiles mount option is behaving in the reverse
@@ -1369,10 +1369,10 @@ index a91852b17c2d..0207cafbab08 100644
 2.41.0
 
 
-From 450be0a7ae1991fa91a1ef382b414216d899a13a Mon Sep 17 00:00:00 2001
+From d49b7b680158818d5b7cd217e5fbefc60b784bff Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:32:12 +0100
-Subject: [PATCH 15/80] fs/ntfs3: Make hidedotfiles mount option work when
+Subject: [PATCH 15/79] fs/ntfs3: Make hidedotfiles mount option work when
  renaming files
 
 Currently, the hidedotfiles mount option only has an effect when
@@ -1412,10 +1412,10 @@ index ce5e8f3b1aca..392efa0270f8 100644
 2.41.0
 
 
-From 83d2c49620168d9060d833a5e93417770f84d2d0 Mon Sep 17 00:00:00 2001
+From 21bdb9f19d3c5cdd47c528e6ff1faa93da50f8e3 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:34:06 +0100
-Subject: [PATCH 16/80] fs/ntfs3: Add hidedotfiles to the list of enabled mount
+Subject: [PATCH 16/79] fs/ntfs3: Add hidedotfiles to the list of enabled mount
  options
 
 Currently, the ntfs3 driver does return the hidedotfiles mount
@@ -1449,10 +1449,10 @@ index 0207cafbab08..464703701ed4 100644
 2.41.0
 
 
-From 2e175692ec5c8be502f0222abddaa0a40c449b8d Mon Sep 17 00:00:00 2001
+From 964f65705e721b1378511bff69760bad1d7e1680 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:35:46 +0100
-Subject: [PATCH 17/80] fs/ntfs3: Document the hidedotfiles mount option
+Subject: [PATCH 17/79] fs/ntfs3: Document the hidedotfiles mount option
 
 Add documentation for the hidedotfiles mount option.
 
@@ -1483,10 +1483,10 @@ index cda8e0e010d4..3a20ecd13d45 100644
 2.41.0
 
 
-From 1130a1e39dac4a718e08c7376797ba402272867b Mon Sep 17 00:00:00 2001
+From b4e0cadb9c2001831d39d22c1b514fe86b1b0b12 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:37:13 +0100
-Subject: [PATCH 18/80] fs/ntfs3: Rename hidedotfiles mount option to
+Subject: [PATCH 18/79] fs/ntfs3: Rename hidedotfiles mount option to
  hide_dot_files
 
 The hidedotfiles mount option provides the same functionality as
@@ -1570,10 +1570,10 @@ index 464703701ed4..59a831bd0c9b 100644
 2.41.0
 
 
-From 7177611ddebb84acf25eaebd56031022c5a39044 Mon Sep 17 00:00:00 2001
+From 7699cfd9058ec9873d664822ffbc973c59e52fd1 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:44:27 +0100
-Subject: [PATCH 19/80] fs/ntfs3: Add system.ntfs_attrib_be extended attribute
+Subject: [PATCH 19/79] fs/ntfs3: Add system.ntfs_attrib_be extended attribute
 
 NTFS-3G provides the system.ntfs_attrib_be extended attribute, which
 has the same value as system.ntfs_attrib but represented in big-endian.
@@ -1646,10 +1646,10 @@ index 9a6e55e9acb8..52f0247c1030 100644
 2.41.0
 
 
-From 93a17c4606acf4bb85a93d70f89aa8365edda3c6 Mon Sep 17 00:00:00 2001
+From fcace14764eed349b737eb44939412939b68635f Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:46:12 +0100
-Subject: [PATCH 20/80] fs/ntfs3: Document system.ntfs_attrib_be extended
+Subject: [PATCH 20/79] fs/ntfs3: Document system.ntfs_attrib_be extended
  attribute
 
 Add documentation for system.ntfs_attrib_be extended attribute.
@@ -1680,10 +1680,10 @@ index 7b1e78cf01ad..5aa102bd72c2 100644
 2.41.0
 
 
-From 0c9ebd89ffedf0e71d64031e3e47961187bd13f8 Mon Sep 17 00:00:00 2001
+From 691a57da2e31ecf406bd99e7cd75a70c266e2be0 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Thomas=20K=C3=BChnel?= <thomas.kuehnel@avm.de>
 Date: Tue, 7 Dec 2021 11:24:53 +0100
-Subject: [PATCH 21/80] fs/ntfs3: Fix endian conversion in ni_fname_name
+Subject: [PATCH 21/79] fs/ntfs3: Fix endian conversion in ni_fname_name
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -1726,10 +1726,10 @@ index 3b309b9a5e29..039247ab5b0b 100644
 2.41.0
 
 
-From 77ae55d4c4e3b462f4b89885f29069822e6b3d07 Mon Sep 17 00:00:00 2001
+From 170a5de1065067ffeafe38c445ba2d8ec8511ed8 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Thomas=20K=C3=BChnel?= <thomas.kuehnel@avm.de>
 Date: Tue, 7 Dec 2021 11:24:54 +0100
-Subject: [PATCH 22/80] fs/ntfs3: Add functions to modify LE bitmaps
+Subject: [PATCH 22/79] fs/ntfs3: Add functions to modify LE bitmaps
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -1862,10 +1862,10 @@ index 861d0a8adb14..feebc7d8ceea 100644
 2.41.0
 
 
-From 370fc1716c64655b8945f91f7417d82ecf34bde8 Mon Sep 17 00:00:00 2001
+From 5ef8e86bd02ccb827619dc070d58ffdf4edbe7b0 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Thomas=20K=C3=BChnel?= <thomas.kuehnel@avm.de>
 Date: Tue, 7 Dec 2021 11:24:55 +0100
-Subject: [PATCH 23/80] fs/ntfs3: Use _le variants of bitops functions
+Subject: [PATCH 23/79] fs/ntfs3: Use _le variants of bitops functions
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -2039,10 +2039,10 @@ index 1d6be4e07152..c87f870fd603 100644
 2.41.0
 
 
-From 1db665fe5eadd6630839020932061fed3f137b85 Mon Sep 17 00:00:00 2001
+From b8069991fb05e9fcdec6bbfc8f9eeffe459cc9fd Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 6 Oct 2022 19:42:24 +0300
-Subject: [PATCH 24/80] fs/ntfs3: Add ntfs_bitmap_weight_le function and
+Subject: [PATCH 24/79] fs/ntfs3: Add ntfs_bitmap_weight_le function and
  refactoring
 
 Added ntfs_bitmap_weight_le function.
@@ -2391,10 +2391,10 @@ index feebc7d8ceea..664858457f48 100644
 2.41.0
 
 
-From 1e37f1406aac713869c02480908e0758cde46c16 Mon Sep 17 00:00:00 2001
+From 312a9554b3ee39f615210798eb1e9fc69b28ffb4 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 6 Oct 2022 19:58:11 +0300
-Subject: [PATCH 25/80] fs/ntfs3: Fix sparse problems
+Subject: [PATCH 25/79] fs/ntfs3: Fix sparse problems
 
 Fixing various problems, detected by sparse.
 
@@ -2502,10 +2502,10 @@ index 68cbb953e680..f30cbd45daba 100644
 2.41.0
 
 
-From 7b0caf2a3746fe53e3fb12b2dcd5c6552f4ac43c Mon Sep 17 00:00:00 2001
+From dcf69bf5395124790ad661334f76625872bd675b Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 6 Oct 2022 20:04:53 +0300
-Subject: [PATCH 26/80] fs/ntfs3: Remove unused functions
+Subject: [PATCH 26/79] fs/ntfs3: Remove unused functions
 
 Removed attr_must_be_resident and ntfs_query_def.
 
@@ -2611,10 +2611,10 @@ index 664858457f48..7ed75dd4c0ec 100644
 2.41.0
 
 
-From 0d90830eb37d73a3d7b27f462290c9ae6348155e Mon Sep 17 00:00:00 2001
+From e5038992c25b7ef6e49c3bcfad83b595b8200d74 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 6 Oct 2022 20:19:38 +0300
-Subject: [PATCH 27/80] fs/ntfs3: Simplify ntfs_update_mftmirr function
+Subject: [PATCH 27/79] fs/ntfs3: Simplify ntfs_update_mftmirr function
 
 Make err assignment in one place.
 
@@ -2649,10 +2649,10 @@ index b7c68ca65bac..b68a7b780262 100644
 2.41.0
 
 
-From 38a194132f046b8bec3994e542ed48312585257b Mon Sep 17 00:00:00 2001
+From 983a6613d51206fd64416acf70d4e9a499d1f783 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 13:57:28 +0300
-Subject: [PATCH 28/80] fs/ntfs3: Fixing work with sparse clusters
+Subject: [PATCH 28/79] fs/ntfs3: Fixing work with sparse clusters
 
 Simplify logic in ntfs_extend_initialized_size, ntfs_sparse_cluster
 and ntfs_fallocate.
@@ -2757,10 +2757,10 @@ index f31c0389a2e7..f6f47b0f0d7e 100644
 2.41.0
 
 
-From 2f15720197d6b0a348d085825b3134606a15714a Mon Sep 17 00:00:00 2001
+From 122535ce51b25fc39a946eca7503e5c8029a8550 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 14:02:36 +0300
-Subject: [PATCH 29/80] fs/ntfs3: Change new sparse cluster processing
+Subject: [PATCH 29/79] fs/ntfs3: Change new sparse cluster processing
 
 Remove ntfs_sparse_cluster.
 Zero clusters in attr_allocate_clusters.
@@ -3428,10 +3428,10 @@ index 7ed75dd4c0ec..ebf66de7b54f 100644
 2.41.0
 
 
-From b3edfb2d5df7a2f3811cacd2949e136ced90eb51 Mon Sep 17 00:00:00 2001
+From 47a2d1b6533ac62040da82ec126a84b367f33096 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 18:55:03 +0300
-Subject: [PATCH 30/80] fs/ntfs3: Fix wrong indentations
+Subject: [PATCH 30/79] fs/ntfs3: Fix wrong indentations
 
 Also simplifying code.
 
@@ -3517,10 +3517,10 @@ index e7c1a06b963d..f3179b83fa01 100644
 2.41.0
 
 
-From 04c9fb17c0ea4c1cdbedfa963d0ad90770a36f3d Mon Sep 17 00:00:00 2001
+From 1488be3ace29aac74ce531907b8eeef4b9597732 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 19:53:30 +0300
-Subject: [PATCH 31/80] fs/ntfs3: atomic_open implementation
+Subject: [PATCH 31/79] fs/ntfs3: atomic_open implementation
 
 Added ntfs_atomic_open function.
 Relaxed locking in ntfs_create_inode.
@@ -3723,10 +3723,10 @@ index f30cbd45daba..6b75e7c39b52 100644
 2.41.0
 
 
-From da48d4427cfe0e7caffb3034825915274a6fe408 Mon Sep 17 00:00:00 2001
+From 2d9e14b677359a6b1b3bfb3ddd801b6518b4e9dc Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 20:08:06 +0300
-Subject: [PATCH 32/80] fs/ntfs3: Fixing wrong logic in attr_set_size and
+Subject: [PATCH 32/79] fs/ntfs3: Fixing wrong logic in attr_set_size and
  ntfs_fallocate
 
 There were 2 problems:
@@ -3992,10 +3992,10 @@ index a2428d1fdb0a..8225d0b7c48c 100644
 2.41.0
 
 
-From ae53e8dc4e5f9d6a4baecc883b8e7a9904da90ae Mon Sep 17 00:00:00 2001
+From 2d5fd7d5972040e1aa12d2c20855c60eec33d032 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 20:16:15 +0300
-Subject: [PATCH 33/80] fs/ntfs3: Changing locking in ntfs_rename
+Subject: [PATCH 33/79] fs/ntfs3: Changing locking in ntfs_rename
 
 In some cases we can be in deadlock
 because we tried to lock the same dir.
@@ -4056,10 +4056,10 @@ index ebf66de7b54f..34bf16ff3a5c 100644
 2.41.0
 
 
-From df0b1e7d302b9e088934fbd8c7b683f09d528938 Mon Sep 17 00:00:00 2001
+From 8159ed73b59b1c6d2492d78b9f9310233a1caa2f Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 20:20:14 +0300
-Subject: [PATCH 34/80] fs/ntfs3: Restore correct state after ENOSPC in
+Subject: [PATCH 34/79] fs/ntfs3: Restore correct state after ENOSPC in
  attr_data_get_block
 
 Added new function ntfs_check_for_free_space.
@@ -4343,10 +4343,10 @@ index 34bf16ff3a5c..157f77218392 100644
 2.41.0
 
 
-From fea70b2440b53ebc344cd24755786b16a3f9dcb3 Mon Sep 17 00:00:00 2001
+From 1c09eec5b5e2d85ad92dbb0c5f1dd32ab47becc6 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 20:23:19 +0300
-Subject: [PATCH 35/80] fs/ntfs3: Correct ntfs_check_for_free_space
+Subject: [PATCH 35/79] fs/ntfs3: Correct ntfs_check_for_free_space
 
 zlen in some cases was bigger than correct value.
 
@@ -4372,10 +4372,10 @@ index 4f04e8594a8f..6a1e000fd2b5 100644
 2.41.0
 
 
-From 79e9d4fe1c66e309b1a91d2aab73a68c11e2e914 Mon Sep 17 00:00:00 2001
+From 0842dfb45c4acc8eda2c9546d986dd79f6846f6b Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 11 Oct 2022 20:00:36 +0300
-Subject: [PATCH 36/80] fs/ntfs3: Fix incorrect if in ntfs_set_acl_ex
+Subject: [PATCH 36/79] fs/ntfs3: Fix incorrect if in ntfs_set_acl_ex
 
 We need to update ctime too with mode.
 Fixes xfstest generic/307
@@ -4407,10 +4407,10 @@ index 52f0247c1030..bb4d0327b6e6 100644
 2.41.0
 
 
-From 7d1017b8d860915d2b8c80452eced715ac68d8b6 Mon Sep 17 00:00:00 2001
+From bb4251bf877badc86b23079aa7e40981abbf3cd4 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 11 Oct 2022 20:12:02 +0300
-Subject: [PATCH 37/80] fs/ntfs3: Use ALIGN kernel macro
+Subject: [PATCH 37/79] fs/ntfs3: Use ALIGN kernel macro
 
 This way code will be more readable.
 
@@ -4463,10 +4463,10 @@ index 157f77218392..f292e47a01c7 100644
 2.41.0
 
 
-From 8b7203d51d95d87191d49ad2032475fe8e90f22d Mon Sep 17 00:00:00 2001
+From 4815992ee175f816dac6b48793d2c26e0f7fe088 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 11 Oct 2022 20:15:28 +0300
-Subject: [PATCH 38/80] fs/ntfs3: Fix wrong if in hdr_first_de
+Subject: [PATCH 38/79] fs/ntfs3: Fix wrong if in hdr_first_de
 
 We need to check used bytes instead of total.
 
@@ -4499,10 +4499,10 @@ index d6a856a8d227..90151e56c122 100644
 2.41.0
 
 
-From 79634085e44df8dc88b76a2e62679ef051f835b3 Mon Sep 17 00:00:00 2001
+From e0c9e185e981e182f94d599106bf4050ed91f152 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 11 Oct 2022 20:19:36 +0300
-Subject: [PATCH 39/80] fs/ntfs3: Improve checking of bad clusters
+Subject: [PATCH 39/79] fs/ntfs3: Improve checking of bad clusters
 
 Added new function wnd_set_used_safe.
 Load $BadClus before $AttrDef instead of before $Bitmap.
@@ -4702,10 +4702,10 @@ index 59a831bd0c9b..ef4ea3f21905 100644
 2.41.0
 
 
-From ab9045f6802b588e7e8a872b4f09a6c022063ee8 Mon Sep 17 00:00:00 2001
+From 82f5abab2f7f245f57dde6e580859ab260523255 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 11 Oct 2022 20:21:03 +0300
-Subject: [PATCH 40/80] fs/ntfs3: Make if more readable
+Subject: [PATCH 40/79] fs/ntfs3: Make if more readable
 
 This way it looks better.
 
@@ -4735,10 +4735,10 @@ index a952cd7aa7a4..defce6a5c8e1 100644
 2.41.0
 
 
-From 8d2ca4def5c77f2a2865d7aea155d4f13e10c366 Mon Sep 17 00:00:00 2001
+From 1d489fce77c26171bba4617303e6a84f21fb1706 Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Thu, 29 Dec 2022 06:10:27 -1000
-Subject: [PATCH 41/80] ntfs3: stop using generic_writepages
+Subject: [PATCH 41/79] ntfs3: stop using generic_writepages
 
 Open code the resident inode handling in ntfs_writepages by directly using
 write_cache_pages to prepare removing the ->writepage handler in ntfs3.
@@ -4797,10 +4797,10 @@ index 8225d0b7c48c..dcb74e244921 100644
 2.41.0
 
 
-From 3bcd0b97537471166ef2f4ee83c0806c3e7196ea Mon Sep 17 00:00:00 2001
+From 15404f5e0ee1ab2e523f2c0250e8d38c6983d974 Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Thu, 29 Dec 2022 06:10:28 -1000
-Subject: [PATCH 42/80] ntfs3: remove ->writepage
+Subject: [PATCH 42/79] ntfs3: remove ->writepage
 
 ->writepage is a very inefficient method to write back data, and only used
 through write_cache_pages or a a fallback when no ->migrate_folio method
@@ -4873,10 +4873,10 @@ index dcb74e244921..e8ed525619dc 100644
 2.41.0
 
 
-From 382654030fcc7fe2d8e9e1fd5aec836791e77f90 Mon Sep 17 00:00:00 2001
+From 8ea7142f4de9e70bd055eeb603545f80f77f8d52 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Tue, 15 Nov 2022 08:17:32 +0000
-Subject: [PATCH 43/80] fs/ntfs3: Fix wrong cast in xattr.c
+Subject: [PATCH 43/79] fs/ntfs3: Fix wrong cast in xattr.c
 
 cpu_to_be32 and be32_to_cpu respectively return and receive
 __be32, change the cast to the correct types.
@@ -4919,10 +4919,10 @@ index bb4d0327b6e6..9af81430bf14 100644
 2.41.0
 
 
-From cedb2a00fc66f44b29697d5218b7c28ef1520da2 Mon Sep 17 00:00:00 2001
+From c24e1e77032f26cce400d6ac9ee4791a2704b5f9 Mon Sep 17 00:00:00 2001
 From: Ye Bin <yebin10@huawei.com>
 Date: Thu, 17 Nov 2022 17:19:12 +0800
-Subject: [PATCH 44/80] fs/ntfs3: Fix NULL pointer dereference in
+Subject: [PATCH 44/79] fs/ntfs3: Fix NULL pointer dereference in
  'ni_write_inode'
 
 Syzbot found the following issue:
@@ -5025,10 +5025,10 @@ index 567563771bf8..8de861ddec60 100644
 2.41.0
 
 
-From e1185a14b3f6df0fd16966f2abb50706a68783f3 Mon Sep 17 00:00:00 2001
+From 7fbeaa99a98c95393e228fc4ba91af8bc2c1be8c Mon Sep 17 00:00:00 2001
 From: Edward Lo <edward.lo@ambergroup.io>
 Date: Thu, 27 Oct 2022 23:33:37 +0800
-Subject: [PATCH 45/80] fs/ntfs3: Enhance the attribute size check
+Subject: [PATCH 45/79] fs/ntfs3: Enhance the attribute size check
 
 This combines the overflow and boundary check so that all attribute size
 will be properly examined while enumerating them.
@@ -5156,10 +5156,10 @@ index defce6a5c8e1..abfe004774c0 100644
 2.41.0
 
 
-From 69f5da0db85afff14b512bbe7e6704feca0b9a76 Mon Sep 17 00:00:00 2001
+From 3e7f95b0e075c8645c56ffad6fbeef333796090c Mon Sep 17 00:00:00 2001
 From: Abdun Nihaal <abdun.nihaal@gmail.com>
 Date: Sun, 30 Oct 2022 12:32:51 +0530
-Subject: [PATCH 46/80] fs/ntfs3: Fix NULL dereference in ni_write_inode
+Subject: [PATCH 46/79] fs/ntfs3: Fix NULL dereference in ni_write_inode
 
 Syzbot reports a NULL dereference in ni_write_inode.
 When creating a new inode, if allocation fails in mi_init function
@@ -5195,10 +5195,10 @@ index f1df52dfab74..912eeb3d3471 100644
 2.41.0
 
 
-From 31ab76e7e9696e2d9bce913c85b4d0c28cf7f0d6 Mon Sep 17 00:00:00 2001
+From 851d28b2fd8fe7c54f70e9c26b2aa71de373dcf5 Mon Sep 17 00:00:00 2001
 From: Edward Lo <edward.lo@ambergroup.io>
 Date: Tue, 4 Oct 2022 23:15:06 +0800
-Subject: [PATCH 47/80] fs/ntfs3: Add length check in indx_get_root
+Subject: [PATCH 47/79] fs/ntfs3: Add length check in indx_get_root
 
 This adds a length check to guarantee the retrieved index root is legit.
 
@@ -5324,10 +5324,10 @@ index 7a1e01a2ed9a..f716487ec8a0 100644
 2.41.0
 
 
-From d843789cd616137968417266032d66ddaf1f181f Mon Sep 17 00:00:00 2001
+From f4a6b6cfb7b8af5dd4571891c875a390a2d541ee Mon Sep 17 00:00:00 2001
 From: Yu Zhe <yuzhe@nfschina.com>
 Date: Thu, 10 Nov 2022 15:46:40 +0800
-Subject: [PATCH 48/80] fs/ntfs3: fix spelling mistake "attibute" ->
+Subject: [PATCH 48/79] fs/ntfs3: fix spelling mistake "attibute" ->
  "attribute"
 
 There is a spelling mistake in comment. Fix it.
@@ -5355,10 +5355,10 @@ index 9af81430bf14..28d7f8200385 100644
 2.41.0
 
 
-From 3daa7ff35d8ad66399d65f5d1a692e240719b5ce Mon Sep 17 00:00:00 2001
+From 8f714c518eddaf5cf8dc60559e2052513d15b910 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 29 Dec 2022 15:44:43 +0400
-Subject: [PATCH 49/80] fs/ntfs3: Add null pointer checks
+Subject: [PATCH 49/79] fs/ntfs3: Add null pointer checks
 
 Added null pointer checks in function ntfs_security_init.
 Also added le32_to_cpu in functions ntfs_security_init and indx_read.
@@ -5423,10 +5423,10 @@ index f716487ec8a0..8718df791a55 100644
 2.41.0
 
 
-From 7708d0c24f9f449a039222f831374e8a2e049e6f Mon Sep 17 00:00:00 2001
+From e817f8a43984d3fd9f5a8c55fb44bf4cdf5c267e Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 29 Dec 2022 15:50:41 +0400
-Subject: [PATCH 50/80] fs/ntfs3: Improved checking of attribute's name length
+Subject: [PATCH 50/79] fs/ntfs3: Improved checking of attribute's name length
 
 Added comment, added null pointer checking.
 
@@ -5458,10 +5458,10 @@ index e8ed525619dc..e80e94325467 100644
 2.41.0
 
 
-From b3150e1ff5f76aa32c4907dc6cdf7d566a1ed01c Mon Sep 17 00:00:00 2001
+From 137e4a3f1ee1602387bbbbf996ea6b01705362b6 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 29 Dec 2022 15:58:56 +0400
-Subject: [PATCH 51/80] fs/ntfs3: Check for extremely large size of $AttrDef
+Subject: [PATCH 51/79] fs/ntfs3: Check for extremely large size of $AttrDef
 
 Added additional checking for size of $AttrDef.
 Added comment.
@@ -5499,10 +5499,10 @@ index ef4ea3f21905..0967035146ce 100644
 2.41.0
 
 
-From dcd32c61acc2b41e31a065c735656f417d1ebb64 Mon Sep 17 00:00:00 2001
+From 0c13ce21eea2e6c0f2c4704e05c9a1dcfb1cb069 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 30 Dec 2022 14:09:44 +0400
-Subject: [PATCH 52/80] fs/ntfs3: Restore overflow checking for attr size in
+Subject: [PATCH 52/79] fs/ntfs3: Restore overflow checking for attr size in
  mi_enum_attr
 
 Fixed comment.
@@ -5573,10 +5573,10 @@ index 0967035146ce..19d0889b131f 100644
 2.41.0
 
 
-From 8b647ad3923839ab01aa409cb19308c57d09337f Mon Sep 17 00:00:00 2001
+From fb7d024464eea025f4b7b43a73ebaeeca04da1c5 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 30 Dec 2022 14:58:25 +0400
-Subject: [PATCH 53/80] fs/ntfs3: Refactoring of various minor issues
+Subject: [PATCH 53/79] fs/ntfs3: Refactoring of various minor issues
 
 Removed unused macro.
 Changed null pointer checking.
@@ -5622,10 +5622,10 @@ index 1f36e89dcff7..342938704cfd 100644
 2.41.0
 
 
-From cdaee653811617090646b9f32a476ee81912d577 Mon Sep 17 00:00:00 2001
+From 7feb23a84da0e292e2603511bc7779fd444af78e Mon Sep 17 00:00:00 2001
 From: Jia-Ju Bai <baijiaju1990@gmail.com>
 Date: Wed, 11 Jan 2023 16:59:43 +0800
-Subject: [PATCH 54/80] fs/ntfs3: Fix a possible null-pointer dereference in
+Subject: [PATCH 54/79] fs/ntfs3: Fix a possible null-pointer dereference in
  ni_clear()
 
 In a previous commit c1006bd13146, ni->mi.mrec in ni_write_inode()
@@ -5668,10 +5668,10 @@ index 1103d4d9a497..9e7dfee303e8 100644
 2.41.0
 
 
-From e3fad037e54aecc7193b8860c399d6ffd703c6fd Mon Sep 17 00:00:00 2001
+From 1131c45d9138b4395933eb3e6563ef8bdef2a70c Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 16 Jan 2023 11:41:41 +0400
-Subject: [PATCH 55/80] fs/ntfs3: Use bh_read to simplify code
+Subject: [PATCH 55/79] fs/ntfs3: Use bh_read to simplify code
 
 The duplicating code is replaced by a generic function bh_read()
 
@@ -5720,10 +5720,10 @@ index e80e94325467..5e06299591ed 100644
 2.41.0
 
 
-From 8dd461dd10656639155796f7ea1efafb0f18261d Mon Sep 17 00:00:00 2001
+From 44f3d1d0155f5b05d2bae6fbb1b9564900fbad95 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 16 Jan 2023 12:52:10 +0400
-Subject: [PATCH 56/80] fs/ntfs3: Remove noacsrules
+Subject: [PATCH 56/79] fs/ntfs3: Remove noacsrules
 
 Currently, this option does not work properly. Its use leads to unstable results.
 If we figure out how to implement it without errors, we will add it later.
@@ -5918,10 +5918,10 @@ index 28d7f8200385..e32ed7bc0b78 100644
 2.41.0
 
 
-From b2cae94ab850fcaf4960bd408c5043ea154444e3 Mon Sep 17 00:00:00 2001
+From 4e0e81dde1107968e42ccb8febf83f797c9c43b8 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 16 Jan 2023 13:03:24 +0400
-Subject: [PATCH 57/80] fs/ntfs3: Fix ntfs_create_inode()
+Subject: [PATCH 57/79] fs/ntfs3: Fix ntfs_create_inode()
 
 Previous variant creates an inode that requires update the parent directory
 (ea_packed_size). Operations in ntfs_create_inode have been rearranged
@@ -6212,10 +6212,10 @@ index e32ed7bc0b78..bcea1c6fe194 100644
 2.41.0
 
 
-From f0392a7aa893d58adff7c0b7b5d20b900766efa7 Mon Sep 17 00:00:00 2001
+From 167918506f67fe47fe3e74a9c1038048b601df5d Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 16 Jan 2023 14:23:38 +0400
-Subject: [PATCH 58/80] fs/ntfs3: Optimization in ntfs_set_state()
+Subject: [PATCH 58/79] fs/ntfs3: Optimization in ntfs_set_state()
 
 The current volume flags are updated only if VOLUME_FLAG_DIRTY has been changed.
 
@@ -6262,10 +6262,10 @@ index 342938704cfd..d888ba14237f 100644
 2.41.0
 
 
-From ccdef1452330a43c07f2b7c880aadc59c2e3ed4c Mon Sep 17 00:00:00 2001
+From 58471f521ef24ace60022b377549767d173ebe63 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 14 Feb 2023 13:44:22 +0400
-Subject: [PATCH 59/80] fs/ntfs3: Undo endian changes
+Subject: [PATCH 59/79] fs/ntfs3: Undo endian changes
 
 sbi->mft.reserved_bitmap is in-memory (not on-disk!) bitmap.
 Assumed cpu endian is faster than fixed endian.
@@ -6328,10 +6328,10 @@ index d888ba14237f..9ed9dd0d8edf 100644
 2.41.0
 
 
-From 4c9faf34bbd26c8755885be1eacb508c9d393e68 Mon Sep 17 00:00:00 2001
+From 6af5b3b2f53ab0615cd7df11af80527bc3f8786e Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 14 Feb 2023 13:57:09 +0400
-Subject: [PATCH 60/80] fs/ntfs3: Undo critial modificatins to keep directory
+Subject: [PATCH 60/79] fs/ntfs3: Undo critial modificatins to keep directory
  consistency
 
 Affect xfstest 320.
@@ -6434,10 +6434,10 @@ index 9fefeac5fe7e..5d1ec0124137 100644
 2.41.0
 
 
-From 96957305bc6b8903850f037c9f45cc046cfc437d Mon Sep 17 00:00:00 2001
+From f7c6d974ec51ecbb53b6602c6714231a9cc9e39b Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 14 Feb 2023 14:00:04 +0400
-Subject: [PATCH 61/80] fs/ntfs3: Remove field sbi->used.bitmap.set_tail
+Subject: [PATCH 61/79] fs/ntfs3: Remove field sbi->used.bitmap.set_tail
 
 This field is not used in driver.
 
@@ -6476,10 +6476,10 @@ index 10c019ef7da3..d7bec9b28a42 100644
 2.41.0
 
 
-From 8dcc15551154f6c737ac074479bc0da0d9e898c4 Mon Sep 17 00:00:00 2001
+From 6a1aaad4751cc516533407722e29b51de3c690b7 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 17 Jan 2023 15:01:00 +0400
-Subject: [PATCH 62/80] fs/ntfs3: Code formatting and refactoring
+Subject: [PATCH 62/79] fs/ntfs3: Code formatting and refactoring
 
 Added minor refactoring.
 Added and fixed some comments.
@@ -7534,10 +7534,10 @@ index bcea1c6fe194..61a2f45c3297 100644
 2.41.0
 
 
-From a54ab04aecd55ea2373fcce7a7858efb0dcf39c6 Mon Sep 17 00:00:00 2001
+From 1f79a9fa3877ed22a5bd63da93e2f73fcd62cfa6 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Wed, 15 Feb 2023 13:24:23 +0400
-Subject: [PATCH 63/80] fs/ntfs3: Add missed "nocase" in ntfs_show_options
+Subject: [PATCH 63/79] fs/ntfs3: Add missed "nocase" in ntfs_show_options
 
 Sort processing ntfs3's mount options in same order they declared.
 
@@ -7639,10 +7639,10 @@ index 6a412826b43d..521ce31d67a1 100644
 2.41.0
 
 
-From 0760e35a707833659d9eea277ffa2dc3cacb7453 Mon Sep 17 00:00:00 2001
+From 5f3aca84bbe7c1d88d4716ca916f852fcd9f83e3 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Wed, 15 Feb 2023 16:06:56 +0400
-Subject: [PATCH 64/80] fs/ntfs3: Print details about mount fails
+Subject: [PATCH 64/79] fs/ntfs3: Print details about mount fails
 
 Added error mesages with error codes.
 Minor refactoring and code formatting.
@@ -8171,10 +8171,10 @@ index 521ce31d67a1..e0f78b306f15 100644
 2.41.0
 
 
-From 049160654060fc7467e84c5cdc06a20cd5613a6e Mon Sep 17 00:00:00 2001
+From 3a035aa46ebf04a256e2666694fbb64854c1e65a Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 20 Feb 2023 09:39:35 +0400
-Subject: [PATCH 65/80] fs/ntfs3: Fix root inode checking
+Subject: [PATCH 65/79] fs/ntfs3: Fix root inode checking
 
 Separate checking inode->i_op and inode itself.
 
@@ -8217,10 +8217,10 @@ index e0f78b306f15..5158dd31fd97 100644
 2.41.0
 
 
-From 243b1203179699453a7092fb4586b45e5dde39db Mon Sep 17 00:00:00 2001
+From d8c951c404740cca85ab331d7573c3ab9d780501 Mon Sep 17 00:00:00 2001
 From: Yangtao Li <frank.li@vivo.com>
 Date: Fri, 10 Mar 2023 11:08:19 +0800
-Subject: [PATCH 66/80] fs/ntfs3: Use wrapper i_blocksize() in
+Subject: [PATCH 66/79] fs/ntfs3: Use wrapper i_blocksize() in
  ntfs_zero_range()
 
 Convert to use i_blocksize() for readability.
@@ -8250,10 +8250,10 @@ index f3065a12d373..c4c2e8d9d03d 100644
 2.41.0
 
 
-From 88df5fc04f59439a6b0e13ce9510489f36a42b6c Mon Sep 17 00:00:00 2001
+From d6e028bdcba3b1b461ea3ffbda040126a87a74b0 Mon Sep 17 00:00:00 2001
 From: Edward Lo <loyuantsung@gmail.com>
 Date: Thu, 16 Mar 2023 10:56:55 +0800
-Subject: [PATCH 67/80] fs/ntfs3: Enhance sanity check while generating
+Subject: [PATCH 67/79] fs/ntfs3: Enhance sanity check while generating
  attr_list
 
 ni_create_attr_list uses WARN_ON to catch error cases while generating
@@ -8446,10 +8446,10 @@ index 2bfcf1a989c9..50214b77c6a3 100644
 2.41.0
 
 
-From 0df50de4618b25c65f9700fa315efb5dc0653a10 Mon Sep 17 00:00:00 2001
+From a686381bb8683d9fd4548bef8e5c08c947bdc5a4 Mon Sep 17 00:00:00 2001
 From: Edward Lo <loyuantsung@gmail.com>
 Date: Fri, 17 Mar 2023 18:23:03 +0800
-Subject: [PATCH 68/80] fs/ntfs3: Return error for inconsistent extended
+Subject: [PATCH 68/79] fs/ntfs3: Return error for inconsistent extended
  attributes
 
 ntfs_read_ea is called when we want to read extended attributes. There
@@ -8550,10 +8550,10 @@ index 61a2f45c3297..3996f2f6b2af 100644
 2.41.0
 
 
-From d6d20de738ba833485a4fe46f592e8cfbab0747d Mon Sep 17 00:00:00 2001
+From 3850e08b3637e79eb932a8df556ad6af60e7ef82 Mon Sep 17 00:00:00 2001
 From: Jia-Ju Bai <baijiaju@buaa.edu.cn>
 Date: Tue, 21 Mar 2023 21:22:11 +0800
-Subject: [PATCH 69/80] fs: ntfs3: Fix possible null-pointer dereferences in
+Subject: [PATCH 69/79] fs: ntfs3: Fix possible null-pointer dereferences in
  mi_read()
 
 In a previous commit 2681631c2973 ("fs/ntfs3: Add null pointer check to
@@ -8609,53 +8609,10 @@ index 2a281cead2bc..7060f784c2d7 100644
 2.41.0
 
 
-From 8dee8f89166d92719eb8b7ba671e01581342d6a8 Mon Sep 17 00:00:00 2001
-From: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
-Date: Tue, 28 Mar 2023 20:05:16 +0900
-Subject: [PATCH 70/80] fs/ntfs3: Use __GFP_NOWARN allocation at
- ntfs_load_attr_list()
-
-syzbot is reporting too large allocation at ntfs_load_attr_list(), for
-a crafted filesystem can have huge data_size.
-
-Reported-by: syzbot <syzbot+89dbb3a789a5b9711793@syzkaller.appspotmail.com>
-Link: https://syzkaller.appspot.com/bug?extid=89dbb3a789a5b9711793
-Signed-off-by: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
-Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
----
- fs/ntfs3/attrlist.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/fs/ntfs3/attrlist.c b/fs/ntfs3/attrlist.c
-index c0c6bcbc8c05..81c22df27c72 100644
---- a/fs/ntfs3/attrlist.c
-+++ b/fs/ntfs3/attrlist.c
-@@ -52,7 +52,7 @@ int ntfs_load_attr_list(struct ntfs_inode *ni, struct ATTRIB *attr)
- 
- 	if (!attr->non_res) {
- 		lsize = le32_to_cpu(attr->res.data_size);
--		le = kmalloc(al_aligned(lsize), GFP_NOFS);
-+		le = kmalloc(al_aligned(lsize), GFP_NOFS | __GFP_NOWARN);
- 		if (!le) {
- 			err = -ENOMEM;
- 			goto out;
-@@ -80,7 +80,7 @@ int ntfs_load_attr_list(struct ntfs_inode *ni, struct ATTRIB *attr)
- 		if (err < 0)
- 			goto out;
- 
--		le = kmalloc(al_aligned(lsize), GFP_NOFS);
-+		le = kmalloc(al_aligned(lsize), GFP_NOFS | __GFP_NOWARN);
- 		if (!le) {
- 			err = -ENOMEM;
- 			goto out;
--- 
-2.41.0
-
-
-From 2f8ed660cee9fbee5871784b283a0ada63e1d464 Mon Sep 17 00:00:00 2001
+From 31522debe6766ac9b4957053556495f04507ccdd Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 13:32:10 +0400
-Subject: [PATCH 71/80] fs/ntfs3: Correct checking while generating attr_list
+Subject: [PATCH 70/79] fs/ntfs3: Correct checking while generating attr_list
 
 Correct slightly previous commit:
 Enhance sanity check while generating attr_list
@@ -8754,10 +8711,10 @@ index 50214b77c6a3..66f3341c65ec 100644
 2.41.0
 
 
-From 1c20af3b355f9b23dc2bb8ae56d74f9e86dfd4e9 Mon Sep 17 00:00:00 2001
+From deb6233b74cb019409d227ee30e60ddd92acaee5 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 11:36:28 +0400
-Subject: [PATCH 72/80] fs/ntfs3: Mark ntfs dirty when on-disk struct is
+Subject: [PATCH 71/79] fs/ntfs3: Mark ntfs dirty when on-disk struct is
  corrupted
 
 Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
@@ -8832,10 +8789,10 @@ index 7060f784c2d7..7974ca35a15c 100644
 2.41.0
 
 
-From 498b3789dd6659e637c8641692bd022a4c2634e5 Mon Sep 17 00:00:00 2001
+From 2bcbb06a04335e9db7859e1a331e5357cbaf5af5 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 11:56:13 +0400
-Subject: [PATCH 73/80] fs/ntfs3: Alternative boot if primary boot is corrupted
+Subject: [PATCH 72/79] fs/ntfs3: Alternative boot if primary boot is corrupted
 
 Some code refactoring added also.
 
@@ -9048,10 +9005,10 @@ index 5158dd31fd97..ecf899d571d8 100644
 2.41.0
 
 
-From b326e5834a9aca9b051567ff42d66847f855ff66 Mon Sep 17 00:00:00 2001
+From 93ac430214ffa4636b23afcce708ad556337475b Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 12:09:10 +0400
-Subject: [PATCH 74/80] fs/ntfs3: Do not update primary boot in
+Subject: [PATCH 73/79] fs/ntfs3: Do not update primary boot in
  ntfs_init_from_boot()
 
 'cause it may be faked boot.
@@ -9172,10 +9129,10 @@ index ecf899d571d8..2b48b45238ea 100644
 2.41.0
 
 
-From 4b2574f709597acea5bc0314579ae86d92b9425b Mon Sep 17 00:00:00 2001
+From 5265acf947ca9d316cb8f6358c777114712befca Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 12:22:05 +0400
-Subject: [PATCH 75/80] fs/ntfs3: Code formatting
+Subject: [PATCH 74/79] fs/ntfs3: Code formatting
 
 clang-format-15 was used to format code according kernel's .clang-format.
 
@@ -9697,10 +9654,10 @@ index 3996f2f6b2af..a38e1302535a 100644
 2.41.0
 
 
-From ab4bf4f8d1ef829b60cd154b0ecca18f036e0e9b Mon Sep 17 00:00:00 2001
+From 3732a351269b5e5034ad30a053175ffca8df4149 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 12:59:06 +0400
-Subject: [PATCH 76/80] fs/ntfs3: Code refactoring
+Subject: [PATCH 75/79] fs/ntfs3: Code refactoring
 
 Check functions arguments. Use u8 instead of size_t for ntfs names, more consts and other.
 
@@ -10184,10 +10141,10 @@ index 7974ca35a15c..e73ca2df42eb 100644
 2.41.0
 
 
-From 20da60153b1af9e0b02d329d52a1f55728ad22a0 Mon Sep 17 00:00:00 2001
+From 182004827bcc116bffd781f544025e76c6b795b4 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 13:37:22 +0400
-Subject: [PATCH 77/80] fs/ntfs3: Add ability to format new mft records with
+Subject: [PATCH 76/79] fs/ntfs3: Add ability to format new mft records with
  bigger/smaller header
 
 Just define in ntfs.h
@@ -10265,10 +10222,10 @@ index 12019bfe1325..7ab0a79c7d84 100644
 2.41.0
 
 
-From 213d7ff8cf97bd8dfca7c245eb30ccc75ffeed7a Mon Sep 17 00:00:00 2001
+From bf8f618f3f4232040659682693ed553600a0c48f Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 13:41:24 +0400
-Subject: [PATCH 78/80] fs/ntfs3: Fix endian problem
+Subject: [PATCH 77/79] fs/ntfs3: Fix endian problem
 
 Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 ---
@@ -10343,10 +10300,10 @@ index 691c2ad13477..29e1a2a0d7fb 100644
 2.41.0
 
 
-From 618204a2f7571e9a6c0c10dc8e57ff7706d996b6 Mon Sep 17 00:00:00 2001
+From 41fd7258de7b76b656f8b8395ce4892a92037e27 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 13:39:45 +0400
-Subject: [PATCH 79/80] fs/ntfs3: Add support /proc/fs/ntfs3/<dev>/volinfo and
+Subject: [PATCH 78/79] fs/ntfs3: Add support /proc/fs/ntfs3/<dev>/volinfo and
  /proc/fs/ntfs3/<dev>/label
 
 Metafile /proc/fs/ntfs3/<dev>/label allows to read/write current ntfs label.
@@ -10653,10 +10610,10 @@ index 7ab0a79c7d84..e36769eac7de 100644
 2.41.0
 
 
-From ee1344657fe5c219faf79e7197af91561aaa0791 Mon Sep 17 00:00:00 2001
+From 726ac0938982ec58466f9a8a1d43c32861c5ee88 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 30 Jun 2023 15:23:07 +0400
-Subject: [PATCH 80/80] fs/ntfs3: Correct mode for label entry inside
+Subject: [PATCH 79/79] fs/ntfs3: Correct mode for label entry inside
  /proc/fs/ntfs3/
 
 Suggested-by: Dan Carpenter <dan.carpenter@linaro.org>
