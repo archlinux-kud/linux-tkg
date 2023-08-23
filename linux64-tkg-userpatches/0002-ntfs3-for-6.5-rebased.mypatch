@@ -1,7 +1,7 @@
-From 75667c338a09fecf705848a0af39e70ac99e0483 Mon Sep 17 00:00:00 2001
+From 6ddfbac56cb69f5ed66aeab9d2fcd1b4b659e25b Mon Sep 17 00:00:00 2001
 From: Yangtao Li <frank.li@vivo.com>
 Date: Fri, 10 Mar 2023 11:08:19 +0800
-Subject: [PATCH 01/16] fs/ntfs3: Use wrapper i_blocksize() in
+Subject: [PATCH 01/15] fs/ntfs3: Use wrapper i_blocksize() in
  ntfs_zero_range()
 
 Convert to use i_blocksize() for readability.
@@ -31,10 +31,10 @@ index 9a3d55c367d9..c4983e028d90 100644
 2.41.0
 
 
-From 61161be2fb41ea39b536f2bcda9a60296d7de32a Mon Sep 17 00:00:00 2001
+From 91a8b80a58ad36313ba41138daade3909388b6eb Mon Sep 17 00:00:00 2001
 From: Edward Lo <loyuantsung@gmail.com>
 Date: Thu, 16 Mar 2023 10:56:55 +0800
-Subject: [PATCH 02/16] fs/ntfs3: Enhance sanity check while generating
+Subject: [PATCH 02/15] fs/ntfs3: Enhance sanity check while generating
  attr_list
 
 ni_create_attr_list uses WARN_ON to catch error cases while generating
@@ -227,10 +227,10 @@ index 2bfcf1a989c9..50214b77c6a3 100644
 2.41.0
 
 
-From ebef48bb7bfca0ac370146c0cdf15e30fa62fdd0 Mon Sep 17 00:00:00 2001
+From df4cf1bae0b309e554a87c32ada27634a3a40d92 Mon Sep 17 00:00:00 2001
 From: Edward Lo <loyuantsung@gmail.com>
 Date: Fri, 17 Mar 2023 18:23:03 +0800
-Subject: [PATCH 03/16] fs/ntfs3: Return error for inconsistent extended
+Subject: [PATCH 03/15] fs/ntfs3: Return error for inconsistent extended
  attributes
 
 ntfs_read_ea is called when we want to read extended attributes. There
@@ -331,10 +331,10 @@ index fd02fcf4d409..26787c2bbf75 100644
 2.41.0
 
 
-From 4d4fc5ef19ef414e8ecadc6f8b18b3b539766e41 Mon Sep 17 00:00:00 2001
+From 3c83d245dbd29d0f666a0da1aef41c6a1388bc71 Mon Sep 17 00:00:00 2001
 From: Jia-Ju Bai <baijiaju@buaa.edu.cn>
 Date: Tue, 21 Mar 2023 21:22:11 +0800
-Subject: [PATCH 04/16] fs: ntfs3: Fix possible null-pointer dereferences in
+Subject: [PATCH 04/15] fs: ntfs3: Fix possible null-pointer dereferences in
  mi_read()
 
 In a previous commit 2681631c2973 ("fs/ntfs3: Add null pointer check to
@@ -390,53 +390,10 @@ index 2a281cead2bc..7060f784c2d7 100644
 2.41.0
 
 
-From 3010190fbb17184d8bba1dc766d67aa8e65f2835 Mon Sep 17 00:00:00 2001
-From: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
-Date: Tue, 28 Mar 2023 20:05:16 +0900
-Subject: [PATCH 05/16] fs/ntfs3: Use __GFP_NOWARN allocation at
- ntfs_load_attr_list()
-
-syzbot is reporting too large allocation at ntfs_load_attr_list(), for
-a crafted filesystem can have huge data_size.
-
-Reported-by: syzbot <syzbot+89dbb3a789a5b9711793@syzkaller.appspotmail.com>
-Link: https://syzkaller.appspot.com/bug?extid=89dbb3a789a5b9711793
-Signed-off-by: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
-Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
----
- fs/ntfs3/attrlist.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/fs/ntfs3/attrlist.c b/fs/ntfs3/attrlist.c
-index c0c6bcbc8c05..81c22df27c72 100644
---- a/fs/ntfs3/attrlist.c
-+++ b/fs/ntfs3/attrlist.c
-@@ -52,7 +52,7 @@ int ntfs_load_attr_list(struct ntfs_inode *ni, struct ATTRIB *attr)
- 
- 	if (!attr->non_res) {
- 		lsize = le32_to_cpu(attr->res.data_size);
--		le = kmalloc(al_aligned(lsize), GFP_NOFS);
-+		le = kmalloc(al_aligned(lsize), GFP_NOFS | __GFP_NOWARN);
- 		if (!le) {
- 			err = -ENOMEM;
- 			goto out;
-@@ -80,7 +80,7 @@ int ntfs_load_attr_list(struct ntfs_inode *ni, struct ATTRIB *attr)
- 		if (err < 0)
- 			goto out;
- 
--		le = kmalloc(al_aligned(lsize), GFP_NOFS);
-+		le = kmalloc(al_aligned(lsize), GFP_NOFS | __GFP_NOWARN);
- 		if (!le) {
- 			err = -ENOMEM;
- 			goto out;
--- 
-2.41.0
-
-
-From 269d6ab4eff05a7dbd4b4c7858ca3fba1552cb35 Mon Sep 17 00:00:00 2001
+From e987b9de15c3292e579e7733cb50715677ef8209 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 13:32:10 +0400
-Subject: [PATCH 06/16] fs/ntfs3: Correct checking while generating attr_list
+Subject: [PATCH 05/15] fs/ntfs3: Correct checking while generating attr_list
 
 Correct slightly previous commit:
 Enhance sanity check while generating attr_list
@@ -535,10 +492,10 @@ index 50214b77c6a3..66f3341c65ec 100644
 2.41.0
 
 
-From 3843378dce73219a7fa6c905a79272afcffae23d Mon Sep 17 00:00:00 2001
+From 976121e13f51796dee6cb7f0084c53e29063db57 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 11:26:45 +0400
-Subject: [PATCH 07/16] fs/ntfs3: Fix ntfs_atomic_open
+Subject: [PATCH 06/15] fs/ntfs3: Fix ntfs_atomic_open
 
 This fixes xfstest 633/696.
 
@@ -578,10 +535,10 @@ index 9736b1e4a0f6..343bce6da58a 100644
 2.41.0
 
 
-From e4594bac521fcd0e56a65ca50dd269e15bfe5f40 Mon Sep 17 00:00:00 2001
+From e24d5dfaa39ec10efd35fd7a3fd5e80ebdd17e3b Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 11:36:28 +0400
-Subject: [PATCH 08/16] fs/ntfs3: Mark ntfs dirty when on-disk struct is
+Subject: [PATCH 07/15] fs/ntfs3: Mark ntfs dirty when on-disk struct is
  corrupted
 
 Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
@@ -656,10 +613,10 @@ index 7060f784c2d7..7974ca35a15c 100644
 2.41.0
 
 
-From c54eb5aecb85fb7b14958a6f721c39f07ad47ee8 Mon Sep 17 00:00:00 2001
+From abe84037fd56b020abaf1d8dbe8c0cef084dd979 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 11:56:13 +0400
-Subject: [PATCH 09/16] fs/ntfs3: Alternative boot if primary boot is corrupted
+Subject: [PATCH 08/15] fs/ntfs3: Alternative boot if primary boot is corrupted
 
 Some code refactoring added also.
 
@@ -872,10 +829,10 @@ index 5158dd31fd97..ecf899d571d8 100644
 2.41.0
 
 
-From 176e18f497631cf402e594fd6b54c60e186071f0 Mon Sep 17 00:00:00 2001
+From 4eb88645a24bacd123429aa3490bffe652e9c75d Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 12:09:10 +0400
-Subject: [PATCH 10/16] fs/ntfs3: Do not update primary boot in
+Subject: [PATCH 09/15] fs/ntfs3: Do not update primary boot in
  ntfs_init_from_boot()
 
 'cause it may be faked boot.
@@ -996,10 +953,10 @@ index ecf899d571d8..2b48b45238ea 100644
 2.41.0
 
 
-From e93c0c1bf3c660da03da1b98612e839e5f348982 Mon Sep 17 00:00:00 2001
+From 0203377b2e6c94d796c81874110b7ffe8a018e8f Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 12:22:05 +0400
-Subject: [PATCH 11/16] fs/ntfs3: Code formatting
+Subject: [PATCH 10/15] fs/ntfs3: Code formatting
 
 clang-format-15 was used to format code according kernel's .clang-format.
 
@@ -1643,10 +1600,10 @@ index 26787c2bbf75..023f314e8950 100644
 2.41.0
 
 
-From 0bf795ae0331a7020eb6e7495704e9da2937810a Mon Sep 17 00:00:00 2001
+From 2133e634c303adc17f07ce4eefe7f119bdcb5d1f Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 12:59:06 +0400
-Subject: [PATCH 12/16] fs/ntfs3: Code refactoring
+Subject: [PATCH 11/15] fs/ntfs3: Code refactoring
 
 Check functions arguments. Use u8 instead of size_t for ntfs names, more consts and other.
 
@@ -2130,10 +2087,10 @@ index 7974ca35a15c..e73ca2df42eb 100644
 2.41.0
 
 
-From 153620910265454cd427f2af0918acc889a153da Mon Sep 17 00:00:00 2001
+From 31c338251a2027e5706ee2edc58ea00992a9471a Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 13:37:22 +0400
-Subject: [PATCH 13/16] fs/ntfs3: Add ability to format new mft records with
+Subject: [PATCH 12/15] fs/ntfs3: Add ability to format new mft records with
  bigger/smaller header
 
 Just define in ntfs.h
@@ -2211,10 +2168,10 @@ index 12019bfe1325..7ab0a79c7d84 100644
 2.41.0
 
 
-From 2bdd1329791e251096fb27b5353609816f5ec846 Mon Sep 17 00:00:00 2001
+From e7513c81f1350c038df468d87bb4f0905f6ce74b Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 13:41:24 +0400
-Subject: [PATCH 14/16] fs/ntfs3: Fix endian problem
+Subject: [PATCH 13/15] fs/ntfs3: Fix endian problem
 
 Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 ---
@@ -2289,10 +2246,10 @@ index 98b61e4b3215..00fa782fcada 100644
 2.41.0
 
 
-From 7ff5aa3e08d1cb0cfc29ba8c12938d28eea7f8b2 Mon Sep 17 00:00:00 2001
+From 93a34e5f941bcf75a427d34d19cb3e97c975ee3d Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 13:39:45 +0400
-Subject: [PATCH 15/16] fs/ntfs3: Add support /proc/fs/ntfs3/<dev>/volinfo and
+Subject: [PATCH 14/15] fs/ntfs3: Add support /proc/fs/ntfs3/<dev>/volinfo and
  /proc/fs/ntfs3/<dev>/label
 
 Metafile /proc/fs/ntfs3/<dev>/label allows to read/write current ntfs label.
@@ -2599,10 +2556,10 @@ index 7ab0a79c7d84..e36769eac7de 100644
 2.41.0
 
 
-From 5da82f55cf6d32a27654cc05b686fa6eab81ae0d Mon Sep 17 00:00:00 2001
+From 2f236bc3936fd73c041346596fe6018a1ca63d8c Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 30 Jun 2023 15:23:07 +0400
-Subject: [PATCH 16/16] fs/ntfs3: Correct mode for label entry inside
+Subject: [PATCH 15/15] fs/ntfs3: Correct mode for label entry inside
  /proc/fs/ntfs3/
 
 Suggested-by: Dan Carpenter <dan.carpenter@linaro.org>

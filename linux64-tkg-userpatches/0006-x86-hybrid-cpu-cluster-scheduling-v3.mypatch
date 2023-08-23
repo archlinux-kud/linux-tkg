@@ -1,4 +1,4 @@
-From 911e188086ebcae464c040f963883a8bd900dbb5 Mon Sep 17 00:00:00 2001
+From def9ac65f58d61be88a8b92ce4dd0c75d6f790da Mon Sep 17 00:00:00 2001
 From: Tim C Chen <tim.c.chen@linux.intel.com>
 Date: Fri, 7 Jul 2023 15:57:00 -0700
 Subject: [PATCH 1/6] sched/fair: Determine active load balance for SMT sched
@@ -44,10 +44,10 @@ Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
  1 file changed, 77 insertions(+), 3 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index af8bf6af6ed7..646bbd0d7b3f 100644
+index 74c4be5c21eb..22463e4255c0 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -8536,6 +8536,11 @@ enum group_type {
+@@ -8515,6 +8515,11 @@ enum group_type {
  	 * more powerful CPU.
  	 */
  	group_misfit_task,
@@ -59,7 +59,7 @@ index af8bf6af6ed7..646bbd0d7b3f 100644
  	/*
  	 * SD_ASYM_PACKING only: One local CPU with higher capacity is available,
  	 * and the task should be migrated to it instead of running on the
-@@ -9244,6 +9249,7 @@ struct sg_lb_stats {
+@@ -9222,6 +9227,7 @@ struct sg_lb_stats {
  	unsigned int group_weight;
  	enum group_type group_type;
  	unsigned int group_asym_packing; /* Tasks should be moved to preferred CPU */
@@ -67,7 +67,7 @@ index af8bf6af6ed7..646bbd0d7b3f 100644
  	unsigned long group_misfit_task_load; /* A CPU has a task too big for its capacity */
  #ifdef CONFIG_NUMA_BALANCING
  	unsigned int nr_numa_running;
-@@ -9524,6 +9530,9 @@ group_type group_classify(unsigned int imbalance_pct,
+@@ -9502,6 +9508,9 @@ group_type group_classify(unsigned int imbalance_pct,
  	if (sgs->group_asym_packing)
  		return group_asym_packing;
  
@@ -77,7 +77,7 @@ index af8bf6af6ed7..646bbd0d7b3f 100644
  	if (sgs->group_misfit_task_load)
  		return group_misfit_task;
  
-@@ -9835,6 +9844,36 @@ sched_asym(struct lb_env *env, struct sd_lb_stats *sds,  struct sg_lb_stats *sgs
+@@ -9813,6 +9822,36 @@ sched_asym(struct lb_env *env, struct sd_lb_stats *sds,  struct sg_lb_stats *sgs
  	return sched_asym_prefer(env->dst_cpu, group->asym_prefer_cpu);
  }
  
@@ -114,7 +114,7 @@ index af8bf6af6ed7..646bbd0d7b3f 100644
  static inline bool
  sched_reduced_capacity(struct rq *rq, struct sched_domain *sd)
  {
-@@ -9930,6 +9969,10 @@ static inline void update_sg_lb_stats(struct lb_env *env,
+@@ -9908,6 +9947,10 @@ static inline void update_sg_lb_stats(struct lb_env *env,
  		sgs->group_asym_packing = 1;
  	}
  
@@ -125,7 +125,7 @@ index af8bf6af6ed7..646bbd0d7b3f 100644
  	sgs->group_type = group_classify(env->sd->imbalance_pct, group, sgs);
  
  	if (!local_group)
-@@ -10027,6 +10070,7 @@ static bool update_sd_pick_busiest(struct lb_env *env,
+@@ -10005,6 +10048,7 @@ static bool update_sd_pick_busiest(struct lb_env *env,
  			return false;
  		break;
  
@@ -133,7 +133,7 @@ index af8bf6af6ed7..646bbd0d7b3f 100644
  	case group_fully_busy:
  		/*
  		 * Select the fully busy group with highest avg_load. In
-@@ -10066,6 +10110,18 @@ static bool update_sd_pick_busiest(struct lb_env *env,
+@@ -10044,6 +10088,18 @@ static bool update_sd_pick_busiest(struct lb_env *env,
  		break;
  
  	case group_has_spare:
@@ -152,7 +152,7 @@ index af8bf6af6ed7..646bbd0d7b3f 100644
  		/*
  		 * Select not overloaded group with lowest number of idle cpus
  		 * and highest number of running tasks. We could also compare
-@@ -10262,6 +10318,7 @@ static bool update_pick_idlest(struct sched_group *idlest,
+@@ -10240,6 +10296,7 @@ static bool update_pick_idlest(struct sched_group *idlest,
  
  	case group_imbalanced:
  	case group_asym_packing:
@@ -160,7 +160,7 @@ index af8bf6af6ed7..646bbd0d7b3f 100644
  		/* Those types are not used in the slow wakeup path */
  		return false;
  
-@@ -10393,6 +10450,7 @@ find_idlest_group(struct sched_domain *sd, struct task_struct *p, int this_cpu)
+@@ -10371,6 +10428,7 @@ find_idlest_group(struct sched_domain *sd, struct task_struct *p, int this_cpu)
  
  	case group_imbalanced:
  	case group_asym_packing:
@@ -168,7 +168,7 @@ index af8bf6af6ed7..646bbd0d7b3f 100644
  		/* Those type are not used in the slow wakeup path */
  		return NULL;
  
-@@ -10647,6 +10705,13 @@ static inline void calculate_imbalance(struct lb_env *env, struct sd_lb_stats *s
+@@ -10625,6 +10683,13 @@ static inline void calculate_imbalance(struct lb_env *env, struct sd_lb_stats *s
  		return;
  	}
  
@@ -182,7 +182,7 @@ index af8bf6af6ed7..646bbd0d7b3f 100644
  	if (busiest->group_type == group_imbalanced) {
  		/*
  		 * In the group_imb case we cannot rely on group-wide averages
-@@ -10902,16 +10967,23 @@ static struct sched_group *find_busiest_group(struct lb_env *env)
+@@ -10880,16 +10945,23 @@ static struct sched_group *find_busiest_group(struct lb_env *env)
  		goto force_balance;
  
  	if (busiest->group_type != group_overloaded) {
@@ -208,7 +208,7 @@ index af8bf6af6ed7..646bbd0d7b3f 100644
  			/*
  			 * If the busiest group is not overloaded
  			 * and there is no imbalance between this and busiest
-@@ -10922,12 +10994,14 @@ static struct sched_group *find_busiest_group(struct lb_env *env)
+@@ -10900,12 +10972,14 @@ static struct sched_group *find_busiest_group(struct lb_env *env)
  			 * there is more than 1 CPU per group.
  			 */
  			goto out_balanced;
@@ -228,7 +228,7 @@ index af8bf6af6ed7..646bbd0d7b3f 100644
 2.41.0
 
 
-From 984c0fec8567ae4e19dd3bc9a307bd4ebd3da379 Mon Sep 17 00:00:00 2001
+From 3a707f0b04267fa2673bd63d4342144e9b5443f9 Mon Sep 17 00:00:00 2001
 From: Tim C Chen <tim.c.chen@linux.intel.com>
 Date: Fri, 7 Jul 2023 15:57:01 -0700
 Subject: [PATCH 2/6] sched/topology: Record number of cores in sched group
@@ -245,10 +245,10 @@ Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
  2 files changed, 10 insertions(+), 1 deletion(-)
 
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 7f9b794a6ac3..052e9b7c1a97 100644
+index 87d9df96478e..0a5a14bcd701 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
-@@ -1882,6 +1882,7 @@ struct sched_group {
+@@ -1883,6 +1883,7 @@ struct sched_group {
  	atomic_t		ref;
  
  	unsigned int		group_weight;
@@ -288,7 +288,7 @@ index c3a633a4b474..959218d6d55e 100644
 2.41.0
 
 
-From 3e2a8fb62205fb1cb6403f699ee490ee2019d1e1 Mon Sep 17 00:00:00 2001
+From aa4039e0b7e5ea64cc70b0156c444b823498b5b4 Mon Sep 17 00:00:00 2001
 From: Tim C Chen <tim.c.chen@linux.intel.com>
 Date: Fri, 7 Jul 2023 15:57:02 -0700
 Subject: [PATCH 3/6] sched/fair: Implement prefer sibling imbalance
@@ -314,10 +314,10 @@ Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
  1 file changed, 37 insertions(+), 4 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 646bbd0d7b3f..8e37d89879c8 100644
+index 22463e4255c0..82cb73284aed 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -9874,6 +9874,41 @@ static inline bool smt_balance(struct lb_env *env, struct sg_lb_stats *sgs,
+@@ -9852,6 +9852,41 @@ static inline bool smt_balance(struct lb_env *env, struct sg_lb_stats *sgs,
  	return false;
  }
  
@@ -359,7 +359,7 @@ index 646bbd0d7b3f..8e37d89879c8 100644
  static inline bool
  sched_reduced_capacity(struct rq *rq, struct sched_domain *sd)
  {
-@@ -10759,14 +10794,12 @@ static inline void calculate_imbalance(struct lb_env *env, struct sd_lb_stats *s
+@@ -10737,14 +10772,12 @@ static inline void calculate_imbalance(struct lb_env *env, struct sd_lb_stats *s
  		}
  
  		if (busiest->group_weight == 1 || sds->prefer_sibling) {
@@ -375,7 +375,7 @@ index 646bbd0d7b3f..8e37d89879c8 100644
  		} else {
  
  			/*
-@@ -10963,7 +10996,7 @@ static struct sched_group *find_busiest_group(struct lb_env *env)
+@@ -10941,7 +10974,7 @@ static struct sched_group *find_busiest_group(struct lb_env *env)
  	 * group's child domain.
  	 */
  	if (sds.prefer_sibling && local->group_type == group_has_spare &&
@@ -388,7 +388,7 @@ index 646bbd0d7b3f..8e37d89879c8 100644
 2.41.0
 
 
-From cfb47934b2db177f01a0a3b43b0044d699231e02 Mon Sep 17 00:00:00 2001
+From 55a6135ac3b7a4754583c281f69b76da3106ae2d Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Fri, 7 Jul 2023 15:57:03 -0700
 Subject: [PATCH 4/6] sched/fair: Consider the idle state of the whole core for
@@ -438,10 +438,10 @@ Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
  1 file changed, 16 insertions(+), 1 deletion(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 8e37d89879c8..5d843e7d3dc3 100644
+index 82cb73284aed..e1e9e735974b 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -11289,7 +11289,7 @@ static int active_load_balance_cpu_stop(void *data);
+@@ -11267,7 +11267,7 @@ static int active_load_balance_cpu_stop(void *data);
  static int should_we_balance(struct lb_env *env)
  {
  	struct sched_group *sg = env->sd->groups;
@@ -450,7 +450,7 @@ index 8e37d89879c8..5d843e7d3dc3 100644
  
  	/*
  	 * Ensure the balancing environment is consistent; can happen
-@@ -11316,10 +11316,25 @@ static int should_we_balance(struct lb_env *env)
+@@ -11294,10 +11294,25 @@ static int should_we_balance(struct lb_env *env)
  		if (!idle_cpu(cpu))
  			continue;
  
@@ -480,7 +480,7 @@ index 8e37d89879c8..5d843e7d3dc3 100644
 2.41.0
 
 
-From 2531db6d0da2f2482147bcd1d278dd2ef727586d Mon Sep 17 00:00:00 2001
+From a0ef0dff1f5f3a8e6f63a0eb9b344915c8aefc95 Mon Sep 17 00:00:00 2001
 From: Tim C Chen <tim.c.chen@linux.intel.com>
 Date: Fri, 7 Jul 2023 15:57:04 -0700
 Subject: [PATCH 5/6] sched/x86: Add cluster topology to hybrid CPU
@@ -513,7 +513,7 @@ index bc64fd5ca69e..a81f2b0dbbad 100644
 2.41.0
 
 
-From b3608c9b39a2f620687b7980f301da05c3f03c03 Mon Sep 17 00:00:00 2001
+From d1babbccb12d6c35c91a0fc67054f05b69e57e6d Mon Sep 17 00:00:00 2001
 From: "Peter Zijlstra (Intel)" <peterz@infradead.org>
 Date: Fri, 7 Jul 2023 15:57:05 -0700
 Subject: [PATCH 6/6] sched/debug: Dump domains' sched group flags
@@ -535,10 +535,10 @@ Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
-index af55744963e2..64490d5098ff 100644
+index d4ea947e8fd1..bf50c6aafd7b 100644
 --- a/kernel/sched/debug.c
 +++ b/kernel/sched/debug.c
-@@ -427,6 +427,7 @@ static void register_sd(struct sched_domain *sd, struct dentry *parent)
+@@ -425,6 +425,7 @@ static void register_sd(struct sched_domain *sd, struct dentry *parent)
  #undef SDM
  
  	debugfs_create_file("flags", 0444, parent, &sd->flags, &sd_flags_fops);

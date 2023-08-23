@@ -1,7 +1,7 @@
-From be06b86818be2cb77caf9275802a2671afd0c085 Mon Sep 17 00:00:00 2001
+From ad15c3025d05fecde827319a7d822c180d34cc48 Mon Sep 17 00:00:00 2001
 From: Yangtao Li <frank.li@vivo.com>
 Date: Wed, 26 Apr 2023 00:06:11 +0800
-Subject: [PATCH 01/36] f2fs: add sanity check for proc_mkdir
+Subject: [PATCH 01/35] f2fs: add sanity check for proc_mkdir
 
 Return -ENOMEM when proc_mkdir failed.
 
@@ -89,10 +89,10 @@ index 8ea05340bad9..467d743c801f 100644
 2.41.0
 
 
-From 658b33ea587dc846ccaaec2a08f70db03845c825 Mon Sep 17 00:00:00 2001
+From 25d1b6ec88b42b1aa03fead03289650d115f8259 Mon Sep 17 00:00:00 2001
 From: Li Zetao <lizetao1@huawei.com>
 Date: Mon, 24 Apr 2023 23:46:48 +0000
-Subject: [PATCH 02/36] f2fs: remove redundant goto statement in
+Subject: [PATCH 02/35] f2fs: remove redundant goto statement in
  f2fs_read_single_page()
 
 After the commit "0a4ee518185", this "goto" statement was redundant,
@@ -121,10 +121,10 @@ index 15b6dc2e0641..bdb245bb3aa8 100644
 2.41.0
 
 
-From 98d9d9f3982fe2adab7bea3d566d745ce8df0568 Mon Sep 17 00:00:00 2001
+From aa270b004008bf98be5d95d2a14420a552c148e4 Mon Sep 17 00:00:00 2001
 From: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
 Date: Mon, 17 Apr 2023 22:51:46 +0200
-Subject: [PATCH 03/36] f2fs: remove some dead code
+Subject: [PATCH 03/35] f2fs: remove some dead code
 
 'ret' is known to be 0 at the point.
 So these lines of code should just be removed.
@@ -137,10 +137,10 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  1 file changed, 1 insertion(+), 9 deletions(-)
 
 diff --git a/fs/f2fs/node.c b/fs/f2fs/node.c
-index 6bdb1bed29ec..dadea6b01888 100644
+index f8e1fd32e3e4..588f9ecbff58 100644
 --- a/fs/f2fs/node.c
 +++ b/fs/f2fs/node.c
-@@ -2068,7 +2068,6 @@ int f2fs_wait_on_node_pages_writeback(struct f2fs_sb_info *sbi,
+@@ -2078,7 +2078,6 @@ int f2fs_wait_on_node_pages_writeback(struct f2fs_sb_info *sbi,
  	struct list_head *head = &sbi->fsync_node_list;
  	unsigned long flags;
  	unsigned int cur_seq_id = 0;
@@ -148,7 +148,7 @@ index 6bdb1bed29ec..dadea6b01888 100644
  
  	while (seq_id && cur_seq_id < seq_id) {
  		spin_lock_irqsave(&sbi->fsync_node_lock, flags);
-@@ -2089,16 +2088,9 @@ int f2fs_wait_on_node_pages_writeback(struct f2fs_sb_info *sbi,
+@@ -2099,16 +2098,9 @@ int f2fs_wait_on_node_pages_writeback(struct f2fs_sb_info *sbi,
  		f2fs_wait_on_page_writeback(page, NODE, true, false);
  
  		put_page(page);
@@ -170,10 +170,10 @@ index 6bdb1bed29ec..dadea6b01888 100644
 2.41.0
 
 
-From e4289232ce7531b19a8428595eaf92e8af7b445a Mon Sep 17 00:00:00 2001
+From 03a1fb3f8867a24f28b6710c05ba869efcdedc43 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Wed, 3 May 2023 13:53:49 -0700
-Subject: [PATCH 04/36] f2fs: maintain six open zones for zoned devices
+Subject: [PATCH 04/35] f2fs: maintain six open zones for zoned devices
 
 To keep six open zone constraints, make them not to be open over six
 open zones.
@@ -284,7 +284,7 @@ index bdb245bb3aa8..3fad7a23a507 100644
  				!f2fs_is_checkpoint_ready(sbi))
  		__submit_merged_bio(io);
 diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index d867056a01f6..34488080a4b7 100644
+index 271d4e7b22c9..3ee974c0895b 100644
 --- a/fs/f2fs/f2fs.h
 +++ b/fs/f2fs/f2fs.h
 @@ -1218,6 +1218,11 @@ struct f2fs_bio_info {
@@ -303,10 +303,10 @@ index d867056a01f6..34488080a4b7 100644
 2.41.0
 
 
-From cdf99305490cad9f7ce5f1ae9b8624e50fff038d Mon Sep 17 00:00:00 2001
+From 42f2a08ae778949a3d8ece36158f6a140dbbfc5b Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Fri, 5 May 2023 13:40:00 -0700
-Subject: [PATCH 05/36] f2fs: close unused open zones while mounting
+Subject: [PATCH 05/35] f2fs: close unused open zones while mounting
 
 Zoned UFS allows only 6 open zones at the same time, so we need to take
 care of the count of open zones while mounting.
@@ -397,10 +397,10 @@ index 6db410f1bb8c..43d537d29b52 100644
 2.41.0
 
 
-From 8a7803486e012330f8831b6a18f2e9d5669a869a Mon Sep 17 00:00:00 2001
+From b4dd37fcf924387fd22af5314d3d4ced17d384dc Mon Sep 17 00:00:00 2001
 From: Yonggil Song <yonggil.song@samsung.com>
 Date: Fri, 12 May 2023 13:16:10 +0900
-Subject: [PATCH 06/36] f2fs: Fix over-estimating free section during FG GC
+Subject: [PATCH 06/35] f2fs: Fix over-estimating free section during FG GC
 
 There was a bug that finishing FG GC unconditionally because free sections
 are over-estimated after checkpoint in FG GC.
@@ -486,10 +486,10 @@ index 719b1ba32a78..01effd3fcb6c 100644
 2.41.0
 
 
-From 37973a50fd95c6917b91b77a84c6f7008349d18e Mon Sep 17 00:00:00 2001
+From 87b72bbdd3f13d2dbf016f7e5ce38df8c6ec95dc Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 17 May 2023 17:42:49 +0800
-Subject: [PATCH 07/36] f2fs: renew value of F2FS_MOUNT_*
+Subject: [PATCH 07/35] f2fs: renew value of F2FS_MOUNT_*
 
 Then we can just define newly introduced mount option w/ lasted
 free number rather than random free one.
@@ -503,7 +503,7 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  1 file changed, 28 insertions(+), 28 deletions(-)
 
 diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index 34488080a4b7..89f4a4d03ede 100644
+index 3ee974c0895b..d63635b14077 100644
 --- a/fs/f2fs/f2fs.h
 +++ b/fs/f2fs/f2fs.h
 @@ -80,34 +80,34 @@ extern const char *f2fs_fault_name[FAULT_MAX];
@@ -573,10 +573,10 @@ index 34488080a4b7..89f4a4d03ede 100644
 2.41.0
 
 
-From 5863a7420375b395ee924665560c5eabd02236ec Mon Sep 17 00:00:00 2001
+From 52da78ef7f99dde6abf1a0272ef8da0ad605fbde Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 17 May 2023 17:42:50 +0800
-Subject: [PATCH 08/36] f2fs: renew value of F2FS_FEATURE_*
+Subject: [PATCH 08/35] f2fs: renew value of F2FS_FEATURE_*
 
 Define F2FS_FEATURE_* macro w/ 32-bits value rather than 16-bits value.
 
@@ -589,7 +589,7 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  1 file changed, 15 insertions(+), 15 deletions(-)
 
 diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index 89f4a4d03ede..86ac5f599575 100644
+index d63635b14077..74497cac9cdd 100644
 --- a/fs/f2fs/f2fs.h
 +++ b/fs/f2fs/f2fs.h
 @@ -186,21 +186,21 @@ struct f2fs_mount_info {
@@ -633,10 +633,10 @@ index 89f4a4d03ede..86ac5f599575 100644
 2.41.0
 
 
-From 222b53c8453b1b8f8f25e5985e38eded0258a082 Mon Sep 17 00:00:00 2001
+From 08f3b87d1942a04f945dd661d12f3ec085851c8d Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sat, 27 May 2023 08:15:39 +0800
-Subject: [PATCH 09/36] f2fs: fix to set noatime and immutable flag for quota
+Subject: [PATCH 09/35] f2fs: fix to set noatime and immutable flag for quota
  file
 
 We should set noatime bit for quota files, since no one cares about
@@ -684,10 +684,10 @@ index 3d91b5313947..ee390c398e1c 100644
 2.41.0
 
 
-From 1815db846e2baea8b4da7ba10af15b08fe43253a Mon Sep 17 00:00:00 2001
+From 17598160709166a8b50776d352acb6fc82ddb2f5 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Tue, 23 May 2023 20:35:21 +0800
-Subject: [PATCH 10/36] f2fs: clean up w/ sbi->log_sectors_per_block
+Subject: [PATCH 10/35] f2fs: clean up w/ sbi->log_sectors_per_block
 
 Use sbi->log_sectors_per_block to clean up below calculated one:
 
@@ -789,10 +789,10 @@ index 43d537d29b52..9282399cc810 100644
 2.41.0
 
 
-From 785e6bbdaae6d5fc39947b9db98ffbf754e5df32 Mon Sep 17 00:00:00 2001
+From 3ebd86b23e35e7c685694728523f5a4daa6468f1 Mon Sep 17 00:00:00 2001
 From: Daejun Park <daejun7.park@samsung.com>
 Date: Mon, 8 May 2023 17:10:42 +0900
-Subject: [PATCH 11/36] f2fs: add async reset zone command support
+Subject: [PATCH 11/35] f2fs: add async reset zone command support
 
 This patch enables submit reset zone command asynchornously. It helps
 decrease average latency of write IOs in high utilization scenario by
@@ -809,7 +809,7 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  4 files changed, 104 insertions(+), 6 deletions(-)
 
 diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index 86ac5f599575..4b249716ae7b 100644
+index 74497cac9cdd..818d717091a8 100644
 --- a/fs/f2fs/f2fs.h
 +++ b/fs/f2fs/f2fs.h
 @@ -1176,6 +1176,7 @@ enum iostat_type {
@@ -1031,10 +1031,10 @@ index 99cbc5949e3c..793f82cc1515 100644
 2.41.0
 
 
-From db9ace9035aae68b09f4555f15e348b0204fe50b Mon Sep 17 00:00:00 2001
+From 33b3bbdde06e2c7b0f57dbe3332142a312be7db2 Mon Sep 17 00:00:00 2001
 From: Chunhai Guo <guochunhai@vivo.com>
 Date: Sun, 28 May 2023 01:06:40 +0800
-Subject: [PATCH 12/36] f2fs: Detect looped node chain efficiently
+Subject: [PATCH 12/35] f2fs: Detect looped node chain efficiently
 
 find_fsync_dnodes() detect the looped node chain by comparing the loop
 counter with free blocks. While it may take tens of seconds to quit when
@@ -1155,10 +1155,10 @@ index 58c1a0096f7d..f0cf1538389c 100644
 2.41.0
 
 
-From c85106a25765f6275b5050a44ebdf7c7d873e814 Mon Sep 17 00:00:00 2001
+From 8435a8d5f68970fef6455997d0de9f5833d583f0 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 28 May 2023 15:47:12 +0800
-Subject: [PATCH 13/36] f2fs: fix to drop all dirty meta/node pages during
+Subject: [PATCH 13/35] f2fs: fix to drop all dirty meta/node pages during
  umount()
 
 For cp error case, there will be dirty meta/node pages remained after
@@ -1225,10 +1225,10 @@ index ee390c398e1c..2936bc870f5c 100644
 2.41.0
 
 
-From 9af4c2a3ec6e65efb82e7c28e174343ec3d7897a Mon Sep 17 00:00:00 2001
+From 4b33089211397625dbe98af7005392cd20deec6f Mon Sep 17 00:00:00 2001
 From: Yangtao Li <frank.li@vivo.com>
 Date: Wed, 31 May 2023 20:59:18 +0800
-Subject: [PATCH 14/36] f2fs: flag as supporting buffered async reads
+Subject: [PATCH 14/35] f2fs: flag as supporting buffered async reads
 
 The f2fs uses generic_file_buffered_read(), which supports buffered async
 reads since commit 1a0a7853b901 ("mm: support async buffered reads in
@@ -1255,7 +1255,7 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 015ed274dc31..23c68ee946e5 100644
+index ead75c4e833d..e3d953f9465d 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
 @@ -546,7 +546,7 @@ static int f2fs_file_open(struct inode *inode, struct file *filp)
@@ -1271,10 +1271,10 @@ index 015ed274dc31..23c68ee946e5 100644
 2.41.0
 
 
-From bfdff8a28f7be06f2e56e739edcf02f9a1b1a83e Mon Sep 17 00:00:00 2001
+From 17a6f30e6b8d9ec12f3587bc5941e9b9f12b4343 Mon Sep 17 00:00:00 2001
 From: Wu Bo <bo.wu@vivo.com>
 Date: Thu, 1 Jun 2023 09:37:59 +0800
-Subject: [PATCH 15/36] f2fs: fix args passed to trace_f2fs_lookup_end
+Subject: [PATCH 15/35] f2fs: fix args passed to trace_f2fs_lookup_end
 
 The NULL return of 'd_splice_alias' dosen't mean error. Thus the
 successful case will also return NULL, which makes the tracepoint always
@@ -1314,10 +1314,10 @@ index ad597b417fea..5415eb6f1309 100644
 2.41.0
 
 
-From 3d229f65e2f8720b007ef999c7ce29d2c6c1eb4c Mon Sep 17 00:00:00 2001
+From 30b8d2018339cc575e695c5911de4e9529cf9f42 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Fri, 2 Jun 2023 16:36:05 +0800
-Subject: [PATCH 16/36] f2fs: avoid dead loop in f2fs_issue_checkpoint()
+Subject: [PATCH 16/35] f2fs: avoid dead loop in f2fs_issue_checkpoint()
 
 generic/082 reports a bug as below:
 
@@ -1410,10 +1410,10 @@ index 2936bc870f5c..8fd23caa1ed9 100644
 2.41.0
 
 
-From 614c6d961f315904ac2a73932f02adf3a6c4473f Mon Sep 17 00:00:00 2001
+From 9c1306a0693fba78f0046619443b4791de94f1d3 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Tue, 6 Jun 2023 14:18:22 +0800
-Subject: [PATCH 17/36] f2fs: introduce F2FS_QUOTA_DEFAULT_FL for cleanup
+Subject: [PATCH 17/35] f2fs: introduce F2FS_QUOTA_DEFAULT_FL for cleanup
 
 This patch adds F2FS_QUOTA_DEFAULT_FL to include two default flags:
 F2FS_NOATIME_FL and F2FS_IMMUTABLE_FL, and use it to clean up codes.
@@ -1426,7 +1426,7 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  2 files changed, 5 insertions(+), 3 deletions(-)
 
 diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index 4b249716ae7b..5582a93d9190 100644
+index 818d717091a8..e85b2088fbe1 100644
 --- a/fs/f2fs/f2fs.h
 +++ b/fs/f2fs/f2fs.h
 @@ -2960,6 +2960,8 @@ static inline void f2fs_change_bit(unsigned int nr, char *addr)
@@ -1473,10 +1473,10 @@ index 8fd23caa1ed9..8efbb2e1b8b1 100644
 2.41.0
 
 
-From 3971ca5d83d65a903ed7098fe091bbf41bc5643a Mon Sep 17 00:00:00 2001
+From 65a6b228a6069a2b9f217f5171cfcc43e5e9e874 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Mon, 12 Jun 2023 12:58:34 -0700
-Subject: [PATCH 18/36] f2fs: assign default compression level
+Subject: [PATCH 18/35] f2fs: assign default compression level
 
 Let's avoid any confusion from assigning compress_level=0 for LZ4HC and ZSTD.
 
@@ -1509,7 +1509,7 @@ index 1132d3cd8f33..438af59d3571 100644
  		level = F2FS_ZSTD_DEFAULT_CLEVEL;
  
 diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index 5582a93d9190..94811085f9f3 100644
+index e85b2088fbe1..474c6e580c1c 100644
 --- a/fs/f2fs/f2fs.h
 +++ b/fs/f2fs/f2fs.h
 @@ -1440,6 +1440,8 @@ struct compress_data {
@@ -1574,10 +1574,10 @@ index 8efbb2e1b8b1..a3695adad3d3 100644
 2.41.0
 
 
-From e362a58a38c5fca2d6b067aeb1413da073238850 Mon Sep 17 00:00:00 2001
+From 7acf135cf9406a792e392244f46ec5c007ddfe93 Mon Sep 17 00:00:00 2001
 From: Yangtao Li <frank.li@vivo.com>
 Date: Sat, 8 Apr 2023 02:31:47 +0800
-Subject: [PATCH 19/36] f2fs: add sanity compress level check for compressed
+Subject: [PATCH 19/35] f2fs: add sanity compress level check for compressed
  file
 
 Commit 3fde13f817e2 ("f2fs: compress: support compress level")
@@ -1725,10 +1725,10 @@ index cf4327ad106c..bb6c3733d104 100644
 2.41.0
 
 
-From c50bbf66b5de1d90c937a2f90fc629f738ef3aa9 Mon Sep 17 00:00:00 2001
+From b12f697b74cbd890f65c357481159915bc9ca652 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 17 May 2023 11:41:39 +0800
-Subject: [PATCH 20/36] f2fs: compress: fix to check validity of
+Subject: [PATCH 20/35] f2fs: compress: fix to check validity of
  i_compress_flag field
 
 The last valid compress related field is i_compress_flag, check its
@@ -1775,10 +1775,10 @@ index bb6c3733d104..6cacc8c55dec 100644
 2.41.0
 
 
-From 41062bd5a6275a502a73265b0a3a1025cb83f1b6 Mon Sep 17 00:00:00 2001
+From d86ed8f02e030d47b3c828a845da2bb9ada915d5 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 31 May 2023 09:40:55 +0800
-Subject: [PATCH 21/36] f2fs: do more sanity check on inode
+Subject: [PATCH 21/35] f2fs: do more sanity check on inode
 
 There are several issues in sanity_check_inode():
 - The code looks not clean, it checks extra_attr related condition
@@ -1800,7 +1800,7 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  2 files changed, 67 insertions(+), 35 deletions(-)
 
 diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index 94811085f9f3..bd0edb619f40 100644
+index 474c6e580c1c..759dd8342438 100644
 --- a/fs/f2fs/f2fs.h
 +++ b/fs/f2fs/f2fs.h
 @@ -3417,6 +3417,8 @@ static inline int get_inline_xattr_addrs(struct inode *inode)
@@ -1940,10 +1940,10 @@ index 6cacc8c55dec..09e986b050c6 100644
 2.41.0
 
 
-From 60295d622d113d1b2f07f0b708d569bc4a15becd Mon Sep 17 00:00:00 2001
+From 28b83462925a48fa90af03a0f88c4b7e34acccce Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Mon, 12 Jun 2023 07:37:11 +0200
-Subject: [PATCH 22/36] f2fs: set FMODE_CAN_ODIRECT instead of a dummy
+Subject: [PATCH 22/35] f2fs: set FMODE_CAN_ODIRECT instead of a dummy
  direct_IO method
 
 Since commit a2ad63daa88b ("VFS: add FMODE_CAN_ODIRECT file flag") file
@@ -1973,7 +1973,7 @@ index 3fad7a23a507..5882afe71d82 100644
  	.swap_activate  = f2fs_swap_activate,
  	.swap_deactivate = f2fs_swap_deactivate,
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 23c68ee946e5..b8a6267d9800 100644
+index e3d953f9465d..8c5b59dad6dd 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
 @@ -547,6 +547,7 @@ static int f2fs_file_open(struct inode *inode, struct file *filp)
@@ -1988,10 +1988,10 @@ index 23c68ee946e5..b8a6267d9800 100644
 2.41.0
 
 
-From a9356f473456cd4fc2d7ba5803923a3a299dfe97 Mon Sep 17 00:00:00 2001
+From 482fdce716a620df7c8a906c84f6a2db65213e98 Mon Sep 17 00:00:00 2001
 From: Sheng Yong <shengyong@oppo.com>
 Date: Mon, 12 Jun 2023 11:01:16 +0800
-Subject: [PATCH 23/36] f2fs: add helper to check compression level
+Subject: [PATCH 23/35] f2fs: add helper to check compression level
 
 This patch adds a helper function to check if compression level is
 valid.
@@ -2077,10 +2077,10 @@ index 438af59d3571..236d890f560b 100644
  static int num_compress_pages = 512;
  module_param(num_compress_pages, uint, 0444);
 diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index bd0edb619f40..2a6a6b1a0895 100644
+index 759dd8342438..c7cb2177b252 100644
 --- a/fs/f2fs/f2fs.h
 +++ b/fs/f2fs/f2fs.h
-@@ -4240,6 +4240,7 @@ bool f2fs_compress_write_end(struct inode *inode, void *fsdata,
+@@ -4239,6 +4239,7 @@ bool f2fs_compress_write_end(struct inode *inode, void *fsdata,
  int f2fs_truncate_partial_cluster(struct inode *inode, u64 from, bool lock);
  void f2fs_compress_write_end_io(struct bio *bio, struct page *page);
  bool f2fs_is_compress_backend_ready(struct inode *inode);
@@ -2088,7 +2088,7 @@ index bd0edb619f40..2a6a6b1a0895 100644
  int __init f2fs_init_compress_mempool(void);
  void f2fs_destroy_compress_mempool(void);
  void f2fs_decompress_cluster(struct decompress_io_ctx *dic, bool in_task);
-@@ -4304,6 +4305,7 @@ static inline bool f2fs_is_compress_backend_ready(struct inode *inode)
+@@ -4303,6 +4304,7 @@ static inline bool f2fs_is_compress_backend_ready(struct inode *inode)
  	/* not support compression */
  	return false;
  }
@@ -2122,10 +2122,10 @@ index a3695adad3d3..5b7d25fd4c08 100644
 2.41.0
 
 
-From 023383cbe3acf0a80c796e3ba70edf41f45a24ab Mon Sep 17 00:00:00 2001
+From aa54cce6e58af5312f65c9e305afff1c7a952333 Mon Sep 17 00:00:00 2001
 From: Sheng Yong <shengyong@oppo.com>
 Date: Mon, 12 Jun 2023 11:01:17 +0800
-Subject: [PATCH 24/36] f2fs: cleanup MIN_INLINE_XATTR_SIZE
+Subject: [PATCH 24/35] f2fs: cleanup MIN_INLINE_XATTR_SIZE
 
 Signed-off-by: Sheng Yong <shengyong@oppo.com>
 Reviewed-by: Chao Yu <chao@kernel.org>
@@ -2164,10 +2164,10 @@ index 416d652774a3..b1811c392e6f 100644
 2.41.0
 
 
-From e871463e8a4f908fd52ab0ca1f856516ba39d599 Mon Sep 17 00:00:00 2001
+From 005f3653c6822613d2c8178f02847e0e6f2ed11f Mon Sep 17 00:00:00 2001
 From: Sheng Yong <shengyong@oppo.com>
 Date: Mon, 12 Jun 2023 11:01:19 +0800
-Subject: [PATCH 25/36] f2fs: add f2fs_ioc_get_compress_blocks
+Subject: [PATCH 25/35] f2fs: add f2fs_ioc_get_compress_blocks
 
 This patch adds f2fs_ioc_get_compress_blocks() to provide a common
 f2fs_get_compress_blocks().
@@ -2180,10 +2180,10 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  1 file changed, 17 insertions(+), 6 deletions(-)
 
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index b8a6267d9800..95b92a6ca19f 100644
+index 8c5b59dad6dd..6ff636f56586 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
-@@ -3377,18 +3377,29 @@ static int f2fs_ioc_setfslabel(struct file *filp, unsigned long arg)
+@@ -3372,18 +3372,29 @@ static int f2fs_ioc_setfslabel(struct file *filp, unsigned long arg)
  	return err;
  }
  
@@ -2218,7 +2218,7 @@ index b8a6267d9800..95b92a6ca19f 100644
  	return put_user(blocks, (u64 __user *)arg);
  }
  
-@@ -4240,7 +4251,7 @@ static long __f2fs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+@@ -4235,7 +4246,7 @@ static long __f2fs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
  	case FS_IOC_SETFSLABEL:
  		return f2fs_ioc_setfslabel(filp, arg);
  	case F2FS_IOC_GET_COMPRESS_BLOCKS:
@@ -2231,10 +2231,10 @@ index b8a6267d9800..95b92a6ca19f 100644
 2.41.0
 
 
-From 386f92cf7e1dcc91ab1630c9fc27911e3d595721 Mon Sep 17 00:00:00 2001
+From b192f5b55bf89cd141d265bc91193fe456ce3212 Mon Sep 17 00:00:00 2001
 From: Daeho Jeong <daehojeong@google.com>
 Date: Mon, 12 Jun 2023 16:32:03 -0700
-Subject: [PATCH 26/36] f2fs: check zone write pointer points to the end of
+Subject: [PATCH 26/35] f2fs: check zone write pointer points to the end of
  zone
 
 We don't need to report an issue, when the zone write pointer already
@@ -2270,10 +2270,10 @@ index 0c0c033c4bdd..8c7af8b4fc47 100644
 2.41.0
 
 
-From fe6d098ab091b987b9a3ed89bd1c3daee6362fc8 Mon Sep 17 00:00:00 2001
+From c392f59d36985f1b005feab781e4c3010506caf5 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 13 Jun 2023 13:35:31 -0700
-Subject: [PATCH 27/36] f2fs: do not issue small discard commands during
+Subject: [PATCH 27/35] f2fs: do not issue small discard commands during
  checkpoint
 
 If there're huge # of small discards, this will increase checkpoint latency
@@ -2301,10 +2301,10 @@ index 8c7af8b4fc47..0457d620011f 100644
 2.41.0
 
 
-From 52e813ed410f99543a06ea9327938b4ccd7d7b3f Mon Sep 17 00:00:00 2001
+From f7ffb3a5a1f55106f6c31e74b25f958fa342ae4d Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Fri, 16 Jun 2023 15:20:09 +0100
-Subject: [PATCH 28/36] f2fs: remove redundant assignment to variable err
+Subject: [PATCH 28/35] f2fs: remove redundant assignment to variable err
 
 The assignment to variable err is redundant since the code jumps to
 label next and err is then re-assigned a new value on the call to
@@ -2339,10 +2339,10 @@ index f0cf1538389c..4e7d4ceeb084 100644
 2.41.0
 
 
-From e86d0130ce9ebf527e513101df7c1015b0e4de84 Mon Sep 17 00:00:00 2001
+From 0d6f9d54e83fa0abef47aed2370c97856dff87c9 Mon Sep 17 00:00:00 2001
 From: Yangtao Li <frank.li@vivo.com>
 Date: Tue, 13 Jun 2023 15:51:57 +0800
-Subject: [PATCH 29/36] f2fs: convert to use sbi directly
+Subject: [PATCH 29/35] f2fs: convert to use sbi directly
 
 F2FS_I_SB(inode) is redundant.
 
@@ -2354,10 +2354,10 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 95b92a6ca19f..12ad128aefb7 100644
+index 6ff636f56586..e8c12237c546 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
-@@ -3468,7 +3468,7 @@ static int f2fs_release_compress_blocks(struct file *filp, unsigned long arg)
+@@ -3463,7 +3463,7 @@ static int f2fs_release_compress_blocks(struct file *filp, unsigned long arg)
  	int ret;
  	int writecount;
  
@@ -2366,7 +2366,7 @@ index 95b92a6ca19f..12ad128aefb7 100644
  		return -EOPNOTSUPP;
  
  	if (!f2fs_compressed_file(inode))
-@@ -3481,7 +3481,7 @@ static int f2fs_release_compress_blocks(struct file *filp, unsigned long arg)
+@@ -3476,7 +3476,7 @@ static int f2fs_release_compress_blocks(struct file *filp, unsigned long arg)
  	if (ret)
  		return ret;
  
@@ -2375,7 +2375,7 @@ index 95b92a6ca19f..12ad128aefb7 100644
  
  	inode_lock(inode);
  
-@@ -3638,7 +3638,7 @@ static int f2fs_reserve_compress_blocks(struct file *filp, unsigned long arg)
+@@ -3633,7 +3633,7 @@ static int f2fs_reserve_compress_blocks(struct file *filp, unsigned long arg)
  	unsigned int reserved_blocks = 0;
  	int ret;
  
@@ -2384,7 +2384,7 @@ index 95b92a6ca19f..12ad128aefb7 100644
  		return -EOPNOTSUPP;
  
  	if (!f2fs_compressed_file(inode))
-@@ -3654,7 +3654,7 @@ static int f2fs_reserve_compress_blocks(struct file *filp, unsigned long arg)
+@@ -3649,7 +3649,7 @@ static int f2fs_reserve_compress_blocks(struct file *filp, unsigned long arg)
  	if (atomic_read(&F2FS_I(inode)->i_compr_blocks))
  		goto out;
  
@@ -2393,7 +2393,7 @@ index 95b92a6ca19f..12ad128aefb7 100644
  
  	inode_lock(inode);
  
-@@ -4048,7 +4048,7 @@ static int f2fs_ioc_decompress_file(struct file *filp)
+@@ -4043,7 +4043,7 @@ static int f2fs_ioc_decompress_file(struct file *filp)
  	if (!f2fs_compressed_file(inode))
  		return -EINVAL;
  
@@ -2402,7 +2402,7 @@ index 95b92a6ca19f..12ad128aefb7 100644
  
  	file_start_write(filp);
  	inode_lock(inode);
-@@ -4123,7 +4123,7 @@ static int f2fs_ioc_compress_file(struct file *filp)
+@@ -4118,7 +4118,7 @@ static int f2fs_ioc_compress_file(struct file *filp)
  	if (!f2fs_compressed_file(inode))
  		return -EINVAL;
  
@@ -2415,10 +2415,10 @@ index 95b92a6ca19f..12ad128aefb7 100644
 2.41.0
 
 
-From 7fa3bbf9bcc1e4256177a81668caa8df0ec49c18 Mon Sep 17 00:00:00 2001
+From 3f3ba3b4d546214bc69ff3a5edc0edf725e3a193 Mon Sep 17 00:00:00 2001
 From: Yangtao Li <frank.li@vivo.com>
 Date: Sat, 6 May 2023 23:16:03 +0800
-Subject: [PATCH 30/36] f2fs: refactor struct f2fs_attr macro
+Subject: [PATCH 30/35] f2fs: refactor struct f2fs_attr macro
 
 This patch provides a large number of variants of F2FS_RW_ATTR
 and F2FS_RO_ATTR macros, reducing the number of parameters required
@@ -2717,10 +2717,10 @@ index 467d743c801f..48b7e0073884 100644
 2.41.0
 
 
-From f480965618186058aa877b2c1c018939a6b08dc9 Mon Sep 17 00:00:00 2001
+From 4c8ff5ffac8a3e8361a7fbdf8239600febb39741 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Tue, 6 Jun 2023 10:17:47 -0700
-Subject: [PATCH 31/36] f2fs: compress tmp files given extension
+Subject: [PATCH 31/35] f2fs: compress tmp files given extension
 
 Let's compress tmp files for the given extension list.
 
@@ -2818,10 +2818,10 @@ index 5415eb6f1309..bee0568888da 100644
 2.41.0
 
 
-From dd3f897c64f08950d4e2887e86588df57f0f6eed Mon Sep 17 00:00:00 2001
+From a4b7df64c5155b09c7b9db5b149250978ae4d818 Mon Sep 17 00:00:00 2001
 From: Yunlei He <heyunlei@oppo.com>
 Date: Fri, 23 Jun 2023 00:16:46 +0800
-Subject: [PATCH 32/36] f2fs: update mtime and ctime in move file range method
+Subject: [PATCH 32/35] f2fs: update mtime and ctime in move file range method
 
 Mtime and ctime stay old value without update after move
 file range ioctl. This patch add time update.
@@ -2834,10 +2834,10 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  1 file changed, 11 insertions(+)
 
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 12ad128aefb7..fd2cde9d21b0 100644
+index e8c12237c546..39fa3716d1eb 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
-@@ -2878,6 +2878,17 @@ static int f2fs_move_file_range(struct file *file_in, loff_t pos_in,
+@@ -2873,6 +2873,17 @@ static int f2fs_move_file_range(struct file *file_in, loff_t pos_in,
  		f2fs_up_write(&F2FS_I(dst)->i_gc_rwsem[WRITE]);
  out_src:
  	f2fs_up_write(&F2FS_I(src)->i_gc_rwsem[WRITE]);
@@ -2859,10 +2859,10 @@ index 12ad128aefb7..fd2cde9d21b0 100644
 2.41.0
 
 
-From 17f9dd51a61f3e5741cfad7ed0faaef3e754b0bb Mon Sep 17 00:00:00 2001
+From ed904bf6a2bfcf4d8b910ec55fd82b056d81f4e1 Mon Sep 17 00:00:00 2001
 From: Yunlei He <heyunlei@oppo.com>
 Date: Mon, 19 Jun 2023 23:13:53 +0800
-Subject: [PATCH 33/36] f2fs: remove unneeded page uptodate check/set
+Subject: [PATCH 33/35] f2fs: remove unneeded page uptodate check/set
 
 This patch remove unneeded page uptodate check/set in
 f2fs_vm_page_mkwrite, which already done in set_page_dirty.
@@ -2875,7 +2875,7 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  1 file changed, 2 deletions(-)
 
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index fd2cde9d21b0..b1a4de3b53e0 100644
+index 39fa3716d1eb..8d49c7ff8be3 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
 @@ -149,8 +149,6 @@ static vm_fault_t f2fs_vm_page_mkwrite(struct vm_fault *vmf)
@@ -2891,10 +2891,10 @@ index fd2cde9d21b0..b1a4de3b53e0 100644
 2.41.0
 
 
-From e563907f7c8a668c1d9c2d5dc3e4a43873ea65be Mon Sep 17 00:00:00 2001
+From 47807167ab1995ae59a1ce06c3e9e63ee2f397db Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Thu, 29 Jun 2023 09:41:34 +0800
-Subject: [PATCH 34/36] f2fs: fix compile warning in
+Subject: [PATCH 34/35] f2fs: fix compile warning in
  f2fs_destroy_node_manager()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -2917,10 +2917,10 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  2 files changed, 9 insertions(+), 8 deletions(-)
 
 diff --git a/fs/f2fs/node.c b/fs/f2fs/node.c
-index dadea6b01888..3e1fa564db8f 100644
+index 588f9ecbff58..ee2e1dd64f25 100644
 --- a/fs/f2fs/node.c
 +++ b/fs/f2fs/node.c
-@@ -3062,7 +3062,7 @@ int f2fs_flush_nat_entries(struct f2fs_sb_info *sbi, struct cp_control *cpc)
+@@ -3072,7 +3072,7 @@ int f2fs_flush_nat_entries(struct f2fs_sb_info *sbi, struct cp_control *cpc)
  	struct f2fs_nm_info *nm_i = NM_I(sbi);
  	struct curseg_info *curseg = CURSEG_I(sbi, CURSEG_HOT_DATA);
  	struct f2fs_journal *journal = curseg->journal;
@@ -2929,7 +2929,7 @@ index dadea6b01888..3e1fa564db8f 100644
  	struct nat_entry_set *set, *tmp;
  	unsigned int found;
  	nid_t set_idx = 0;
-@@ -3095,7 +3095,7 @@ int f2fs_flush_nat_entries(struct f2fs_sb_info *sbi, struct cp_control *cpc)
+@@ -3105,7 +3105,7 @@ int f2fs_flush_nat_entries(struct f2fs_sb_info *sbi, struct cp_control *cpc)
  		remove_nats_in_journal(sbi);
  
  	while ((found = __gang_lookup_nat_set(nm_i,
@@ -2938,7 +2938,7 @@ index dadea6b01888..3e1fa564db8f 100644
  		unsigned idx;
  
  		set_idx = setvec[found - 1]->set + 1;
-@@ -3316,8 +3316,9 @@ void f2fs_destroy_node_manager(struct f2fs_sb_info *sbi)
+@@ -3326,8 +3326,9 @@ void f2fs_destroy_node_manager(struct f2fs_sb_info *sbi)
  {
  	struct f2fs_nm_info *nm_i = NM_I(sbi);
  	struct free_nid *i, *next_i;
@@ -2950,7 +2950,7 @@ index dadea6b01888..3e1fa564db8f 100644
  	nid_t nid = 0;
  	unsigned int found;
  
-@@ -3340,7 +3341,7 @@ void f2fs_destroy_node_manager(struct f2fs_sb_info *sbi)
+@@ -3350,7 +3351,7 @@ void f2fs_destroy_node_manager(struct f2fs_sb_info *sbi)
  	/* destroy nat cache */
  	f2fs_down_write(&nm_i->nat_tree_lock);
  	while ((found = __gang_lookup_nat_cache(nm_i,
@@ -2959,7 +2959,7 @@ index dadea6b01888..3e1fa564db8f 100644
  		unsigned idx;
  
  		nid = nat_get_nid(natvec[found - 1]) + 1;
-@@ -3356,8 +3357,9 @@ void f2fs_destroy_node_manager(struct f2fs_sb_info *sbi)
+@@ -3366,8 +3367,9 @@ void f2fs_destroy_node_manager(struct f2fs_sb_info *sbi)
  
  	/* destroy nat set cache */
  	nid = 0;
@@ -2988,10 +2988,10 @@ index 906fb67a99da..5bd16a95eef8 100644
 2.41.0
 
 
-From d082d5c5f56c383b676b16ae92b34baebdde091d Mon Sep 17 00:00:00 2001
+From d39ed50389c7aac8757caec963a05e199248c102 Mon Sep 17 00:00:00 2001
 From: Sheng Yong <shengyong@oppo.com>
 Date: Tue, 27 Jun 2023 20:21:53 +0800
-Subject: [PATCH 35/36] f2fs: only set release for file that has compressed
+Subject: [PATCH 35/35] f2fs: only set release for file that has compressed
  data
 
 If a file is not comprssed yet or does not have compressed data,
@@ -3006,10 +3006,10 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  1 file changed, 5 insertions(+), 3 deletions(-)
 
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index b1a4de3b53e0..0f54c1ff02f7 100644
+index 8d49c7ff8be3..861d7aaa4711 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
-@@ -3510,13 +3510,15 @@ static int f2fs_release_compress_blocks(struct file *filp, unsigned long arg)
+@@ -3505,13 +3505,15 @@ static int f2fs_release_compress_blocks(struct file *filp, unsigned long arg)
  	if (ret)
  		goto out;
  
@@ -3027,158 +3027,6 @@ index b1a4de3b53e0..0f54c1ff02f7 100644
 -
  	f2fs_down_write(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
  	filemap_invalidate_lock(inode->i_mapping);
- 
--- 
-2.41.0
-
-
-From 580eec113cb45da8be7188c2ccd8b564dd2164fe Mon Sep 17 00:00:00 2001
-From: Chao Yu <chao@kernel.org>
-Date: Thu, 29 Jun 2023 19:11:44 +0800
-Subject: [PATCH 36/36] f2fs: fix to do sanity check on direct node in
- truncate_dnode()
-
-syzbot reports below bug:
-
-BUG: KASAN: slab-use-after-free in f2fs_truncate_data_blocks_range+0x122a/0x14c0 fs/f2fs/file.c:574
-Read of size 4 at addr ffff88802a25c000 by task syz-executor148/5000
-
-CPU: 1 PID: 5000 Comm: syz-executor148 Not tainted 6.4.0-rc7-syzkaller-00041-ge660abd551f1 #0
-Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 05/27/2023
-Call Trace:
- <TASK>
- __dump_stack lib/dump_stack.c:88 [inline]
- dump_stack_lvl+0xd9/0x150 lib/dump_stack.c:106
- print_address_description.constprop.0+0x2c/0x3c0 mm/kasan/report.c:351
- print_report mm/kasan/report.c:462 [inline]
- kasan_report+0x11c/0x130 mm/kasan/report.c:572
- f2fs_truncate_data_blocks_range+0x122a/0x14c0 fs/f2fs/file.c:574
- truncate_dnode+0x229/0x2e0 fs/f2fs/node.c:944
- f2fs_truncate_inode_blocks+0x64b/0xde0 fs/f2fs/node.c:1154
- f2fs_do_truncate_blocks+0x4ac/0xf30 fs/f2fs/file.c:721
- f2fs_truncate_blocks+0x7b/0x300 fs/f2fs/file.c:749
- f2fs_truncate.part.0+0x4a5/0x630 fs/f2fs/file.c:799
- f2fs_truncate include/linux/fs.h:825 [inline]
- f2fs_setattr+0x1738/0x2090 fs/f2fs/file.c:1006
- notify_change+0xb2c/0x1180 fs/attr.c:483
- do_truncate+0x143/0x200 fs/open.c:66
- handle_truncate fs/namei.c:3295 [inline]
- do_open fs/namei.c:3640 [inline]
- path_openat+0x2083/0x2750 fs/namei.c:3791
- do_filp_open+0x1ba/0x410 fs/namei.c:3818
- do_sys_openat2+0x16d/0x4c0 fs/open.c:1356
- do_sys_open fs/open.c:1372 [inline]
- __do_sys_creat fs/open.c:1448 [inline]
- __se_sys_creat fs/open.c:1442 [inline]
- __x64_sys_creat+0xcd/0x120 fs/open.c:1442
- do_syscall_x64 arch/x86/entry/common.c:50 [inline]
- do_syscall_64+0x39/0xb0 arch/x86/entry/common.c:80
- entry_SYSCALL_64_after_hwframe+0x63/0xcd
-
-The root cause is, inodeA references inodeB via inodeB's ino, once inodeA
-is truncated, it calls truncate_dnode() to truncate data blocks in inodeB's
-node page, it traverse mapping data from node->i.i_addr[0] to
-node->i.i_addr[ADDRS_PER_BLOCK() - 1], result in out-of-boundary access.
-
-This patch fixes to add sanity check on dnode page in truncate_dnode(),
-so that, it can help to avoid triggering such issue, and once it encounters
-such issue, it will record newly introduced ERROR_INVALID_NODE_REFERENCE
-error into superblock, later fsck can detect such issue and try repairing.
-
-Also, it removes f2fs_truncate_data_blocks() for cleanup due to the
-function has only one caller, and uses f2fs_truncate_data_blocks_range()
-instead.
-
-Reported-and-tested-by: syzbot+12cb4425b22169b52036@syzkaller.appspotmail.com
-Closes: https://lore.kernel.org/linux-f2fs-devel/000000000000f3038a05fef867f8@google.com
-Signed-off-by: Chao Yu <chao@kernel.org>
-Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
----
- fs/f2fs/f2fs.h          |  1 -
- fs/f2fs/file.c          |  5 -----
- fs/f2fs/node.c          | 14 ++++++++++++--
- include/linux/f2fs_fs.h |  1 +
- 4 files changed, 13 insertions(+), 8 deletions(-)
-
-diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index 2a6a6b1a0895..c7cb2177b252 100644
---- a/fs/f2fs/f2fs.h
-+++ b/fs/f2fs/f2fs.h
-@@ -3457,7 +3457,6 @@ static inline bool __is_valid_data_blkaddr(block_t blkaddr)
-  * file.c
-  */
- int f2fs_sync_file(struct file *file, loff_t start, loff_t end, int datasync);
--void f2fs_truncate_data_blocks(struct dnode_of_data *dn);
- int f2fs_do_truncate_blocks(struct inode *inode, u64 from, bool lock);
- int f2fs_truncate_blocks(struct inode *inode, u64 from, bool lock);
- int f2fs_truncate(struct inode *inode);
-diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 0f54c1ff02f7..861d7aaa4711 100644
---- a/fs/f2fs/file.c
-+++ b/fs/f2fs/file.c
-@@ -626,11 +626,6 @@ void f2fs_truncate_data_blocks_range(struct dnode_of_data *dn, int count)
- 					 dn->ofs_in_node, nr_free);
- }
- 
--void f2fs_truncate_data_blocks(struct dnode_of_data *dn)
--{
--	f2fs_truncate_data_blocks_range(dn, ADDRS_PER_BLOCK(dn->inode));
--}
--
- static int truncate_partial_data_page(struct inode *inode, u64 from,
- 								bool cache_only)
- {
-diff --git a/fs/f2fs/node.c b/fs/f2fs/node.c
-index 3e1fa564db8f..ee2e1dd64f25 100644
---- a/fs/f2fs/node.c
-+++ b/fs/f2fs/node.c
-@@ -925,6 +925,7 @@ static int truncate_node(struct dnode_of_data *dn)
- 
- static int truncate_dnode(struct dnode_of_data *dn)
- {
-+	struct f2fs_sb_info *sbi = F2FS_I_SB(dn->inode);
- 	struct page *page;
- 	int err;
- 
-@@ -932,16 +933,25 @@ static int truncate_dnode(struct dnode_of_data *dn)
- 		return 1;
- 
- 	/* get direct node */
--	page = f2fs_get_node_page(F2FS_I_SB(dn->inode), dn->nid);
-+	page = f2fs_get_node_page(sbi, dn->nid);
- 	if (PTR_ERR(page) == -ENOENT)
- 		return 1;
- 	else if (IS_ERR(page))
- 		return PTR_ERR(page);
- 
-+	if (IS_INODE(page) || ino_of_node(page) != dn->inode->i_ino) {
-+		f2fs_err(sbi, "incorrect node reference, ino: %lu, nid: %u, ino_of_node: %u",
-+				dn->inode->i_ino, dn->nid, ino_of_node(page));
-+		set_sbi_flag(sbi, SBI_NEED_FSCK);
-+		f2fs_handle_error(sbi, ERROR_INVALID_NODE_REFERENCE);
-+		f2fs_put_page(page, 1);
-+		return -EFSCORRUPTED;
-+	}
-+
- 	/* Make dnode_of_data for parameter */
- 	dn->node_page = page;
- 	dn->ofs_in_node = 0;
--	f2fs_truncate_data_blocks(dn);
-+	f2fs_truncate_data_blocks_range(dn, ADDRS_PER_BLOCK(dn->inode));
- 	err = truncate_node(dn);
- 	if (err) {
- 		f2fs_put_page(page, 1);
-diff --git a/include/linux/f2fs_fs.h b/include/linux/f2fs_fs.h
-index 1d6402529d10..a82a4bb6ce68 100644
---- a/include/linux/f2fs_fs.h
-+++ b/include/linux/f2fs_fs.h
-@@ -103,6 +103,7 @@ enum f2fs_error {
- 	ERROR_INCONSISTENT_SIT,
- 	ERROR_CORRUPTED_VERITY_XATTR,
- 	ERROR_CORRUPTED_XATTR,
-+	ERROR_INVALID_NODE_REFERENCE,
- 	ERROR_MAX,
- };
  
 -- 
 2.41.0
