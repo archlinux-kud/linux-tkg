@@ -861,9 +861,6 @@ _tkg_srcprep() {
     _msg="Applying BORE patch"
     curl "https://raw.githubusercontent.com/CachyOS/kernel-patches/master/${_basekernel}/sched/0001-bore.patch" > "$srcdir"/0001-bore.patch
     tkgpatch="$srcdir/0001-bore.patch" && _tkg_patcher
-  elif [ "${_cpusched}" = "cfs" ]; then
-    _msg="Applying Glitched CFS additions patch"
-    tkgpatch="$srcdir/0003-glitched-cfs-additions.patch" && _tkg_patcher
   elif [[ "${_cpusched}" =~ "eevdf" ]]; then
     _msg="Applying Earliest Eligible Virtual Deadline First (EEVDF) scheduler patch"
     tkgpatch="$srcdir/0003-eevdf.patch" && _tkg_patcher
@@ -878,6 +875,11 @@ _tkg_srcprep() {
   if [ "${_cpusched}" = "cfs" ] || [ "${_cpusched}" = "cacule" ] || [ "${_cpusched}" = "tt" ] || [ "${_cpusched}" = "bore" ] || [[ "${_cpusched}" =~ "eevdf" ]]; then
     _msg="Applying Glitched CFS/EEVDF patch"
     tkgpatch="$srcdir/0003-glitched-cfs.patch" && _tkg_patcher
+  fi
+
+  if [ "${_cpusched}" = "cfs" ] || [ "${_cpusched}" = "bore" ]; then
+    _msg="Applying Glitched CFS additions patch"
+    tkgpatch="$srcdir/0003-glitched-cfs-additions.patch" && _tkg_patcher
   fi
 
   fi
