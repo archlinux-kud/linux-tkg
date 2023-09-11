@@ -738,6 +738,7 @@ _tkg_srcprep() {
   _msg="Applying patches for WRITE_WATCH support in Wine"
   tkgpatch="$srcdir/0001-mm-Support-soft-dirty-flag-reset-for-VA-range.patch" && _tkg_patcher
   tkgpatch="$srcdir/0002-mm-Support-soft-dirty-flag-read-with-reset.patch" && _tkg_patcher
+  tkgpatch="$srcdir/0003-mm-Use-UFFD_WP-to-make-per-pte-soft-dirty-tracking-w.patch" && _tkg_patcher
 
   # prjc/bmq patch rev
   if [ "$_kver" = "508" ] || [ "$_kver" = "507" ]; then
