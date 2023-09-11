@@ -1,0 +1,38 @@
+From 9b7f80af143396a5b0444733efc4096688e7359d Mon Sep 17 00:00:00 2001
+From: Albert I <kras@raphielgang.org>
+Date: Sun, 18 Jun 2023 16:10:01 +0800
+Subject: [PATCH] Kconfig: Stop hiding io_uring behind CONFIG_EXPERT
+
+This allows us opportunity to disable io_uring without enabling CONFIG_EXPERT.
+
+In particular, as published [1] by Google Security Team, 60% of kCTF VRP
+submissions made in 2022 exploited io_uring vulnerabilities which bypassed
+all mitigations put by Google in place.
+
+grsecurity has been disabling [2] io_uring for all customers since 2019 [3].
+
+[1] https://security.googleblog.com/2023/06/learnings-from-kctf-vrps-42-linux.html
+[2] https://twitter.com/spendergrsec/status/1669339468824813569
+[3] https://twitter.com/grsecurity/status/1206297468452974593
+
+Signed-off-by: Albert I <kras@raphielgang.org>
+---
+ init/Kconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init/Kconfig b/init/Kconfig
+index e900419e1..4a3b781ae 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1764,7 +1764,7 @@ config AIO
+ 	  this option saves about 7k.
+ 
+ config IO_URING
+-	bool "Enable IO uring support" if EXPERT
++	bool "Enable IO uring support"
+ 	select IO_WQ
+ 	default y
+ 	help
+-- 
+2.41.0
+
