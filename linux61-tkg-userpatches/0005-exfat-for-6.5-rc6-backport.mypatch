@@ -1,7 +1,7 @@
 From d1a57db95ca264621761ac27ed148caba012359d Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Thu, 21 Jul 2022 09:59:32 +0800
-Subject: [PATCH 01/18] exfat: simplify empty entry hint
+Subject: [PATCH 01/21] exfat: simplify empty entry hint
 
 This commit adds exfat_set_empty_hint()/exfat_reset_empty_hint()
 to reduce code complexity and make code more readable.
@@ -123,13 +123,13 @@ index 51b03b0dd5f7..c4aca0ba5d76 100644
  	}
  
 -- 
-2.41.0
+2.42.0
 
 
 From ef473e26f72f1d851f4820e09e624372b7be6ce7 Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Mon, 7 Nov 2022 17:22:13 +0900
-Subject: [PATCH 02/18] exfat: hint the empty entry which at the end of cluster
+Subject: [PATCH 02/21] exfat: hint the empty entry which at the end of cluster
  chain
 
 After traversing all directory entries, hint the empty directory
@@ -296,13 +296,13 @@ index 90b047791144..edb578e8f781 100644
  		p_dir->size++;
  		size = EXFAT_CLU_TO_B(p_dir->size, sbi);
 -- 
-2.41.0
+2.42.0
 
 
 From fe5ed947d2c5aa8bfb36b1f602dbd0e564f44303 Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Thu, 7 Apr 2022 15:55:56 +0800
-Subject: [PATCH 03/18] exfat: reduce the size of exfat_entry_set_cache
+Subject: [PATCH 03/21] exfat: reduce the size of exfat_entry_set_cache
 
 In normal, there are 19 directory entries at most for a file or
 a directory.
@@ -397,13 +397,13 @@ index e0af6ace633c..fd9af474f3e7 100644
  
  struct exfat_dir_entry {
 -- 
-2.41.0
+2.42.0
 
 
 From 825b1d015573f7873353069f788cfe9e799484fa Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Wed, 9 Nov 2022 13:50:22 +0800
-Subject: [PATCH 04/18] exfat: support dynamic allocate bh for
+Subject: [PATCH 04/21] exfat: support dynamic allocate bh for
  exfat_entry_set_cache
 
 In special cases, a file or a directory may occupied more than 19
@@ -485,13 +485,13 @@ index fd9af474f3e7..5113d0c09865 100644
  	struct exfat_chain dir;
  	int entry;
 -- 
-2.41.0
+2.42.0
 
 
 From a5924b35117eda57081ed4311d4aacaa4793b33d Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Thu, 17 Nov 2022 11:37:13 +0800
-Subject: [PATCH 05/18] exfat: move exfat_entry_set_cache from heap to stack
+Subject: [PATCH 05/21] exfat: move exfat_entry_set_cache from heap to stack
 
 The size of struct exfat_entry_set_cache is only 56 bytes on
 64-bit system, and allocating from stack is more efficient than
@@ -720,13 +720,13 @@ index edb578e8f781..89e0735f2129 100644
  	if (ei->start_clu == EXFAT_FREE_CLUSTER) {
  		exfat_fs_error(sb,
 -- 
-2.41.0
+2.42.0
 
 
 From 3127cdb7aa5a89a6e730fd36f1e33ca50ce7eef4 Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Thu, 17 Mar 2022 18:12:40 +0800
-Subject: [PATCH 06/18] exfat: rename exfat_free_dentry_set() to
+Subject: [PATCH 06/21] exfat: rename exfat_free_dentry_set() to
  exfat_put_dentry_set()
 
 Since struct exfat_entry_set_cache is allocated from stack,
@@ -851,13 +851,13 @@ index 89e0735f2129..3cb6baf6fade 100644
  	if (ei->start_clu == EXFAT_FREE_CLUSTER) {
  		exfat_fs_error(sb,
 -- 
-2.41.0
+2.42.0
 
 
 From 9413c6a114329299d0df527b6ba4f69b266932fc Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Thu, 17 Mar 2022 19:39:20 +0800
-Subject: [PATCH 07/18] exfat: replace magic numbers with Macros
+Subject: [PATCH 07/21] exfat: replace magic numbers with Macros
 
 Code refinement, no functional changes.
 
@@ -959,13 +959,13 @@ index 3cb6baf6fade..171a413e5c64 100644
  	info->type = exfat_get_entry_type(ep);
  	info->attr = le16_to_cpu(ep->dentry.file.attr);
 -- 
-2.41.0
+2.42.0
 
 
 From a3b610da7ebc7948c6c7381913395ed56151a4af Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Tue, 16 Aug 2022 16:55:06 +0800
-Subject: [PATCH 08/18] exfat: remove call ilog2() from exfat_readdir()
+Subject: [PATCH 08/21] exfat: remove call ilog2() from exfat_readdir()
 
 There is no need to call ilog2() for the conversions between
 cluster and dentry in exfat_readdir(), because these conversions
@@ -1044,13 +1044,13 @@ index 3b2d1fb45404..2fda27df167b 100644
   * helpers for fat entry.
   */
 -- 
-2.41.0
+2.42.0
 
 
 From 3b8abe7c98a536f2498fcb80f54f855eb52577ab Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Mon, 15 Aug 2022 10:15:16 +0800
-Subject: [PATCH 09/18] exfat: remove unneeded codes from __exfat_rename()
+Subject: [PATCH 09/21] exfat: remove unneeded codes from __exfat_rename()
 
 The code gets the dentry, but the dentry is not used, remove the
 code.
@@ -1094,13 +1094,13 @@ index 171a413e5c64..9b2aae01cddb 100644
  	if (new_inode) {
  		ret = -EIO;
 -- 
-2.41.0
+2.42.0
 
 
 From af816d88baba371d725204bf5442429de18d2a45 Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Sun, 10 Apr 2022 16:12:14 +0800
-Subject: [PATCH 10/18] exfat: remove unnecessary arguments from
+Subject: [PATCH 10/21] exfat: remove unnecessary arguments from
  exfat_find_dir_entry()
 
 This commit removes argument 'num_entries' and 'type' from
@@ -1213,13 +1213,13 @@ index 9b2aae01cddb..7442fead0279 100644
  		return dentry; /* -error value */
  
 -- 
-2.41.0
+2.42.0
 
 
 From 598b6d1d74c06789e842502f32d6759af7ab1be9 Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Thu, 17 Nov 2022 10:36:21 +0800
-Subject: [PATCH 11/18] exfat: remove argument 'size' from exfat_truncate()
+Subject: [PATCH 11/21] exfat: remove argument 'size' from exfat_truncate()
 
 argument 'size' is not used in exfat_truncate(), remove it.
 
@@ -1285,13 +1285,13 @@ index b1dba4022b6e..f67fa0cc3d82 100644
  }
  
 -- 
-2.41.0
+2.42.0
 
 
 From 224adebe22fc4f17127d49d0e85ee89d94b81a8d Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Mon, 28 Mar 2022 16:37:58 +0800
-Subject: [PATCH 12/18] exfat: remove i_size_write() from __exfat_truncate()
+Subject: [PATCH 12/21] exfat: remove i_size_write() from __exfat_truncate()
 
 The file/directory size is updated into inode by i_size_write()
 before __exfat_truncate() is called, so it is redundant to
@@ -1377,13 +1377,13 @@ index f67fa0cc3d82..9776ca2936a5 100644
  	}
  
 -- 
-2.41.0
+2.42.0
 
 
 From 18e4b483cb2846f082ab95fe3113ae06e6b0b82f Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Tue, 13 Dec 2022 09:40:32 +0800
-Subject: [PATCH 13/18] exfat: fix overflow in sector and cluster conversion
+Subject: [PATCH 13/21] exfat: fix overflow in sector and cluster conversion
 
 According to the exFAT specification, there are at most 2^32-11
 clusters in a volume. so using 'int' is not enough for cluster
@@ -1411,13 +1411,13 @@ index 4ab0988d12a8..25a5df0fdfe0 100644
  {
  	return ((sec - sbi->data_start_sector) >> sbi->sect_per_clus_bits) +
 -- 
-2.41.0
+2.42.0
 
 
 From c4dacce34823cd92fc0f1d89949a0d2cadefb2cd Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Thu, 17 Nov 2022 11:31:30 +0800
-Subject: [PATCH 14/18] exfat: reuse exfat_find_location() to simplify
+Subject: [PATCH 14/21] exfat: reuse exfat_find_location() to simplify
  exfat_get_dentry_set()
 
 In exfat_get_dentry_set(), part of the code is the same as
@@ -1487,13 +1487,13 @@ index 74fbaba00dbc..0e998b9541e3 100644
  				clu++;
  			else if (exfat_get_next_cluster(sb, &clu))
 -- 
-2.41.0
+2.42.0
 
 
 From 94ed1e259f659c9f4c1ee7f8b5a2dff39ef7befe Mon Sep 17 00:00:00 2001
 From: Namjae Jeon <linkinjeon@kernel.org>
 Date: Sat, 14 Jan 2023 13:09:48 +0900
-Subject: [PATCH 15/18] exfat: handle unreconized benign secondary entries
+Subject: [PATCH 15/21] exfat: handle unreconized benign secondary entries
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -1759,13 +1759,13 @@ index 7f39b1c6469c..0ece2e43cf49 100644
  } __packed;
  
 -- 
-2.41.0
+2.42.0
 
 
 From 46a4f4475c29ac537bc432c8b7b69ebe7a1eda8a Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Mon, 6 Feb 2023 18:25:20 +0800
-Subject: [PATCH 16/18] exfat: remove unneeded code from exfat_alloc_cluster()
+Subject: [PATCH 16/21] exfat: remove unneeded code from exfat_alloc_cluster()
 
 In the removed code, num_clusters is 0, nothing is done in
 exfat_chain_cont_cluster(), so it is unneeded, remove it.
@@ -1799,13 +1799,13 @@ index 41ae4cce1f42..65a8c9fb072c 100644
  
  	p_chain->dir = EXFAT_EOF_CLUSTER;
 -- 
-2.41.0
+2.42.0
 
 
 From 32bc5c4799e365971f1ec02898b2fe2a01ae6194 Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Thu, 9 Feb 2023 17:44:50 +0800
-Subject: [PATCH 17/18] exfat: don't print error log in normal case
+Subject: [PATCH 17/21] exfat: don't print error log in normal case
 
 When allocating a new cluster, exFAT first allocates from the
 next cluster of the last cluster of the file. If the last cluster
@@ -1841,13 +1841,13 @@ index 65a8c9fb072c..c75c5a2cad42 100644
  		p_chain->flags = ALLOC_FAT_CHAIN;
  	}
 -- 
-2.41.0
+2.42.0
 
 
 From 0d5aa119fd22817902dc558e47bedfea07987e54 Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Fri, 10 Feb 2023 13:33:44 +0800
-Subject: [PATCH 18/18] exfat: fix the newly allocated clusters are not freed
+Subject: [PATCH 18/21] exfat: fix the newly allocated clusters are not freed
  in error handling
 
 In error handling 'free_cluster', before num_alloc clusters allocated,
@@ -1931,5 +1931,227 @@ index c75c5a2cad42..56b870d9cc0d 100644
  	mutex_unlock(&sbi->bitmap_lock);
  	return ret;
 -- 
-2.41.0
+2.42.0
+
+
+From 03bd893c7567bd5c38dbef7844c91277350f04b1 Mon Sep 17 00:00:00 2001
+From: Jeff Layton <jlayton@kernel.org>
+Date: Wed, 5 Jul 2023 15:00:31 -0400
+Subject: [PATCH 19/21] exfat: ensure that ctime is updated whenever the mtime
+ is
+
+When removing entries from a directory, the ctime must also be updated
+alongside the mtime.
+
+Signed-off-by: Jeff Layton <jlayton@kernel.org>
+Message-Id: <20230705190309.579783-4-jlayton@kernel.org>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+Signed-off-by: Albert I <kras@raphielgang.org>
+---
+ fs/exfat/namei.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/fs/exfat/namei.c b/fs/exfat/namei.c
+index 7442fead0279..50d4d89331c2 100644
+--- a/fs/exfat/namei.c
++++ b/fs/exfat/namei.c
+@@ -817,7 +817,7 @@ static int exfat_unlink(struct inode *dir, struct dentry *dentry)
+ 	ei->dir.dir = DIR_DELETED;
+ 
+ 	inode_inc_iversion(dir);
+-	dir->i_mtime = dir->i_atime = current_time(dir);
++	dir->i_mtime = dir->i_atime = dir->i_ctime = current_time(dir);
+ 	exfat_truncate_atime(&dir->i_atime);
+ 	if (IS_DIRSYNC(dir))
+ 		exfat_sync_inode(dir);
+@@ -825,7 +825,7 @@ static int exfat_unlink(struct inode *dir, struct dentry *dentry)
+ 		mark_inode_dirty(dir);
+ 
+ 	clear_nlink(inode);
+-	inode->i_mtime = inode->i_atime = current_time(inode);
++	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+ 	exfat_truncate_atime(&inode->i_atime);
+ 	exfat_unhash_inode(inode);
+ 	exfat_d_version_set(dentry, inode_query_iversion(dir));
+@@ -979,7 +979,7 @@ static int exfat_rmdir(struct inode *dir, struct dentry *dentry)
+ 	ei->dir.dir = DIR_DELETED;
+ 
+ 	inode_inc_iversion(dir);
+-	dir->i_mtime = dir->i_atime = current_time(dir);
++	dir->i_mtime = dir->i_atime = dir->i_ctime = current_time(dir);
+ 	exfat_truncate_atime(&dir->i_atime);
+ 	if (IS_DIRSYNC(dir))
+ 		exfat_sync_inode(dir);
+@@ -988,7 +988,7 @@ static int exfat_rmdir(struct inode *dir, struct dentry *dentry)
+ 	drop_nlink(dir);
+ 
+ 	clear_nlink(inode);
+-	inode->i_mtime = inode->i_atime = current_time(inode);
++	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+ 	exfat_truncate_atime(&inode->i_atime);
+ 	exfat_unhash_inode(inode);
+ 	exfat_d_version_set(dentry, inode_query_iversion(dir));
+-- 
+2.42.0
+
+
+From 791b4c1d6bef3118a13d7a93bb2e80bed7a1d71d Mon Sep 17 00:00:00 2001
+From: Christoph Hellwig <hch@lst.de>
+Date: Wed, 9 Aug 2023 15:05:41 -0700
+Subject: [PATCH 20/21] exfat: don't RCU-free the sbi
+
+There are no RCU critical sections for accessing any information in the
+sbi, so drop the call_rcu indirection for freeing the sbi.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Message-Id: <20230809220545.1308228-10-hch@lst.de>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+Signed-off-by: Albert I <kras@raphielgang.org>
+---
+ fs/exfat/exfat_fs.h |  2 --
+ fs/exfat/super.c    | 15 ++++-----------
+ 2 files changed, 4 insertions(+), 13 deletions(-)
+
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index 8a399e234aab..6548096f90bc 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -273,8 +273,6 @@ struct exfat_sb_info {
+ 
+ 	spinlock_t inode_hash_lock;
+ 	struct hlist_head inode_hashtable[EXFAT_HASH_SIZE];
+-
+-	struct rcu_head rcu;
+ };
+ 
+ #define EXFAT_CACHE_VALID	0
+diff --git a/fs/exfat/super.c b/fs/exfat/super.c
+index 8c32460e031e..3c6aec96d0dc 100644
+--- a/fs/exfat/super.c
++++ b/fs/exfat/super.c
+@@ -31,16 +31,6 @@ static void exfat_free_iocharset(struct exfat_sb_info *sbi)
+ 		kfree(sbi->options.iocharset);
+ }
+ 
+-static void exfat_delayed_free(struct rcu_head *p)
+-{
+-	struct exfat_sb_info *sbi = container_of(p, struct exfat_sb_info, rcu);
+-
+-	unload_nls(sbi->nls_io);
+-	exfat_free_iocharset(sbi);
+-	exfat_free_upcase_table(sbi);
+-	kfree(sbi);
+-}
+-
+ static void exfat_put_super(struct super_block *sb)
+ {
+ 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+@@ -50,7 +40,10 @@ static void exfat_put_super(struct super_block *sb)
+ 	brelse(sbi->boot_bh);
+ 	mutex_unlock(&sbi->s_lock);
+ 
+-	call_rcu(&sbi->rcu, exfat_delayed_free);
++	unload_nls(sbi->nls_io);
++	exfat_free_iocharset(sbi);
++	exfat_free_upcase_table(sbi);
++	kfree(sbi);
+ }
+ 
+ static int exfat_sync_fs(struct super_block *sb, int wait)
+-- 
+2.42.0
+
+
+From 7bbd1959e5a8b748bf347a049d63e703f8fa1e84 Mon Sep 17 00:00:00 2001
+From: Christoph Hellwig <hch@lst.de>
+Date: Wed, 9 Aug 2023 15:05:42 -0700
+Subject: [PATCH 21/21] exfat: free the sbi and iocharset in ->kill_sb
+
+As a rule of thumb everything allocated to the fs_context and moved into
+the super_block should be freed by ->kill_sb so that the teardown
+handling doesn't need to be duplicated between the fill_super error
+path and put_super.  Implement an exfat-specific kill_sb method to do
+that and share the code with the mount contex free helper for the
+mount error handling case.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Message-Id: <20230809220545.1308228-11-hch@lst.de>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+Signed-off-by: Albert I <kras@raphielgang.org>
+---
+ fs/exfat/super.c | 28 ++++++++++++++++++----------
+ 1 file changed, 18 insertions(+), 10 deletions(-)
+
+diff --git a/fs/exfat/super.c b/fs/exfat/super.c
+index 3c6aec96d0dc..85b04a4064af 100644
+--- a/fs/exfat/super.c
++++ b/fs/exfat/super.c
+@@ -41,9 +41,7 @@ static void exfat_put_super(struct super_block *sb)
+ 	mutex_unlock(&sbi->s_lock);
+ 
+ 	unload_nls(sbi->nls_io);
+-	exfat_free_iocharset(sbi);
+ 	exfat_free_upcase_table(sbi);
+-	kfree(sbi);
+ }
+ 
+ static int exfat_sync_fs(struct super_block *sb, int wait)
+@@ -703,9 +701,6 @@ static int exfat_fill_super(struct super_block *sb, struct fs_context *fc)
+ 
+ check_nls_io:
+ 	unload_nls(sbi->nls_io);
+-	exfat_free_iocharset(sbi);
+-	sb->s_fs_info = NULL;
+-	kfree(sbi);
+ 	return err;
+ }
+ 
+@@ -714,14 +709,18 @@ static int exfat_get_tree(struct fs_context *fc)
+ 	return get_tree_bdev(fc, exfat_fill_super);
+ }
+ 
++static void exfat_free_sbi(struct exfat_sb_info *sbi)
++{
++	exfat_free_iocharset(sbi);
++	kfree(sbi);
++}
++
+ static void exfat_free(struct fs_context *fc)
+ {
+ 	struct exfat_sb_info *sbi = fc->s_fs_info;
+ 
+-	if (sbi) {
+-		exfat_free_iocharset(sbi);
+-		kfree(sbi);
+-	}
++	if (sbi)
++		exfat_free_sbi(sbi);
+ }
+ 
+ static int exfat_reconfigure(struct fs_context *fc)
+@@ -766,12 +765,21 @@ static int exfat_init_fs_context(struct fs_context *fc)
+ 	return 0;
+ }
+ 
++static void exfat_kill_sb(struct super_block *sb)
++{
++	struct exfat_sb_info *sbi = sb->s_fs_info;
++
++	kill_block_super(sb);
++	if (sbi)
++		exfat_free_sbi(sbi);
++}
++
+ static struct file_system_type exfat_fs_type = {
+ 	.owner			= THIS_MODULE,
+ 	.name			= "exfat",
+ 	.init_fs_context	= exfat_init_fs_context,
+ 	.parameters		= exfat_parameters,
+-	.kill_sb		= kill_block_super,
++	.kill_sb		= exfat_kill_sb,
+ 	.fs_flags		= FS_REQUIRES_DEV,
+ };
+ 
+-- 
+2.42.0
 

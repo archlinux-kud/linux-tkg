@@ -1,7 +1,7 @@
-From 3fe1cb087147f4f7f089899da8b526fb775dd192 Mon Sep 17 00:00:00 2001
+From 24e33b93093e744b913974b2500555f597d62649 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 9 Sep 2022 19:12:31 +0300
-Subject: [PATCH 01/79] fs/ntfs3: Add comments about cluster size
+Subject: [PATCH 01/81] fs/ntfs3: Add comments about cluster size
 
 This commit adds additional info about CONFIG_NTFS3_64BIT_CLUSTER
 
@@ -13,7 +13,7 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  3 files changed, 29 insertions(+), 1 deletion(-)
 
 diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index b1b476fb7229..502dd3767c95 100644
+index dda13e1f1b33..1cbb0470b766 100644
 --- a/fs/ntfs3/frecord.c
 +++ b/fs/ntfs3/frecord.c
 @@ -557,7 +557,7 @@ static int ni_repack(struct ntfs_inode *ni)
@@ -26,10 +26,10 @@ index b1b476fb7229..502dd3767c95 100644
  				continue;
  
 diff --git a/fs/ntfs3/record.c b/fs/ntfs3/record.c
-index af1e4b364ea8..a952cd7aa7a4 100644
+index ba336c7280b8..e7af3afa38b8 100644
 --- a/fs/ntfs3/record.c
 +++ b/fs/ntfs3/record.c
-@@ -547,6 +547,10 @@ bool mi_resize_attr(struct mft_inode *mi, struct ATTRIB *attr, int bytes)
+@@ -553,6 +553,10 @@ bool mi_resize_attr(struct mft_inode *mi, struct ATTRIB *attr, int bytes)
  	return true;
  }
  
@@ -76,13 +76,13 @@ index 8e2fe0f69203..d9c9dc035e46 100644
  
  #include <linux/blkdev.h>
 -- 
-2.41.0
+2.42.0
 
 
-From 50c5a35b6035c8c6699fb161493a115f92640b10 Mon Sep 17 00:00:00 2001
+From 0593aa5ec38f452360c6a4e11b4614c00ba72da0 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 12 Sep 2022 18:28:51 +0300
-Subject: [PATCH 02/79] fs/ntfs3: Add hidedotfiles option
+Subject: [PATCH 02/81] fs/ntfs3: Add hidedotfiles option
 
 With this option all files with filename[0] == '.'
 will have FILE_ATTRIBUTE_HIDDEN attribute.
@@ -110,10 +110,10 @@ index dc937089a464..aa0944b33124 100644
  		fa |= FILE_ATTRIBUTE_READONLY;
  
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index 24227b2e1b2b..eefcd28001d8 100644
+index 8c9abaf139e6..0aa19fae41e0 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -97,6 +97,7 @@ struct ntfs_mount_options {
+@@ -99,6 +99,7 @@ struct ntfs_mount_options {
  	unsigned sparse : 1; /* Create sparse files. */
  	unsigned showmeta : 1; /* Show meta files. */
  	unsigned nohidden : 1; /* Do not show hidden files. */
@@ -152,13 +152,13 @@ index d9c9dc035e46..366606d9b856 100644
  		if (!result.negated)
  #ifdef CONFIG_NTFS3_FS_POSIX_ACL
 -- 
-2.41.0
+2.42.0
 
 
-From 793ded88df0ec5dce67a8faa984ad9abeee83f1c Mon Sep 17 00:00:00 2001
+From b8d127fe4787641922350ab6e9ecd58094f87fcf Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 12 Sep 2022 18:54:06 +0300
-Subject: [PATCH 03/79] fs/ntfs3: Change destroy_inode to free_inode
+Subject: [PATCH 03/81] fs/ntfs3: Change destroy_inode to free_inode
 
 Many filesystems already use free_inode callback,
 so we will use it too from now on.
@@ -225,13 +225,13 @@ index 366606d9b856..e3ceee6357f7 100644
  	ntfs3_exit_bitmap();
  }
 -- 
-2.41.0
+2.42.0
 
 
-From 5fdb0203c7486b4c79baed468bd28a95554199ea Mon Sep 17 00:00:00 2001
+From 687b94035b429b319f5d7e7eb4ee8bf84e913f6a Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 23 Sep 2022 12:42:18 +0300
-Subject: [PATCH 04/79] fs/ntfs3: Add option "nocase"
+Subject: [PATCH 04/81] fs/ntfs3: Add option "nocase"
 
 This commit adds mount option and additional functions.
 
@@ -245,7 +245,7 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  5 files changed, 162 insertions(+), 1 deletion(-)
 
 diff --git a/fs/ntfs3/index.c b/fs/ntfs3/index.c
-index 9e9a9ffd9295..1d6be4e07152 100644
+index 495cfb37962f..166389ada234 100644
 --- a/fs/ntfs3/index.c
 +++ b/fs/ntfs3/index.c
 @@ -47,7 +47,7 @@ static int cmp_fnames(const void *key1, size_t l1, const void *key2, size_t l2,
@@ -420,10 +420,10 @@ index a9549e73081f..b217b7510913 100644
 +
  // clang-format on
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index eefcd28001d8..f850088ad6d0 100644
+index 0aa19fae41e0..c31411104fa1 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -101,6 +101,7 @@ struct ntfs_mount_options {
+@@ -103,6 +103,7 @@ struct ntfs_mount_options {
  	unsigned force : 1; /* RW mount dirty volume. */
  	unsigned noacsrules : 1; /* Exclude acs rules. */
  	unsigned prealloc : 1; /* Preallocate space when file is growing. */
@@ -431,7 +431,7 @@ index eefcd28001d8..f850088ad6d0 100644
  };
  
  /* Special value to unpack and deallocate. */
-@@ -722,6 +723,7 @@ struct dentry *ntfs3_get_parent(struct dentry *child);
+@@ -724,6 +725,7 @@ struct dentry *ntfs3_get_parent(struct dentry *child);
  
  extern const struct inode_operations ntfs_dir_inode_operations;
  extern const struct inode_operations ntfs_special_inode_operations;
@@ -439,7 +439,7 @@ index eefcd28001d8..f850088ad6d0 100644
  
  /* Globals from record.c */
  int mi_get(struct ntfs_sb_info *sbi, CLST rno, struct mft_inode **mi);
-@@ -841,6 +843,8 @@ int ntfs_cmp_names(const __le16 *s1, size_t l1, const __le16 *s2, size_t l2,
+@@ -843,6 +845,8 @@ int ntfs_cmp_names(const __le16 *s1, size_t l1, const __le16 *s2, size_t l2,
  		   const u16 *upcase, bool bothcase);
  int ntfs_cmp_names_cpu(const struct cpu_str *uni1, const struct le_str *uni2,
  		       const u16 *upcase, bool bothcase);
@@ -507,13 +507,13 @@ index b5e8256fd710..7681eefacb4b 100644
 +	return hash;
 +}
 -- 
-2.41.0
+2.42.0
 
 
-From 2395d5520c03b9cf3daa493dd2bc13640733a075 Mon Sep 17 00:00:00 2001
+From c89211cfd7552687de82ba840a001a1942dd8592 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 23 Sep 2022 13:35:22 +0300
-Subject: [PATCH 05/79] fs/ntfs3: Rename variables and add comment
+Subject: [PATCH 05/81] fs/ntfs3: Rename variables and add comment
 
 After renaming we don't need to split code in two lines.
 
@@ -524,10 +524,10 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  2 files changed, 12 insertions(+), 13 deletions(-)
 
 diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index 502dd3767c95..70a80f9412f7 100644
+index 1cbb0470b766..8371dba85da1 100644
 --- a/fs/ntfs3/frecord.c
 +++ b/fs/ntfs3/frecord.c
-@@ -3279,6 +3279,7 @@ int ni_write_inode(struct inode *inode, int sync, const char *hint)
+@@ -3285,6 +3285,7 @@ int ni_write_inode(struct inode *inode, int sync, const char *hint)
  			modified = true;
  		}
  
@@ -590,13 +590,13 @@ index 00faf41d8f97..464b02265c80 100644
  		break;
  
 -- 
-2.41.0
+2.42.0
 
 
-From b8b18cabc596c765a23a7b1d0639fa74f26c9ab2 Mon Sep 17 00:00:00 2001
+From 79ea376a5ef9a11690b54c6e115e3f4ce9eb8845 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Marc=20Aur=C3=A8le=20La=20France?= <tsi@tuyoix.net>
 Date: Wed, 10 Aug 2022 14:28:04 -0600
-Subject: [PATCH 06/79] fs/ntfs3: Fix [df]mask display in /proc/mounts
+Subject: [PATCH 06/81] fs/ntfs3: Fix [df]mask display in /proc/mounts
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -628,13 +628,13 @@ index 2b8c4c7a3bec..2fd1367a5982 100644
  		seq_printf(m, ",iocharset=%s", opts->nls->charset);
  	else
 -- 
-2.41.0
+2.42.0
 
 
-From d6d40ee4a79b967195780a3c796c29eaea5d16b0 Mon Sep 17 00:00:00 2001
+From 4dcf31507dd0927ef7783115ef960ab2923fcfbc Mon Sep 17 00:00:00 2001
 From: Kenneth Lee <klee33@uw.edu>
 Date: Thu, 18 Aug 2022 22:51:17 -0700
-Subject: [PATCH 07/79] fs/ntfs3: Use kmalloc_array for allocating multiple
+Subject: [PATCH 07/81] fs/ntfs3: Use kmalloc_array for allocating multiple
  elements
 
 Prefer using kmalloc_array(a, b) over kmalloc(a * b) as this
@@ -661,13 +661,13 @@ index e0cdc91d88a8..65f599ecf7df 100644
  			return -ENOMEM;
  
 -- 
-2.41.0
+2.42.0
 
 
-From f7362e0b8f4c4a117a30004fa93075edaff4f447 Mon Sep 17 00:00:00 2001
+From ae4affec328e557b3f0d9f980c4bf23a3fa41b5e Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Wed, 7 Sep 2022 02:45:13 +0100
-Subject: [PATCH 08/79] fs/ntfs3: Fix junction point resolution
+Subject: [PATCH 08/81] fs/ntfs3: Fix junction point resolution
 
 The ntfs3 file system driver does not convert the target path of
 junction points to a proper Linux path. As junction points targets
@@ -816,13 +816,13 @@ index aa0944b33124..f18f77201778 100644
  		kfree(ret);
  		return ERR_PTR(err);
 -- 
-2.41.0
+2.42.0
 
 
-From 616760f63e49a410b3dd9ac0cd3b93a4a06ddec5 Mon Sep 17 00:00:00 2001
+From 87d300b053ea186aa7e6284b8a1ffcb24f311e75 Mon Sep 17 00:00:00 2001
 From: Yuan Can <yuancan@huawei.com>
 Date: Sat, 24 Sep 2022 06:32:04 +0000
-Subject: [PATCH 09/79] fs/ntfs3: Use strcmp to determine attribute type
+Subject: [PATCH 09/81] fs/ntfs3: Use strcmp to determine attribute type
 
 The way of determin attribute type is just matching
 name with the predefined string, do this with strcmp
@@ -923,13 +923,13 @@ index f5d3092f478c..9a6e55e9acb8 100644
  out:
  	inode->i_ctime = current_time(inode);
 -- 
-2.41.0
+2.42.0
 
 
-From 7669a60d3771a73e0604287ab93d706d586c10eb Mon Sep 17 00:00:00 2001
+From 033f6215fa3f5c7498c5b4342c33584413d5d7a2 Mon Sep 17 00:00:00 2001
 From: Nathan Chancellor <nathan@kernel.org>
 Date: Tue, 4 Oct 2022 07:41:45 -0700
-Subject: [PATCH 10/79] fs/ntfs3: Don't use uni1 uninitialized in
+Subject: [PATCH 10/81] fs/ntfs3: Don't use uni1 uninitialized in
  ntfs_d_compare()
 
 Clang warns:
@@ -1010,13 +1010,13 @@ index b217b7510913..9ee2ff977e0e 100644
  
  	/*
 -- 
-2.41.0
+2.42.0
 
 
-From 9b1dbbef0fc63694a77e94fb48f3fe4380afc1b2 Mon Sep 17 00:00:00 2001
+From 1eee31fb057afbe7fafd39befa9f3979d6d19e6e Mon Sep 17 00:00:00 2001
 From: Nathan Chancellor <nathan@kernel.org>
 Date: Tue, 4 Oct 2022 16:23:59 -0700
-Subject: [PATCH 11/79] fs/ntfs3: Eliminate unnecessary ternary operator in
+Subject: [PATCH 11/81] fs/ntfs3: Eliminate unnecessary ternary operator in
  ntfs_d_compare()
 
 'a == b ? 0 : 1' is logically equivalent to 'a != b'.
@@ -1042,13 +1042,13 @@ index 9ee2ff977e0e..68cbb953e680 100644
  		if ((c1 = *n1++) == (c2 = *n2++))
  			continue;
 -- 
-2.41.0
+2.42.0
 
 
-From 5c83f3af298a116fbee52214b1fccff941346abc Mon Sep 17 00:00:00 2001
+From 61eaf25d01eaa21284f41cc03ab5c1179f3939b8 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:14:31 +0100
-Subject: [PATCH 12/79] fs/ntfs3: Add windows_names mount option
+Subject: [PATCH 12/81] fs/ntfs3: Add windows_names mount option
 
 When enabled, the windows_names mount option prevents the creation
 of files or directories with names not allowed by Windows. Use
@@ -1065,10 +1065,10 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  5 files changed, 126 insertions(+), 1 deletion(-)
 
 diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index 70a80f9412f7..ce5e8f3b1aca 100644
+index 8371dba85da1..e146542b7119 100644
 --- a/fs/ntfs3/frecord.c
 +++ b/fs/ntfs3/frecord.c
-@@ -3011,6 +3011,7 @@ int ni_add_name(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
+@@ -3017,6 +3017,7 @@ int ni_add_name(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
  		struct NTFS_DE *de)
  {
  	int err;
@@ -1076,7 +1076,7 @@ index 70a80f9412f7..ce5e8f3b1aca 100644
  	struct ATTRIB *attr;
  	struct ATTR_LIST_ENTRY *le;
  	struct mft_inode *mi;
-@@ -3018,6 +3019,10 @@ int ni_add_name(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
+@@ -3024,6 +3025,10 @@ int ni_add_name(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
  	struct ATTR_FILE_NAME *de_name = (struct ATTR_FILE_NAME *)(de + 1);
  	u16 de_key_size = le16_to_cpu(de->key_size);
  
@@ -1087,7 +1087,7 @@ index 70a80f9412f7..ce5e8f3b1aca 100644
  	mi_get_ref(&ni->mi, &de->ref);
  	mi_get_ref(&dir_ni->mi, &de_name->home);
  
-@@ -3036,7 +3041,7 @@ int ni_add_name(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
+@@ -3042,7 +3047,7 @@ int ni_add_name(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
  	memcpy(Add2Ptr(attr, SIZEOF_RESIDENT), de_name, de_key_size);
  
  	/* Insert new name into directory. */
@@ -1097,7 +1097,7 @@ index 70a80f9412f7..ce5e8f3b1aca 100644
  		ni_remove_attr_le(ni, attr, mi, le);
  
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index b6e22bcb929b..0992fb2e4eb7 100644
+index 829b62d3bb88..11b1e4437e80 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -98,6 +98,30 @@ const __le16 WOF_NAME[17] = {
@@ -1234,10 +1234,10 @@ index f18f77201778..3dfe51aca219 100644
  	fname->dup.cr_time = fname->dup.m_time = fname->dup.c_time =
  		fname->dup.a_time = std5->cr_time;
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index f850088ad6d0..861d0a8adb14 100644
+index c31411104fa1..e15bb58620e2 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -98,6 +98,7 @@ struct ntfs_mount_options {
+@@ -100,6 +100,7 @@ struct ntfs_mount_options {
  	unsigned showmeta : 1; /* Show meta files. */
  	unsigned nohidden : 1; /* Do not show hidden files. */
  	unsigned hide_dot_files : 1; /* Set hidden flag on dot files. */
@@ -1245,7 +1245,7 @@ index f850088ad6d0..861d0a8adb14 100644
  	unsigned force : 1; /* RW mount dirty volume. */
  	unsigned noacsrules : 1; /* Exclude acs rules. */
  	unsigned prealloc : 1; /* Preallocate space when file is growing. */
-@@ -646,6 +647,7 @@ int ntfs_remove_reparse(struct ntfs_sb_info *sbi, __le32 rtag,
+@@ -648,6 +649,7 @@ int ntfs_remove_reparse(struct ntfs_sb_info *sbi, __le32 rtag,
  			const struct MFT_REF *ref);
  void mark_as_free_ex(struct ntfs_sb_info *sbi, CLST lcn, CLST len, bool trim);
  int run_deallocate(struct ntfs_sb_info *sbi, struct runs_tree *run, bool trim);
@@ -1293,13 +1293,13 @@ index 2fd1367a5982..a91852b17c2d 100644
  		seq_puts(m, ",force");
  	if (opts->noacsrules)
 -- 
-2.41.0
+2.42.0
 
 
-From e631ae16b01984c4bd1491f0b5a250716eaafd93 Mon Sep 17 00:00:00 2001
+From c6329b93f4f66e4ea694739386957c481dbdcfd4 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:16:29 +0100
-Subject: [PATCH 13/79] fs/ntfs3: Document windows_names mount option
+Subject: [PATCH 13/81] fs/ntfs3: Document windows_names mount option
 
 Add documentation for windows_names mount option.
 
@@ -1329,13 +1329,13 @@ index d67ccd22c63b..cda8e0e010d4 100644
       - Enable support of the TRIM command for improved performance on delete
         operations, which is recommended for use with the solid-state drives
 -- 
-2.41.0
+2.42.0
 
 
-From 8a52fc056a3920775a3d9a7985c94838e0879b8d Mon Sep 17 00:00:00 2001
+From e5e5751da4a789461c4b3e45a25610c67453fea6 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:30:15 +0100
-Subject: [PATCH 14/79] fs/ntfs3: Fix hidedotfiles mount option by reversing
+Subject: [PATCH 14/81] fs/ntfs3: Fix hidedotfiles mount option by reversing
  behaviour
 
 Currently, the hidedotfiles mount option is behaving in the reverse
@@ -1366,13 +1366,13 @@ index a91852b17c2d..0207cafbab08 100644
  	case Opt_windows_names:
  		opts->windows_names = result.negated ? 0 : 1;
 -- 
-2.41.0
+2.42.0
 
 
-From d49b7b680158818d5b7cd217e5fbefc60b784bff Mon Sep 17 00:00:00 2001
+From f1db10dd37e87489447fdabb16d0a0c257a1d95c Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:32:12 +0100
-Subject: [PATCH 15/79] fs/ntfs3: Make hidedotfiles mount option work when
+Subject: [PATCH 15/81] fs/ntfs3: Make hidedotfiles mount option work when
  renaming files
 
 Currently, the hidedotfiles mount option only has an effect when
@@ -1389,10 +1389,10 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 9 insertions(+)
 
 diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index ce5e8f3b1aca..392efa0270f8 100644
+index e146542b7119..e8bbd911e2e7 100644
 --- a/fs/ntfs3/frecord.c
 +++ b/fs/ntfs3/frecord.c
-@@ -3023,6 +3023,15 @@ int ni_add_name(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
+@@ -3029,6 +3029,15 @@ int ni_add_name(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
  	    !valid_windows_name(sbi, (struct le_str *)&de_name->name_len))
  		return -EINVAL;
  
@@ -1409,13 +1409,13 @@ index ce5e8f3b1aca..392efa0270f8 100644
  	mi_get_ref(&dir_ni->mi, &de_name->home);
  
 -- 
-2.41.0
+2.42.0
 
 
-From 21bdb9f19d3c5cdd47c528e6ff1faa93da50f8e3 Mon Sep 17 00:00:00 2001
+From 246526e0c7151ff172852cdf9d3e3269a4208889 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:34:06 +0100
-Subject: [PATCH 16/79] fs/ntfs3: Add hidedotfiles to the list of enabled mount
+Subject: [PATCH 16/81] fs/ntfs3: Add hidedotfiles to the list of enabled mount
  options
 
 Currently, the ntfs3 driver does return the hidedotfiles mount
@@ -1446,13 +1446,13 @@ index 0207cafbab08..464703701ed4 100644
  		seq_puts(m, ",force");
  	if (opts->noacsrules)
 -- 
-2.41.0
+2.42.0
 
 
-From 964f65705e721b1378511bff69760bad1d7e1680 Mon Sep 17 00:00:00 2001
+From 121368db6b16893865d9f8ae531fc98b043c5ea4 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:35:46 +0100
-Subject: [PATCH 17/79] fs/ntfs3: Document the hidedotfiles mount option
+Subject: [PATCH 17/81] fs/ntfs3: Document the hidedotfiles mount option
 
 Add documentation for the hidedotfiles mount option.
 
@@ -1480,13 +1480,13 @@ index cda8e0e010d4..3a20ecd13d45 100644
       - Prevents the creation of files and directories with a name not allowed
         by Windows, either because it contains some not allowed character (which
 -- 
-2.41.0
+2.42.0
 
 
-From b4e0cadb9c2001831d39d22c1b514fe86b1b0b12 Mon Sep 17 00:00:00 2001
+From 15634259fea8db1094e54b1bc5d340bc7af440a3 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:37:13 +0100
-Subject: [PATCH 18/79] fs/ntfs3: Rename hidedotfiles mount option to
+Subject: [PATCH 18/81] fs/ntfs3: Rename hidedotfiles mount option to
  hide_dot_files
 
 The hidedotfiles mount option provides the same functionality as
@@ -1519,10 +1519,10 @@ index 3a20ecd13d45..7b1e78cf01ad 100644
         when creating and moving or renaming files. Files whose names start
         with a dot will have the HIDDEN attribute set and files whose names
 diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index 392efa0270f8..3b309b9a5e29 100644
+index e8bbd911e2e7..f61257e16d2d 100644
 --- a/fs/ntfs3/frecord.c
 +++ b/fs/ntfs3/frecord.c
-@@ -3023,7 +3023,7 @@ int ni_add_name(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
+@@ -3029,7 +3029,7 @@ int ni_add_name(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
  	    !valid_windows_name(sbi, (struct le_str *)&de_name->name_len))
  		return -EINVAL;
  
@@ -1567,13 +1567,13 @@ index 464703701ed4..59a831bd0c9b 100644
  		seq_puts(m, ",force");
  	if (opts->noacsrules)
 -- 
-2.41.0
+2.42.0
 
 
-From 7699cfd9058ec9873d664822ffbc973c59e52fd1 Mon Sep 17 00:00:00 2001
+From d8c414ede77badf27ec50025b08e871535f22e00 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:44:27 +0100
-Subject: [PATCH 19/79] fs/ntfs3: Add system.ntfs_attrib_be extended attribute
+Subject: [PATCH 19/81] fs/ntfs3: Add system.ntfs_attrib_be extended attribute
 
 NTFS-3G provides the system.ntfs_attrib_be extended attribute, which
 has the same value as system.ntfs_attrib but represented in big-endian.
@@ -1643,13 +1643,13 @@ index 9a6e55e9acb8..52f0247c1030 100644
  		if (S_ISREG(inode->i_mode)) {
  			/* Process compressed/sparsed in special way. */
 -- 
-2.41.0
+2.42.0
 
 
-From fcace14764eed349b737eb44939412939b68635f Mon Sep 17 00:00:00 2001
+From de5d4fdbb5e5216b60e6193a7ce0a005293e541f Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Mon, 10 Oct 2022 12:46:12 +0100
-Subject: [PATCH 20/79] fs/ntfs3: Document system.ntfs_attrib_be extended
+Subject: [PATCH 20/81] fs/ntfs3: Document system.ntfs_attrib_be extended
  attribute
 
 Add documentation for system.ntfs_attrib_be extended attribute.
@@ -1677,13 +1677,13 @@ index 7b1e78cf01ad..5aa102bd72c2 100644
  =============
  
 -- 
-2.41.0
+2.42.0
 
 
-From 691a57da2e31ecf406bd99e7cd75a70c266e2be0 Mon Sep 17 00:00:00 2001
+From b1d00755f68d8df96fd785760ede0dff6903cd1c Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Thomas=20K=C3=BChnel?= <thomas.kuehnel@avm.de>
 Date: Tue, 7 Dec 2021 11:24:53 +0100
-Subject: [PATCH 21/79] fs/ntfs3: Fix endian conversion in ni_fname_name
+Subject: [PATCH 21/81] fs/ntfs3: Fix endian conversion in ni_fname_name
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -1701,10 +1701,10 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index 3b309b9a5e29..039247ab5b0b 100644
+index f61257e16d2d..5fe1e1dc3bd8 100644
 --- a/fs/ntfs3/frecord.c
 +++ b/fs/ntfs3/frecord.c
-@@ -1645,6 +1645,7 @@ struct ATTR_FILE_NAME *ni_fname_name(struct ntfs_inode *ni,
+@@ -1651,6 +1651,7 @@ struct ATTR_FILE_NAME *ni_fname_name(struct ntfs_inode *ni,
  {
  	struct ATTRIB *attr = NULL;
  	struct ATTR_FILE_NAME *fname;
@@ -1712,7 +1712,7 @@ index 3b309b9a5e29..039247ab5b0b 100644
  
  	if (le)
  		*le = NULL;
-@@ -1668,7 +1669,8 @@ struct ATTR_FILE_NAME *ni_fname_name(struct ntfs_inode *ni,
+@@ -1674,7 +1675,8 @@ struct ATTR_FILE_NAME *ni_fname_name(struct ntfs_inode *ni,
  	if (uni->len != fname->name_len)
  		goto next;
  
@@ -1723,13 +1723,13 @@ index 3b309b9a5e29..039247ab5b0b 100644
  		goto next;
  
 -- 
-2.41.0
+2.42.0
 
 
-From 170a5de1065067ffeafe38c445ba2d8ec8511ed8 Mon Sep 17 00:00:00 2001
+From 7b144e4691a51d5a560e627a40990369356b4cda Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Thomas=20K=C3=BChnel?= <thomas.kuehnel@avm.de>
 Date: Tue, 7 Dec 2021 11:24:54 +0100
-Subject: [PATCH 22/79] fs/ntfs3: Add functions to modify LE bitmaps
+Subject: [PATCH 22/81] fs/ntfs3: Add functions to modify LE bitmaps
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -1845,10 +1845,10 @@ index 464b02265c80..d2ee7205a9f2 100644
  		break;
  
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index 861d0a8adb14..feebc7d8ceea 100644
+index e15bb58620e2..b49e662beaf9 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -840,6 +840,9 @@ int wnd_extend(struct wnd_bitmap *wnd, size_t new_bits);
+@@ -842,6 +842,9 @@ int wnd_extend(struct wnd_bitmap *wnd, size_t new_bits);
  void wnd_zone_set(struct wnd_bitmap *wnd, size_t Lcn, size_t Len);
  int ntfs_trim_fs(struct ntfs_sb_info *sbi, struct fstrim_range *range);
  
@@ -1859,13 +1859,13 @@ index 861d0a8adb14..feebc7d8ceea 100644
  int ntfs_cmp_names(const __le16 *s1, size_t l1, const __le16 *s2, size_t l2,
  		   const u16 *upcase, bool bothcase);
 -- 
-2.41.0
+2.42.0
 
 
-From 5ef8e86bd02ccb827619dc070d58ffdf4edbe7b0 Mon Sep 17 00:00:00 2001
+From 8f665facbcc43f3420194c9b7568d285c82728a2 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Thomas=20K=C3=BChnel?= <thomas.kuehnel@avm.de>
 Date: Tue, 7 Dec 2021 11:24:55 +0100
-Subject: [PATCH 23/79] fs/ntfs3: Use _le variants of bitops functions
+Subject: [PATCH 23/81] fs/ntfs3: Use _le variants of bitops functions
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -1931,7 +1931,7 @@ index 00c19f7028a9..de4878cd5f81 100644
  					lcn = lcn_wnd + wbit;
  				len += 1;
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index 0992fb2e4eb7..f45520a0d539 100644
+index 11b1e4437e80..7a72fa368edd 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -642,13 +642,13 @@ int ntfs_look_free_mft(struct ntfs_sb_info *sbi, CLST *rno, bool mft,
@@ -1969,7 +1969,7 @@ index 0992fb2e4eb7..f45520a0d539 100644
  
  	if (rno < wnd_zone_bit(wnd))
 diff --git a/fs/ntfs3/index.c b/fs/ntfs3/index.c
-index 1d6be4e07152..c87f870fd603 100644
+index 166389ada234..cc4736af2388 100644
 --- a/fs/ntfs3/index.c
 +++ b/fs/ntfs3/index.c
 @@ -323,7 +323,7 @@ static int indx_mark_used(struct ntfs_index *indx, struct ntfs_inode *ni,
@@ -2026,7 +2026,7 @@ index 1d6be4e07152..c87f870fd603 100644
  
  		if (pos < nbits)
  			*bit = pos;
-@@ -2029,7 +2029,7 @@ static int indx_shrink(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -2035,7 +2035,7 @@ static int indx_shrink(struct ntfs_index *indx, struct ntfs_inode *ni,
  		if (bit >= nbits)
  			return 0;
  
@@ -2036,13 +2036,13 @@ index 1d6be4e07152..c87f870fd603 100644
  			return 0;
  	} else {
 -- 
-2.41.0
+2.42.0
 
 
-From b8069991fb05e9fcdec6bbfc8f9eeffe459cc9fd Mon Sep 17 00:00:00 2001
+From dce7f3ee67272596b9e16f6b5b9f7730a9190803 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 6 Oct 2022 19:42:24 +0300
-Subject: [PATCH 24/79] fs/ntfs3: Add ntfs_bitmap_weight_le function and
+Subject: [PATCH 24/81] fs/ntfs3: Add ntfs_bitmap_weight_le function and
  refactoring
 
 Added ntfs_bitmap_weight_le function.
@@ -2359,10 +2359,10 @@ index de4878cd5f81..a29a55e0c47b 100644
 +	return w;
 +}
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index feebc7d8ceea..664858457f48 100644
+index b49e662beaf9..8985586525c1 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -472,9 +472,9 @@ static inline size_t al_aligned(size_t size)
+@@ -474,9 +474,9 @@ static inline size_t al_aligned(size_t size)
  }
  
  /* Globals from bitfunc.c */
@@ -2375,7 +2375,7 @@ index feebc7d8ceea..664858457f48 100644
  
  /* Globals from dir.c */
  int ntfs_utf16_to_nls(struct ntfs_sb_info *sbi, const __le16 *name, u32 len,
-@@ -840,8 +840,9 @@ int wnd_extend(struct wnd_bitmap *wnd, size_t new_bits);
+@@ -842,8 +842,9 @@ int wnd_extend(struct wnd_bitmap *wnd, size_t new_bits);
  void wnd_zone_set(struct wnd_bitmap *wnd, size_t Lcn, size_t Len);
  int ntfs_trim_fs(struct ntfs_sb_info *sbi, struct fstrim_range *range);
  
@@ -2388,13 +2388,13 @@ index feebc7d8ceea..664858457f48 100644
  /* Globals from upcase.c */
  int ntfs_cmp_names(const __le16 *s1, size_t l1, const __le16 *s2, size_t l2,
 -- 
-2.41.0
+2.42.0
 
 
-From 312a9554b3ee39f615210798eb1e9fc69b28ffb4 Mon Sep 17 00:00:00 2001
+From 21ba7b65e3bbd82f287743839a87f20886668833 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 6 Oct 2022 19:58:11 +0300
-Subject: [PATCH 25/79] fs/ntfs3: Fix sparse problems
+Subject: [PATCH 25/81] fs/ntfs3: Fix sparse problems
 
 Fixing various problems, detected by sparse.
 
@@ -2447,10 +2447,10 @@ index fb438d604040..063a6654199b 100644
  		return ret;
  	}
 diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index 039247ab5b0b..ff938d3cd5ef 100644
+index 5fe1e1dc3bd8..32b46ef38194 100644
 --- a/fs/ntfs3/frecord.c
 +++ b/fs/ntfs3/frecord.c
-@@ -1670,8 +1670,7 @@ struct ATTR_FILE_NAME *ni_fname_name(struct ntfs_inode *ni,
+@@ -1676,8 +1676,7 @@ struct ATTR_FILE_NAME *ni_fname_name(struct ntfs_inode *ni,
  		goto next;
  
  	fns = (struct le_str *)&fname->name_len;
@@ -2499,13 +2499,13 @@ index 68cbb953e680..f30cbd45daba 100644
  out:
  	__putname(uni1);
 -- 
-2.41.0
+2.42.0
 
 
-From dcf69bf5395124790ad661334f76625872bd675b Mon Sep 17 00:00:00 2001
+From 79862025b5601cf44ccc6ea1c5bb5eb57707d391 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 6 Oct 2022 20:04:53 +0300
-Subject: [PATCH 26/79] fs/ntfs3: Remove unused functions
+Subject: [PATCH 26/81] fs/ntfs3: Remove unused functions
 
 Removed attr_must_be_resident and ntfs_query_def.
 
@@ -2555,7 +2555,7 @@ index b2f54fab4001..7c00656151fb 100644
   * attr_load_runs - Load all runs stored in @attr.
   */
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index f45520a0d539..b7c68ca65bac 100644
+index 7a72fa368edd..6b6923bdc2ce 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -345,35 +345,6 @@ int ntfs_loadlog_and_replay(struct ntfs_inode *ni, struct ntfs_sb_info *sbi)
@@ -2595,10 +2595,10 @@ index f45520a0d539..b7c68ca65bac 100644
   * ntfs_look_for_free_space - Look for a free space in bitmap.
   */
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index 664858457f48..7ed75dd4c0ec 100644
+index 8985586525c1..a1f8a997fbf2 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -586,8 +586,6 @@ int ntfs_fix_post_read(struct NTFS_RECORD_HEADER *rhdr, size_t bytes,
+@@ -588,8 +588,6 @@ int ntfs_fix_post_read(struct NTFS_RECORD_HEADER *rhdr, size_t bytes,
  		       bool simple);
  int ntfs_extend_init(struct ntfs_sb_info *sbi);
  int ntfs_loadlog_and_replay(struct ntfs_inode *ni, struct ntfs_sb_info *sbi);
@@ -2608,13 +2608,13 @@ index 664858457f48..7ed75dd4c0ec 100644
  			     CLST *new_lcn, CLST *new_len,
  			     enum ALLOCATE_OPT opt);
 -- 
-2.41.0
+2.42.0
 
 
-From e5038992c25b7ef6e49c3bcfad83b595b8200d74 Mon Sep 17 00:00:00 2001
+From d96ea3f3811448bab1f0215090630183a2fd854f Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 6 Oct 2022 20:19:38 +0300
-Subject: [PATCH 27/79] fs/ntfs3: Simplify ntfs_update_mftmirr function
+Subject: [PATCH 27/81] fs/ntfs3: Simplify ntfs_update_mftmirr function
 
 Make err assignment in one place.
 
@@ -2624,7 +2624,7 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 1 insertion(+), 3 deletions(-)
 
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index b7c68ca65bac..b68a7b780262 100644
+index 6b6923bdc2ce..6e3a709b19a9 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -825,7 +825,6 @@ void ntfs_update_mftmirr(struct ntfs_sb_info *sbi, int wait)
@@ -2646,13 +2646,13 @@ index b7c68ca65bac..b68a7b780262 100644
  		put_bh(bh2);
  		if (err)
 -- 
-2.41.0
+2.42.0
 
 
-From 983a6613d51206fd64416acf70d4e9a499d1f783 Mon Sep 17 00:00:00 2001
+From 1742ab7c28a467297461fc1b0e351edfb368c807 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 13:57:28 +0300
-Subject: [PATCH 28/79] fs/ntfs3: Fixing work with sparse clusters
+Subject: [PATCH 28/81] fs/ntfs3: Fixing work with sparse clusters
 
 Simplify logic in ntfs_extend_initialized_size, ntfs_sparse_cluster
 and ntfs_fallocate.
@@ -2754,13 +2754,13 @@ index f31c0389a2e7..f6f47b0f0d7e 100644
  			CLST cend = bytes_to_cluster(sbi, end);
  			CLST lcn, clen;
 -- 
-2.41.0
+2.42.0
 
 
-From 122535ce51b25fc39a946eca7503e5c8029a8550 Mon Sep 17 00:00:00 2001
+From 33547caf4ed2dec01f32b937f514102662557a11 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 14:02:36 +0300
-Subject: [PATCH 29/79] fs/ntfs3: Change new sparse cluster processing
+Subject: [PATCH 29/81] fs/ntfs3: Change new sparse cluster processing
 
 Remove ntfs_sparse_cluster.
 Zero clusters in attr_allocate_clusters.
@@ -3320,10 +3320,10 @@ index f6f47b0f0d7e..caaed956bb36 100644
  			goto out;
  
 diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index ff938d3cd5ef..f1df52dfab74 100644
+index 32b46ef38194..079a83c8cdb1 100644
 --- a/fs/ntfs3/frecord.c
 +++ b/fs/ntfs3/frecord.c
-@@ -2224,7 +2224,7 @@ int ni_decompress_file(struct ntfs_inode *ni)
+@@ -2230,7 +2230,7 @@ int ni_decompress_file(struct ntfs_inode *ni)
  
  		for (vcn = vbo >> sbi->cluster_bits; vcn < end; vcn += clen) {
  			err = attr_data_get_block(ni, vcn, cend - vcn, &lcn,
@@ -3333,10 +3333,10 @@ index ff938d3cd5ef..f1df52dfab74 100644
  				goto out;
  		}
 diff --git a/fs/ntfs3/index.c b/fs/ntfs3/index.c
-index c87f870fd603..6098908fc0f1 100644
+index cc4736af2388..9c589561aee0 100644
 --- a/fs/ntfs3/index.c
 +++ b/fs/ntfs3/index.c
-@@ -1423,8 +1423,8 @@ static int indx_create_allocate(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -1429,8 +1429,8 @@ static int indx_create_allocate(struct ntfs_index *indx, struct ntfs_inode *ni,
  
  	run_init(&run);
  
@@ -3386,10 +3386,10 @@ index ed2455dd056e..e7c1a06b963d 100644
  				goto out5;
  
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index 7ed75dd4c0ec..ebf66de7b54f 100644
+index a1f8a997fbf2..0c98b5507023 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -127,6 +127,7 @@ struct ntfs_buffers {
+@@ -129,6 +129,7 @@ struct ntfs_buffers {
  enum ALLOCATE_OPT {
  	ALLOCATE_DEF = 0, // Allocate all clusters.
  	ALLOCATE_MFT = 1, // Allocate for MFT.
@@ -3397,7 +3397,7 @@ index 7ed75dd4c0ec..ebf66de7b54f 100644
  };
  
  enum bitmap_mutex_classes {
-@@ -415,7 +416,7 @@ enum REPARSE_SIGN {
+@@ -417,7 +418,7 @@ enum REPARSE_SIGN {
  int attr_allocate_clusters(struct ntfs_sb_info *sbi, struct runs_tree *run,
  			   CLST vcn, CLST lcn, CLST len, CLST *pre_alloc,
  			   enum ALLOCATE_OPT opt, CLST *alen, const size_t fr,
@@ -3406,7 +3406,7 @@ index 7ed75dd4c0ec..ebf66de7b54f 100644
  int attr_make_nonresident(struct ntfs_inode *ni, struct ATTRIB *attr,
  			  struct ATTR_LIST_ENTRY *le, struct mft_inode *mi,
  			  u64 new_size, struct runs_tree *run,
-@@ -425,7 +426,7 @@ int attr_set_size(struct ntfs_inode *ni, enum ATTR_TYPE type,
+@@ -427,7 +428,7 @@ int attr_set_size(struct ntfs_inode *ni, enum ATTR_TYPE type,
  		  u64 new_size, const u64 *new_valid, bool keep_prealloc,
  		  struct ATTRIB **ret);
  int attr_data_get_block(struct ntfs_inode *ni, CLST vcn, CLST clen, CLST *lcn,
@@ -3415,7 +3415,7 @@ index 7ed75dd4c0ec..ebf66de7b54f 100644
  int attr_data_read_resident(struct ntfs_inode *ni, struct page *page);
  int attr_data_write_resident(struct ntfs_inode *ni, struct page *page);
  int attr_load_runs_vcn(struct ntfs_inode *ni, enum ATTR_TYPE type,
-@@ -490,8 +491,6 @@ extern const struct file_operations ntfs_dir_operations;
+@@ -492,8 +493,6 @@ extern const struct file_operations ntfs_dir_operations;
  /* Globals from file.c */
  int ntfs_getattr(struct user_namespace *mnt_userns, const struct path *path,
  		 struct kstat *stat, u32 request_mask, u32 flags);
@@ -3425,13 +3425,13 @@ index 7ed75dd4c0ec..ebf66de7b54f 100644
  		  struct iattr *attr);
  int ntfs_file_open(struct inode *inode, struct file *file);
 -- 
-2.41.0
+2.42.0
 
 
-From 47a2d1b6533ac62040da82ec126a84b367f33096 Mon Sep 17 00:00:00 2001
+From 72b1d26846c53e635002b677c5f3fcf444d4a5f9 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 18:55:03 +0300
-Subject: [PATCH 30/79] fs/ntfs3: Fix wrong indentations
+Subject: [PATCH 30/81] fs/ntfs3: Fix wrong indentations
 
 Also simplifying code.
 
@@ -3457,7 +3457,7 @@ index d2ee7205a9f2..bf7396447284 100644
  			attr->nres.alloc_size = cpu_to_le64(size);
  	}
 diff --git a/fs/ntfs3/index.c b/fs/ntfs3/index.c
-index 6098908fc0f1..a6c2f6589d35 100644
+index 9c589561aee0..45c56a809065 100644
 --- a/fs/ntfs3/index.c
 +++ b/fs/ntfs3/index.c
 @@ -672,9 +672,8 @@ void fnd_clear(struct ntfs_fnd *fnd)
@@ -3471,7 +3471,7 @@ index 6098908fc0f1..a6c2f6589d35 100644
  	if (i < 0 || i >= ARRAY_SIZE(fnd->nodes))
  		return -EINVAL;
  	fnd->nodes[i] = n;
-@@ -2197,9 +2196,10 @@ static int indx_get_entry_to_replace(struct ntfs_index *indx,
+@@ -2203,9 +2202,10 @@ static int indx_get_entry_to_replace(struct ntfs_index *indx,
  	fnd->de[level] = e;
  	indx_write(indx, ni, n, 0);
  
@@ -3514,13 +3514,13 @@ index e7c1a06b963d..f3179b83fa01 100644
  		goto out;
  	}
 -- 
-2.41.0
+2.42.0
 
 
-From 1488be3ace29aac74ce531907b8eeef4b9597732 Mon Sep 17 00:00:00 2001
+From 3421b1035edd91ef2bb97efd38ae7c822dd6978d Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 19:53:30 +0300
-Subject: [PATCH 31/79] fs/ntfs3: atomic_open implementation
+Subject: [PATCH 31/81] fs/ntfs3: atomic_open implementation
 
 Added ntfs_atomic_open function.
 Relaxed locking in ntfs_create_inode.
@@ -3720,13 +3720,13 @@ index f30cbd45daba..6b75e7c39b52 100644
  };
  
 -- 
-2.41.0
+2.42.0
 
 
-From 2d9e14b677359a6b1b3bfb3ddd801b6518b4e9dc Mon Sep 17 00:00:00 2001
+From e8522fe4aa29d27ac9ef679ca9424d2b59ea152a Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 20:08:06 +0300
-Subject: [PATCH 32/79] fs/ntfs3: Fixing wrong logic in attr_set_size and
+Subject: [PATCH 32/81] fs/ntfs3: Fixing wrong logic in attr_set_size and
  ntfs_fallocate
 
 There were 2 problems:
@@ -3913,10 +3913,10 @@ index caaed956bb36..e41b8d54e175 100644
  
  	setattr_copy(mnt_userns, inode, attr);
 diff --git a/fs/ntfs3/index.c b/fs/ntfs3/index.c
-index a6c2f6589d35..7a1e01a2ed9a 100644
+index 45c56a809065..05328f0b25b8 100644
 --- a/fs/ntfs3/index.c
 +++ b/fs/ntfs3/index.c
-@@ -1521,6 +1521,9 @@ static int indx_add_allocate(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -1527,6 +1527,9 @@ static int indx_add_allocate(struct ntfs_index *indx, struct ntfs_inode *ni,
  		goto out1;
  	}
  
@@ -3926,7 +3926,7 @@ index a6c2f6589d35..7a1e01a2ed9a 100644
  	*vbn = bit << indx->idx2vbn_bits;
  
  	return 0;
-@@ -2054,6 +2057,9 @@ static int indx_shrink(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -2060,6 +2063,9 @@ static int indx_shrink(struct ntfs_index *indx, struct ntfs_inode *ni,
  	if (err)
  		return err;
  
@@ -3936,7 +3936,7 @@ index a6c2f6589d35..7a1e01a2ed9a 100644
  	bpb = bitmap_size(bit);
  	if (bpb * 8 == nbits)
  		return 0;
-@@ -2537,6 +2543,9 @@ int indx_delete_entry(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -2543,6 +2549,9 @@ int indx_delete_entry(struct ntfs_index *indx, struct ntfs_inode *ni,
  
  		err = attr_set_size(ni, ATTR_ALLOC, in->name, in->name_len,
  				    &indx->alloc_run, 0, NULL, false, NULL);
@@ -3989,13 +3989,13 @@ index a2428d1fdb0a..8225d0b7c48c 100644
  			mark_inode_dirty(inode);
  	}
 -- 
-2.41.0
+2.42.0
 
 
-From 2d5fd7d5972040e1aa12d2c20855c60eec33d032 Mon Sep 17 00:00:00 2001
+From 74c31429a83e1231736289f9b2035a7f26e740c8 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 20:16:15 +0300
-Subject: [PATCH 33/79] fs/ntfs3: Changing locking in ntfs_rename
+Subject: [PATCH 33/81] fs/ntfs3: Changing locking in ntfs_rename
 
 In some cases we can be in deadlock
 because we tried to lock the same dir.
@@ -4029,10 +4029,10 @@ index 6b75e7c39b52..7620956e5fe5 100644
  	ni_unlock(dir_ni);
  out:
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index ebf66de7b54f..34bf16ff3a5c 100644
+index 0c98b5507023..1e9e1f74a06a 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -334,6 +334,7 @@ enum ntfs_inode_mutex_lock_class {
+@@ -336,6 +336,7 @@ enum ntfs_inode_mutex_lock_class {
  	NTFS_INODE_MUTEX_REPARSE,
  	NTFS_INODE_MUTEX_NORMAL,
  	NTFS_INODE_MUTEX_PARENT,
@@ -4040,7 +4040,7 @@ index ebf66de7b54f..34bf16ff3a5c 100644
  };
  
  /*
-@@ -1122,6 +1123,11 @@ static inline void ni_lock_dir(struct ntfs_inode *ni)
+@@ -1124,6 +1125,11 @@ static inline void ni_lock_dir(struct ntfs_inode *ni)
  	mutex_lock_nested(&ni->ni_lock, NTFS_INODE_MUTEX_PARENT);
  }
  
@@ -4053,13 +4053,13 @@ index ebf66de7b54f..34bf16ff3a5c 100644
  {
  	mutex_unlock(&ni->ni_lock);
 -- 
-2.41.0
+2.42.0
 
 
-From 8159ed73b59b1c6d2492d78b9f9310233a1caa2f Mon Sep 17 00:00:00 2001
+From ee7fe17ff24fbb9447f4cdba44c2b6c78e103e5f Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 20:20:14 +0300
-Subject: [PATCH 34/79] fs/ntfs3: Restore correct state after ENOSPC in
+Subject: [PATCH 34/81] fs/ntfs3: Restore correct state after ENOSPC in
  attr_data_get_block
 
 Added new function ntfs_check_for_free_space.
@@ -4284,7 +4284,7 @@ index 91ea73e6f4fe..5e6bafb10f42 100644
  
  int attr_data_read_resident(struct ntfs_inode *ni, struct page *page)
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index b68a7b780262..4f04e8594a8f 100644
+index 6e3a709b19a9..39520ffeabf1 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -443,6 +443,39 @@ int ntfs_look_for_free_space(struct ntfs_sb_info *sbi, CLST lcn, CLST len,
@@ -4328,10 +4328,10 @@ index b68a7b780262..4f04e8594a8f 100644
   * ntfs_extend_mft - Allocate additional MFT records.
   *
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index 34bf16ff3a5c..157f77218392 100644
+index 1e9e1f74a06a..1989418f6a64 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -589,6 +589,7 @@ int ntfs_loadlog_and_replay(struct ntfs_inode *ni, struct ntfs_sb_info *sbi);
+@@ -591,6 +591,7 @@ int ntfs_loadlog_and_replay(struct ntfs_inode *ni, struct ntfs_sb_info *sbi);
  int ntfs_look_for_free_space(struct ntfs_sb_info *sbi, CLST lcn, CLST len,
  			     CLST *new_lcn, CLST *new_len,
  			     enum ALLOCATE_OPT opt);
@@ -4340,13 +4340,13 @@ index 34bf16ff3a5c..157f77218392 100644
  		       struct ntfs_inode *ni, struct mft_inode **mi);
  void ntfs_mark_rec_free(struct ntfs_sb_info *sbi, CLST rno, bool is_mft);
 -- 
-2.41.0
+2.42.0
 
 
-From 1c09eec5b5e2d85ad92dbb0c5f1dd32ab47becc6 Mon Sep 17 00:00:00 2001
+From 54985e0effcbfc5394f9d837799fee0de876e2cd Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 7 Oct 2022 20:23:19 +0300
-Subject: [PATCH 35/79] fs/ntfs3: Correct ntfs_check_for_free_space
+Subject: [PATCH 35/81] fs/ntfs3: Correct ntfs_check_for_free_space
 
 zlen in some cases was bigger than correct value.
 
@@ -4356,7 +4356,7 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index 4f04e8594a8f..6a1e000fd2b5 100644
+index 39520ffeabf1..d6827c5de234 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -456,7 +456,7 @@ bool ntfs_check_for_free_space(struct ntfs_sb_info *sbi, CLST clen, CLST mlen)
@@ -4369,13 +4369,13 @@ index 4f04e8594a8f..6a1e000fd2b5 100644
  
  	if (free < zlen + clen)
 -- 
-2.41.0
+2.42.0
 
 
-From 0842dfb45c4acc8eda2c9546d986dd79f6846f6b Mon Sep 17 00:00:00 2001
+From 004655d8a36449f6ce424f9655b8eb538dcab8d4 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 11 Oct 2022 20:00:36 +0300
-Subject: [PATCH 36/79] fs/ntfs3: Fix incorrect if in ntfs_set_acl_ex
+Subject: [PATCH 36/81] fs/ntfs3: Fix incorrect if in ntfs_set_acl_ex
 
 We need to update ctime too with mode.
 Fixes xfstest generic/307
@@ -4404,13 +4404,13 @@ index 52f0247c1030..bb4d0327b6e6 100644
  
  out:
 -- 
-2.41.0
+2.42.0
 
 
-From bb4251bf877badc86b23079aa7e40981abbf3cd4 Mon Sep 17 00:00:00 2001
+From 8ba7d1c1bdd1c62f7f4f5f6a55a5eb04fba9685b Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 11 Oct 2022 20:12:02 +0300
-Subject: [PATCH 37/79] fs/ntfs3: Use ALIGN kernel macro
+Subject: [PATCH 37/81] fs/ntfs3: Use ALIGN kernel macro
 
 This way code will be more readable.
 
@@ -4422,7 +4422,7 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  3 files changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index 6a1e000fd2b5..567563771bf8 100644
+index d6827c5de234..b711f2f34c76 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -503,7 +503,7 @@ static int ntfs_extend_mft(struct ntfs_sb_info *sbi)
@@ -4447,10 +4447,10 @@ index 0f38d558169a..d6a856a8d227 100644
  enum RECORD_NUM {
  	MFT_REC_MFT		= 0,
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index 157f77218392..f292e47a01c7 100644
+index 1989418f6a64..ea97a2522a04 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -199,6 +199,8 @@ struct ntfs_index {
+@@ -201,6 +201,8 @@ struct ntfs_index {
  
  /* Minimum MFT zone. */
  #define NTFS_MIN_MFT_ZONE 100
@@ -4460,13 +4460,13 @@ index 157f77218392..f292e47a01c7 100644
  /* Ntfs file system in-core superblock data. */
  struct ntfs_sb_info {
 -- 
-2.41.0
+2.42.0
 
 
-From 4815992ee175f816dac6b48793d2c26e0f7fe088 Mon Sep 17 00:00:00 2001
+From 9d7ec7e0abc90ad69ad72a0e8fe156a55c93ed48 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 11 Oct 2022 20:15:28 +0300
-Subject: [PATCH 38/79] fs/ntfs3: Fix wrong if in hdr_first_de
+Subject: [PATCH 38/81] fs/ntfs3: Fix wrong if in hdr_first_de
 
 We need to check used bytes instead of total.
 
@@ -4496,13 +4496,13 @@ index d6a856a8d227..90151e56c122 100644
  	if (esize < sizeof(struct NTFS_DE) || de_off + esize > used)
  		return NULL;
 -- 
-2.41.0
+2.42.0
 
 
-From e0c9e185e981e182f94d599106bf4050ed91f152 Mon Sep 17 00:00:00 2001
+From 81d5aedf8122e21bea2ba0b15e9d1ee80f454fde Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 11 Oct 2022 20:19:36 +0300
-Subject: [PATCH 39/79] fs/ntfs3: Improve checking of bad clusters
+Subject: [PATCH 39/81] fs/ntfs3: Improve checking of bad clusters
 
 Added new function wnd_set_used_safe.
 Load $BadClus before $AttrDef instead of before $Bitmap.
@@ -4565,10 +4565,10 @@ index a29a55e0c47b..393c726ef17a 100644
   * wnd_is_free_hlp
   *
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index f292e47a01c7..860ebaca37a0 100644
+index ea97a2522a04..ed8f0e14261d 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -829,6 +829,8 @@ static inline size_t wnd_zeroes(const struct wnd_bitmap *wnd)
+@@ -831,6 +831,8 @@ static inline size_t wnd_zeroes(const struct wnd_bitmap *wnd)
  int wnd_init(struct wnd_bitmap *wnd, struct super_block *sb, size_t nbits);
  int wnd_set_free(struct wnd_bitmap *wnd, size_t bit, size_t bits);
  int wnd_set_used(struct wnd_bitmap *wnd, size_t bit, size_t bits);
@@ -4699,13 +4699,13 @@ index 59a831bd0c9b..ef4ea3f21905 100644
  	ref.low = cpu_to_le32(MFT_REC_ATTR);
  	ref.seq = cpu_to_le16(MFT_REC_ATTR);
 -- 
-2.41.0
+2.42.0
 
 
-From 82f5abab2f7f245f57dde6e580859ab260523255 Mon Sep 17 00:00:00 2001
+From 91c0b2e036046e0ef142e09ec48e245dd9b9e73a Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 11 Oct 2022 20:21:03 +0300
-Subject: [PATCH 40/79] fs/ntfs3: Make if more readable
+Subject: [PATCH 40/81] fs/ntfs3: Make if more readable
 
 This way it looks better.
 
@@ -4715,10 +4715,10 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 2 insertions(+), 3 deletions(-)
 
 diff --git a/fs/ntfs3/record.c b/fs/ntfs3/record.c
-index a952cd7aa7a4..defce6a5c8e1 100644
+index e7af3afa38b8..88fa7ce128d4 100644
 --- a/fs/ntfs3/record.c
 +++ b/fs/ntfs3/record.c
-@@ -265,10 +265,9 @@ struct ATTRIB *mi_enum_attr(struct mft_inode *mi, struct ATTRIB *attr)
+@@ -271,10 +271,9 @@ struct ATTRIB *mi_enum_attr(struct mft_inode *mi, struct ATTRIB *attr)
  		if (t16 + t32 > asize)
  			return NULL;
  
@@ -4732,13 +4732,13 @@ index a952cd7aa7a4..defce6a5c8e1 100644
  		return attr;
  	}
 -- 
-2.41.0
+2.42.0
 
 
-From 1d489fce77c26171bba4617303e6a84f21fb1706 Mon Sep 17 00:00:00 2001
+From 088f43b2eff94a9f5a7881a5edab82bd26048455 Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Thu, 29 Dec 2022 06:10:27 -1000
-Subject: [PATCH 41/79] ntfs3: stop using generic_writepages
+Subject: [PATCH 41/81] ntfs3: stop using generic_writepages
 
 Open code the resident inode handling in ntfs_writepages by directly using
 write_cache_pages to prepare removing the ->writepage handler in ntfs3.
@@ -4794,13 +4794,13 @@ index 8225d0b7c48c..dcb74e244921 100644
  }
  
 -- 
-2.41.0
+2.42.0
 
 
-From 15404f5e0ee1ab2e523f2c0250e8d38c6983d974 Mon Sep 17 00:00:00 2001
+From 4fd5f97daaa8370068018d066c579d59bbf6b171 Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Thu, 29 Dec 2022 06:10:28 -1000
-Subject: [PATCH 42/79] ntfs3: remove ->writepage
+Subject: [PATCH 42/81] ntfs3: remove ->writepage
 
 ->writepage is a very inefficient method to write back data, and only used
 through write_cache_pages or a a fallback when no ->migrate_folio method
@@ -4870,13 +4870,13 @@ index dcb74e244921..e8ed525619dc 100644
  };
  
 -- 
-2.41.0
+2.42.0
 
 
-From 8ea7142f4de9e70bd055eeb603545f80f77f8d52 Mon Sep 17 00:00:00 2001
+From def0b7586601541eeab209dc85e7b10036a7f2b9 Mon Sep 17 00:00:00 2001
 From: Daniel Pinto <danielpinto52@gmail.com>
 Date: Tue, 15 Nov 2022 08:17:32 +0000
-Subject: [PATCH 43/79] fs/ntfs3: Fix wrong cast in xattr.c
+Subject: [PATCH 43/81] fs/ntfs3: Fix wrong cast in xattr.c
 
 cpu_to_be32 and be32_to_cpu respectively return and receive
 __be32, change the cast to the correct types.
@@ -4916,13 +4916,13 @@ index bb4d0327b6e6..9af81430bf14 100644
  			new_fa = cpu_to_le32(*(u32 *)value);
  
 -- 
-2.41.0
+2.42.0
 
 
-From c24e1e77032f26cce400d6ac9ee4791a2704b5f9 Mon Sep 17 00:00:00 2001
+From 8f855f5344d2286c2df6da9d8f447add6f596fff Mon Sep 17 00:00:00 2001
 From: Ye Bin <yebin10@huawei.com>
 Date: Thu, 17 Nov 2022 17:19:12 +0800
-Subject: [PATCH 44/79] fs/ntfs3: Fix NULL pointer dereference in
+Subject: [PATCH 44/81] fs/ntfs3: Fix NULL pointer dereference in
  'ni_write_inode'
 
 Syzbot found the following issue:
@@ -5010,7 +5010,7 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index 567563771bf8..8de861ddec60 100644
+index b711f2f34c76..a9fe64e3aab1 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -1683,6 +1683,7 @@ struct ntfs_inode *ntfs_new_inode(struct ntfs_sb_info *sbi, CLST rno, bool dir)
@@ -5022,13 +5022,13 @@ index 567563771bf8..8de861ddec60 100644
  		ni = ERR_PTR(err);
  	}
 -- 
-2.41.0
+2.42.0
 
 
-From 7fbeaa99a98c95393e228fc4ba91af8bc2c1be8c Mon Sep 17 00:00:00 2001
+From a576575a71086ca9bcd7fa26cff38d48038801b3 Mon Sep 17 00:00:00 2001
 From: Edward Lo <edward.lo@ambergroup.io>
 Date: Thu, 27 Oct 2022 23:33:37 +0800
-Subject: [PATCH 45/79] fs/ntfs3: Enhance the attribute size check
+Subject: [PATCH 45/81] fs/ntfs3: Enhance the attribute size check
 
 This combines the overflow and boundary check so that all attribute size
 will be properly examined while enumerating them.
@@ -5126,10 +5126,10 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 2 insertions(+), 7 deletions(-)
 
 diff --git a/fs/ntfs3/record.c b/fs/ntfs3/record.c
-index defce6a5c8e1..abfe004774c0 100644
+index 88fa7ce128d4..ca32d61c8564 100644
 --- a/fs/ntfs3/record.c
 +++ b/fs/ntfs3/record.c
-@@ -220,11 +220,6 @@ struct ATTRIB *mi_enum_attr(struct mft_inode *mi, struct ATTRIB *attr)
+@@ -226,11 +226,6 @@ struct ATTRIB *mi_enum_attr(struct mft_inode *mi, struct ATTRIB *attr)
  			return NULL;
  		}
  
@@ -5141,7 +5141,7 @@ index defce6a5c8e1..abfe004774c0 100644
  		attr = Add2Ptr(attr, asize);
  		off += asize;
  	}
-@@ -247,8 +242,8 @@ struct ATTRIB *mi_enum_attr(struct mft_inode *mi, struct ATTRIB *attr)
+@@ -253,8 +248,8 @@ struct ATTRIB *mi_enum_attr(struct mft_inode *mi, struct ATTRIB *attr)
  	if ((t32 & 0xf) || (t32 > 0x100))
  		return NULL;
  
@@ -5153,13 +5153,13 @@ index defce6a5c8e1..abfe004774c0 100644
  
  	/* Check size of attribute. */
 -- 
-2.41.0
+2.42.0
 
 
-From 3e7f95b0e075c8645c56ffad6fbeef333796090c Mon Sep 17 00:00:00 2001
+From 483cf28b269b0e0d4964e12bf8c3e182f26cc62b Mon Sep 17 00:00:00 2001
 From: Abdun Nihaal <abdun.nihaal@gmail.com>
 Date: Sun, 30 Oct 2022 12:32:51 +0530
-Subject: [PATCH 46/79] fs/ntfs3: Fix NULL dereference in ni_write_inode
+Subject: [PATCH 46/81] fs/ntfs3: Fix NULL dereference in ni_write_inode
 
 Syzbot reports a NULL dereference in ni_write_inode.
 When creating a new inode, if allocation fails in mi_init function
@@ -5178,10 +5178,10 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index f1df52dfab74..912eeb3d3471 100644
+index 079a83c8cdb1..b1f4bcac8536 100644
 --- a/fs/ntfs3/frecord.c
 +++ b/fs/ntfs3/frecord.c
-@@ -3258,6 +3258,9 @@ int ni_write_inode(struct inode *inode, int sync, const char *hint)
+@@ -3264,6 +3264,9 @@ int ni_write_inode(struct inode *inode, int sync, const char *hint)
  		return 0;
  	}
  
@@ -5192,13 +5192,13 @@ index f1df52dfab74..912eeb3d3471 100644
  	    !(sbi->flags & NTFS_FLAGS_LOG_REPLAYING) && inode->i_nlink) {
  		bool modified = false;
 -- 
-2.41.0
+2.42.0
 
 
-From 851d28b2fd8fe7c54f70e9c26b2aa71de373dcf5 Mon Sep 17 00:00:00 2001
+From a00f319acb9697f1b53695598ebdb124592c1b6b Mon Sep 17 00:00:00 2001
 From: Edward Lo <edward.lo@ambergroup.io>
 Date: Tue, 4 Oct 2022 23:15:06 +0800
-Subject: [PATCH 47/79] fs/ntfs3: Add length check in indx_get_root
+Subject: [PATCH 47/81] fs/ntfs3: Add length check in indx_get_root
 
 This adds a length check to guarantee the retrieved index root is legit.
 
@@ -5292,7 +5292,7 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 10 insertions(+), 1 deletion(-)
 
 diff --git a/fs/ntfs3/index.c b/fs/ntfs3/index.c
-index 7a1e01a2ed9a..f716487ec8a0 100644
+index 05328f0b25b8..c7ca6821ee60 100644
 --- a/fs/ntfs3/index.c
 +++ b/fs/ntfs3/index.c
 @@ -994,6 +994,7 @@ struct INDEX_ROOT *indx_get_root(struct ntfs_index *indx, struct ntfs_inode *ni,
@@ -5321,13 +5321,13 @@ index 7a1e01a2ed9a..f716487ec8a0 100644
  
  static int indx_write(struct ntfs_index *indx, struct ntfs_inode *ni,
 -- 
-2.41.0
+2.42.0
 
 
-From f4a6b6cfb7b8af5dd4571891c875a390a2d541ee Mon Sep 17 00:00:00 2001
+From 933d3b670ab13f5970188dd1935d0ec2338ffe24 Mon Sep 17 00:00:00 2001
 From: Yu Zhe <yuzhe@nfschina.com>
 Date: Thu, 10 Nov 2022 15:46:40 +0800
-Subject: [PATCH 48/79] fs/ntfs3: fix spelling mistake "attibute" ->
+Subject: [PATCH 48/81] fs/ntfs3: fix spelling mistake "attibute" ->
  "attribute"
 
 There is a spelling mistake in comment. Fix it.
@@ -5352,13 +5352,13 @@ index 9af81430bf14..28d7f8200385 100644
  	if (new_pack > 0xffff || size > sbi->ea_max_size) {
  		ntfs_inode_warn(
 -- 
-2.41.0
+2.42.0
 
 
-From 8f714c518eddaf5cf8dc60559e2052513d15b910 Mon Sep 17 00:00:00 2001
+From 673627e4b92e2c07320ab72f423094de4c3b9024 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 29 Dec 2022 15:44:43 +0400
-Subject: [PATCH 49/79] fs/ntfs3: Add null pointer checks
+Subject: [PATCH 49/81] fs/ntfs3: Add null pointer checks
 
 Added null pointer checks in function ntfs_security_init.
 Also added le32_to_cpu in functions ntfs_security_init and indx_read.
@@ -5370,7 +5370,7 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  2 files changed, 12 insertions(+), 7 deletions(-)
 
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index 8de861ddec60..1f36e89dcff7 100644
+index a9fe64e3aab1..e8d757ec3e2f 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -1876,10 +1876,12 @@ int ntfs_security_init(struct ntfs_sb_info *sbi)
@@ -5406,7 +5406,7 @@ index 8de861ddec60..1f36e89dcff7 100644
  		goto out;
  	}
 diff --git a/fs/ntfs3/index.c b/fs/ntfs3/index.c
-index f716487ec8a0..8718df791a55 100644
+index c7ca6821ee60..8e5d7ffe825f 100644
 --- a/fs/ntfs3/index.c
 +++ b/fs/ntfs3/index.c
 @@ -1102,7 +1102,8 @@ int indx_read(struct ntfs_index *indx, struct ntfs_inode *ni, CLST vbn,
@@ -5420,13 +5420,13 @@ index f716487ec8a0..8718df791a55 100644
  		goto out;
  	}
 -- 
-2.41.0
+2.42.0
 
 
-From e817f8a43984d3fd9f5a8c55fb44bf4cdf5c267e Mon Sep 17 00:00:00 2001
+From 0ecb2577e7529581aae9a21c90b487aae7a50a56 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 29 Dec 2022 15:50:41 +0400
-Subject: [PATCH 50/79] fs/ntfs3: Improved checking of attribute's name length
+Subject: [PATCH 50/81] fs/ntfs3: Improved checking of attribute's name length
 
 Added comment, added null pointer checking.
 
@@ -5455,13 +5455,13 @@ index e8ed525619dc..e80e94325467 100644
  
  	if (attr->non_res) {
 -- 
-2.41.0
+2.42.0
 
 
-From 137e4a3f1ee1602387bbbbf996ea6b01705362b6 Mon Sep 17 00:00:00 2001
+From ce5c79a50021038d84b883bbaaed99ca00013af7 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Thu, 29 Dec 2022 15:58:56 +0400
-Subject: [PATCH 51/79] fs/ntfs3: Check for extremely large size of $AttrDef
+Subject: [PATCH 51/81] fs/ntfs3: Check for extremely large size of $AttrDef
 
 Added additional checking for size of $AttrDef.
 Added comment.
@@ -5496,13 +5496,13 @@ index ef4ea3f21905..0967035146ce 100644
  	sbi->def_table = t = kmalloc(bytes, GFP_NOFS | __GFP_NOWARN);
  	if (!t) {
 -- 
-2.41.0
+2.42.0
 
 
-From 0c13ce21eea2e6c0f2c4704e05c9a1dcfb1cb069 Mon Sep 17 00:00:00 2001
+From 5dc2199e289504ceae2679c61641213b2fc820fb Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 30 Dec 2022 14:09:44 +0400
-Subject: [PATCH 52/79] fs/ntfs3: Restore overflow checking for attr size in
+Subject: [PATCH 52/81] fs/ntfs3: Restore overflow checking for attr size in
  mi_enum_attr
 
 Fixed comment.
@@ -5516,7 +5516,7 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  3 files changed, 10 insertions(+), 4 deletions(-)
 
 diff --git a/fs/ntfs3/index.c b/fs/ntfs3/index.c
-index 8718df791a55..9fefeac5fe7e 100644
+index 8e5d7ffe825f..4d77e8d427b1 100644
 --- a/fs/ntfs3/index.c
 +++ b/fs/ntfs3/index.c
 @@ -994,7 +994,7 @@ struct INDEX_ROOT *indx_get_root(struct ntfs_index *indx, struct ntfs_inode *ni,
@@ -5541,10 +5541,10 @@ index 8718df791a55..9fefeac5fe7e 100644
  	}
  
 diff --git a/fs/ntfs3/record.c b/fs/ntfs3/record.c
-index abfe004774c0..0603169ee8a0 100644
+index ca32d61c8564..11ae9abd7ea3 100644
 --- a/fs/ntfs3/record.c
 +++ b/fs/ntfs3/record.c
-@@ -220,6 +220,11 @@ struct ATTRIB *mi_enum_attr(struct mft_inode *mi, struct ATTRIB *attr)
+@@ -226,6 +226,11 @@ struct ATTRIB *mi_enum_attr(struct mft_inode *mi, struct ATTRIB *attr)
  			return NULL;
  		}
  
@@ -5570,13 +5570,13 @@ index 0967035146ce..19d0889b131f 100644
  	if (inode->i_size < sizeof(struct ATTR_DEF_ENTRY) ||
  	    inode->i_size > 100 * sizeof(struct ATTR_DEF_ENTRY)) {
 -- 
-2.41.0
+2.42.0
 
 
-From fb7d024464eea025f4b7b43a73ebaeeca04da1c5 Mon Sep 17 00:00:00 2001
+From 14e39a0ca0853b31c5e61234f5e1e015361e1a48 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 30 Dec 2022 14:58:25 +0400
-Subject: [PATCH 53/79] fs/ntfs3: Refactoring of various minor issues
+Subject: [PATCH 53/81] fs/ntfs3: Refactoring of various minor issues
 
 Removed unused macro.
 Changed null pointer checking.
@@ -5589,10 +5589,10 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  2 files changed, 5 insertions(+), 3 deletions(-)
 
 diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index 912eeb3d3471..1103d4d9a497 100644
+index b1f4bcac8536..4b4150dbd9b7 100644
 --- a/fs/ntfs3/frecord.c
 +++ b/fs/ntfs3/frecord.c
-@@ -1645,7 +1645,7 @@ struct ATTR_FILE_NAME *ni_fname_name(struct ntfs_inode *ni,
+@@ -1651,7 +1651,7 @@ struct ATTR_FILE_NAME *ni_fname_name(struct ntfs_inode *ni,
  {
  	struct ATTRIB *attr = NULL;
  	struct ATTR_FILE_NAME *fname;
@@ -5602,7 +5602,7 @@ index 912eeb3d3471..1103d4d9a497 100644
  	if (le)
  		*le = NULL;
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index 1f36e89dcff7..342938704cfd 100644
+index e8d757ec3e2f..ebb0c1c5f836 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -2599,8 +2599,10 @@ static inline bool is_reserved_name(struct ntfs_sb_info *sbi,
@@ -5619,13 +5619,13 @@ index 1f36e89dcff7..342938704cfd 100644
  	}
  
 -- 
-2.41.0
+2.42.0
 
 
-From 7feb23a84da0e292e2603511bc7779fd444af78e Mon Sep 17 00:00:00 2001
+From a7b5701c15130d32e2896058537ba0ba201a9e48 Mon Sep 17 00:00:00 2001
 From: Jia-Ju Bai <baijiaju1990@gmail.com>
 Date: Wed, 11 Jan 2023 16:59:43 +0800
-Subject: [PATCH 54/79] fs/ntfs3: Fix a possible null-pointer dereference in
+Subject: [PATCH 54/81] fs/ntfs3: Fix a possible null-pointer dereference in
  ni_clear()
 
 In a previous commit c1006bd13146, ni->mi.mrec in ni_write_inode()
@@ -5652,7 +5652,7 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index 1103d4d9a497..9e7dfee303e8 100644
+index 4b4150dbd9b7..e3ae207141ce 100644
 --- a/fs/ntfs3/frecord.c
 +++ b/fs/ntfs3/frecord.c
 @@ -102,7 +102,7 @@ void ni_clear(struct ntfs_inode *ni)
@@ -5665,13 +5665,13 @@ index 1103d4d9a497..9e7dfee303e8 100644
  
  	al_destroy(ni);
 -- 
-2.41.0
+2.42.0
 
 
-From 1131c45d9138b4395933eb3e6563ef8bdef2a70c Mon Sep 17 00:00:00 2001
+From b24a259684fb25ca8e328192a0c61beaaea3d292 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 16 Jan 2023 11:41:41 +0400
-Subject: [PATCH 55/79] fs/ntfs3: Use bh_read to simplify code
+Subject: [PATCH 55/81] fs/ntfs3: Use bh_read to simplify code
 
 The duplicating code is replaced by a generic function bh_read()
 
@@ -5717,13 +5717,13 @@ index e80e94325467..5e06299591ed 100644
  			if (err < 0)
  				goto out;
 -- 
-2.41.0
+2.42.0
 
 
-From 44f3d1d0155f5b05d2bae6fbb1b9564900fbad95 Mon Sep 17 00:00:00 2001
+From 917e222c9930b6d705b0ad0219bf9a03687d3348 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 16 Jan 2023 12:52:10 +0400
-Subject: [PATCH 56/79] fs/ntfs3: Remove noacsrules
+Subject: [PATCH 56/81] fs/ntfs3: Remove noacsrules
 
 Currently, this option does not work properly. Its use leads to unstable results.
 If we figure out how to implement it without errors, we will add it later.
@@ -5821,10 +5821,10 @@ index 7620956e5fe5..dd819b59196b 100644
  	.set_acl	= ntfs_set_acl,
  	.setattr	= ntfs3_setattr,
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index 860ebaca37a0..9b24daed2a28 100644
+index ed8f0e14261d..75b3e3f0ee68 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -100,7 +100,6 @@ struct ntfs_mount_options {
+@@ -102,7 +102,6 @@ struct ntfs_mount_options {
  	unsigned hide_dot_files : 1; /* Set hidden flag on dot files. */
  	unsigned windows_names : 1; /* Disallow names forbidden by Windows. */
  	unsigned force : 1; /* RW mount dirty volume. */
@@ -5832,7 +5832,7 @@ index 860ebaca37a0..9b24daed2a28 100644
  	unsigned prealloc : 1; /* Preallocate space when file is growing. */
  	unsigned nocase : 1; /* case insensitive. */
  };
-@@ -868,8 +867,6 @@ int ntfs_init_acl(struct user_namespace *mnt_userns, struct inode *inode,
+@@ -870,8 +869,6 @@ int ntfs_init_acl(struct user_namespace *mnt_userns, struct inode *inode,
  #endif
  
  int ntfs_acl_chmod(struct user_namespace *mnt_userns, struct inode *inode);
@@ -5915,13 +5915,13 @@ index 28d7f8200385..e32ed7bc0b78 100644
   * ntfs_listxattr - inode_operations::listxattr
   */
 -- 
-2.41.0
+2.42.0
 
 
-From 4e0e81dde1107968e42ccb8febf83f797c9c43b8 Mon Sep 17 00:00:00 2001
+From b6497778f0ba4b3b39f91348aac13ff869a96a1d Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 16 Jan 2023 13:03:24 +0400
-Subject: [PATCH 57/79] fs/ntfs3: Fix ntfs_create_inode()
+Subject: [PATCH 57/81] fs/ntfs3: Fix ntfs_create_inode()
 
 Previous variant creates an inode that requires update the parent directory
 (ea_packed_size). Operations in ntfs_create_inode have been rearranged
@@ -6114,10 +6114,10 @@ index 51e342ad79fd..752ad17685c0 100644
  	clear_inode(inode);
  
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index 9b24daed2a28..6a1a56e0d1b4 100644
+index 75b3e3f0ee68..17d6a456332e 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -870,7 +870,7 @@ int ntfs_acl_chmod(struct user_namespace *mnt_userns, struct inode *inode);
+@@ -872,7 +872,7 @@ int ntfs_acl_chmod(struct user_namespace *mnt_userns, struct inode *inode);
  ssize_t ntfs_listxattr(struct dentry *dentry, char *buffer, size_t size);
  extern const struct xattr_handler *ntfs_xattr_handlers[];
  
@@ -6209,13 +6209,13 @@ index e32ed7bc0b78..bcea1c6fe194 100644
  			goto out;
  	}
 -- 
-2.41.0
+2.42.0
 
 
-From 167918506f67fe47fe3e74a9c1038048b601df5d Mon Sep 17 00:00:00 2001
+From a83bd0e84f835c682def243ae022f15972d84dfc Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 16 Jan 2023 14:23:38 +0400
-Subject: [PATCH 58/79] fs/ntfs3: Optimization in ntfs_set_state()
+Subject: [PATCH 58/81] fs/ntfs3: Optimization in ntfs_set_state()
 
 The current volume flags are updated only if VOLUME_FLAG_DIRTY has been changed.
 
@@ -6225,7 +6225,7 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 7 insertions(+), 2 deletions(-)
 
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index 342938704cfd..d888ba14237f 100644
+index ebb0c1c5f836..71b56d88e28e 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -925,6 +925,7 @@ int ntfs_set_state(struct ntfs_sb_info *sbi, enum NTFS_DIRTY_FLAGS dirty)
@@ -6259,13 +6259,13 @@ index 342938704cfd..d888ba14237f 100644
  
  out:
 -- 
-2.41.0
+2.42.0
 
 
-From 58471f521ef24ace60022b377549767d173ebe63 Mon Sep 17 00:00:00 2001
+From f5ff0c82373f02fdbfc1b424fb75dd663c6f91ca Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 14 Feb 2023 13:44:22 +0400
-Subject: [PATCH 59/79] fs/ntfs3: Undo endian changes
+Subject: [PATCH 59/81] fs/ntfs3: Undo endian changes
 
 sbi->mft.reserved_bitmap is in-memory (not on-disk!) bitmap.
 Assumed cpu endian is faster than fixed endian.
@@ -6276,7 +6276,7 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index d888ba14237f..9ed9dd0d8edf 100644
+index 71b56d88e28e..cac4ea099f97 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -646,13 +646,13 @@ int ntfs_look_free_mft(struct ntfs_sb_info *sbi, CLST *rno, bool mft,
@@ -6325,13 +6325,13 @@ index d888ba14237f..9ed9dd0d8edf 100644
  	if (!sb)
  		return;
 -- 
-2.41.0
+2.42.0
 
 
-From 6af5b3b2f53ab0615cd7df11af80527bc3f8786e Mon Sep 17 00:00:00 2001
+From ea429b47ed97a862cf9b7f7e135853c73982cf65 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 14 Feb 2023 13:57:09 +0400
-Subject: [PATCH 60/79] fs/ntfs3: Undo critial modificatins to keep directory
+Subject: [PATCH 60/81] fs/ntfs3: Undo critial modificatins to keep directory
  consistency
 
 Affect xfstest 320.
@@ -6342,10 +6342,10 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 20 insertions(+), 10 deletions(-)
 
 diff --git a/fs/ntfs3/index.c b/fs/ntfs3/index.c
-index 9fefeac5fe7e..5d1ec0124137 100644
+index 4d77e8d427b1..1be07a28a98a 100644
 --- a/fs/ntfs3/index.c
 +++ b/fs/ntfs3/index.c
-@@ -1778,10 +1778,11 @@ indx_insert_into_buffer(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -1784,10 +1784,11 @@ indx_insert_into_buffer(struct ntfs_index *indx, struct ntfs_inode *ni,
  	struct indx_node *n1 = fnd->nodes[level];
  	struct INDEX_HDR *hdr1 = &n1->index->ihdr;
  	struct INDEX_HDR *hdr2;
@@ -6358,7 +6358,7 @@ index 9fefeac5fe7e..5d1ec0124137 100644
  
  	/* Try the most easy case. */
  	e = fnd->level - 1 == level ? fnd->de[level] : NULL;
-@@ -1814,6 +1815,13 @@ indx_insert_into_buffer(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -1820,6 +1821,13 @@ indx_insert_into_buffer(struct ntfs_index *indx, struct ntfs_inode *ni,
  		return -ENOMEM;
  	memcpy(up_e, sp, sp_size);
  
@@ -6372,7 +6372,7 @@ index 9fefeac5fe7e..5d1ec0124137 100644
  	if (!hdr1->flags) {
  		up_e->flags |= NTFS_IE_HAS_SUBNODES;
  		up_e->size = cpu_to_le16(sp_size + sizeof(u64));
-@@ -1846,7 +1854,7 @@ indx_insert_into_buffer(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -1852,7 +1860,7 @@ indx_insert_into_buffer(struct ntfs_index *indx, struct ntfs_inode *ni,
  	hdr_insert_head(hdr2, de_t, to_copy);
  
  	/* Remove all entries (sp including) from hdr1. */
@@ -6381,7 +6381,7 @@ index 9fefeac5fe7e..5d1ec0124137 100644
  	memmove(de_t, Add2Ptr(sp, sp_size), used - le32_to_cpu(hdr1->de_off));
  	hdr1->used = cpu_to_le32(used);
  
-@@ -1876,8 +1884,6 @@ indx_insert_into_buffer(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -1882,8 +1890,6 @@ indx_insert_into_buffer(struct ntfs_index *indx, struct ntfs_inode *ni,
  	if (!level) {
  		/* Insert in root. */
  		err = indx_insert_into_root(indx, ni, up_e, NULL, ctx, fnd, 0);
@@ -6390,7 +6390,7 @@ index 9fefeac5fe7e..5d1ec0124137 100644
  	} else {
  		/*
  		 * The target buffer's parent is another index buffer.
-@@ -1885,12 +1891,20 @@ indx_insert_into_buffer(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -1891,12 +1897,20 @@ indx_insert_into_buffer(struct ntfs_index *indx, struct ntfs_inode *ni,
  		 */
  		err = indx_insert_into_buffer(indx, ni, root, up_e, ctx,
  					      level - 1, fnd);
@@ -6413,7 +6413,7 @@ index 9fefeac5fe7e..5d1ec0124137 100644
  
  	return err;
  }
-@@ -1949,16 +1963,12 @@ int indx_insert_entry(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -1955,16 +1969,12 @@ int indx_insert_entry(struct ntfs_index *indx, struct ntfs_inode *ni,
  		 */
  		err = indx_insert_into_root(indx, ni, new_de, fnd->root_de, ctx,
  					    fnd, undo);
@@ -6431,13 +6431,13 @@ index 9fefeac5fe7e..5d1ec0124137 100644
  
  out:
 -- 
-2.41.0
+2.42.0
 
 
-From f7c6d974ec51ecbb53b6602c6714231a9cc9e39b Mon Sep 17 00:00:00 2001
+From 4e066b29ff9ae737ea3a9ab43acd17a6a0630307 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 14 Feb 2023 14:00:04 +0400
-Subject: [PATCH 61/79] fs/ntfs3: Remove field sbi->used.bitmap.set_tail
+Subject: [PATCH 61/81] fs/ntfs3: Remove field sbi->used.bitmap.set_tail
 
 This field is not used in driver.
 
@@ -6448,10 +6448,10 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  2 files changed, 3 deletions(-)
 
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index 6a1a56e0d1b4..7486ccedbf69 100644
+index 17d6a456332e..6c96b55ca693 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -163,7 +163,6 @@ struct wnd_bitmap {
+@@ -165,7 +165,6 @@ struct wnd_bitmap {
  	size_t zone_bit;
  	size_t zone_end;
  
@@ -6473,13 +6473,13 @@ index 10c019ef7da3..d7bec9b28a42 100644
  	if (err)
  		goto put_inode_out;
 -- 
-2.41.0
+2.42.0
 
 
-From 6a1aaad4751cc516533407722e29b51de3c690b7 Mon Sep 17 00:00:00 2001
+From 9a244acc1e8096921689a690b2e954b82461ed0b Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Tue, 17 Jan 2023 15:01:00 +0400
-Subject: [PATCH 62/79] fs/ntfs3: Code formatting and refactoring
+Subject: [PATCH 62/81] fs/ntfs3: Code formatting and refactoring
 
 Added minor refactoring.
 Added and fixed some comments.
@@ -6690,7 +6690,7 @@ index 7a403cd08cb1..f3065a12d373 100644
  		down_write(&ni->file.run_lock);
  
 diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index 9e7dfee303e8..481219f2a7cf 100644
+index e3ae207141ce..ff8889fa73f7 100644
 --- a/fs/ntfs3/frecord.c
 +++ b/fs/ntfs3/frecord.c
 @@ -76,8 +76,8 @@ struct ATTR_STD_INFO *ni_std(struct ntfs_inode *ni)
@@ -6715,7 +6715,7 @@ index 9e7dfee303e8..481219f2a7cf 100644
  }
  
  /*
-@@ -1439,8 +1439,8 @@ int ni_insert_nonresident(struct ntfs_inode *ni, enum ATTR_TYPE type,
+@@ -1445,8 +1445,8 @@ int ni_insert_nonresident(struct ntfs_inode *ni, enum ATTR_TYPE type,
  	int err;
  	CLST plen;
  	struct ATTRIB *attr;
@@ -6726,7 +6726,7 @@ index 9e7dfee303e8..481219f2a7cf 100644
  	u32 name_size = ALIGN(name_len * sizeof(short), 8);
  	u32 name_off = is_ext ? SIZEOF_NONRESIDENT_EX : SIZEOF_NONRESIDENT;
  	u32 run_off = name_off + name_size;
-@@ -1756,9 +1756,9 @@ int ni_new_attr_flags(struct ntfs_inode *ni, enum FILE_ATTRIBUTE new_fa)
+@@ -1762,9 +1762,9 @@ int ni_new_attr_flags(struct ntfs_inode *ni, enum FILE_ATTRIBUTE new_fa)
  	}
  
  	/* Resize nonresident empty attribute in-place only. */
@@ -6739,7 +6739,7 @@ index 9e7dfee303e8..481219f2a7cf 100644
  
  	if (!mi_resize_attr(mi, attr, new_asize - le32_to_cpu(attr->size)))
  		return -EOPNOTSUPP;
-@@ -2965,14 +2965,14 @@ bool ni_remove_name_undo(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
+@@ -2971,14 +2971,14 @@ bool ni_remove_name_undo(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
  {
  	struct ntfs_sb_info *sbi = ni->mi.sbi;
  	struct ATTRIB *attr;
@@ -6757,7 +6757,7 @@ index 9e7dfee303e8..481219f2a7cf 100644
  		memcpy(Add2Ptr(attr, SIZEOF_RESIDENT), de2 + 1, de_key_size);
  
  		mi_get_ref(&ni->mi, &de2->ref);
-@@ -2981,19 +2981,16 @@ bool ni_remove_name_undo(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
+@@ -2987,19 +2987,16 @@ bool ni_remove_name_undo(struct ntfs_inode *dir_ni, struct ntfs_inode *ni,
  		de2->flags = 0;
  		de2->res = 0;
  
@@ -6779,7 +6779,7 @@ index 9e7dfee303e8..481219f2a7cf 100644
  
  		memcpy(Add2Ptr(attr, SIZEOF_RESIDENT), de + 1, de_key_size);
  		mi_get_ref(&ni->mi, &de->ref);
-@@ -3162,9 +3159,9 @@ static bool ni_update_parent(struct ntfs_inode *ni, struct NTFS_DUP_INFO *dup,
+@@ -3168,9 +3165,9 @@ static bool ni_update_parent(struct ntfs_inode *ni, struct NTFS_DUP_INFO *dup,
  			u64 data_size = le64_to_cpu(attr->nres.data_size);
  			__le64 valid_le;
  
@@ -6974,7 +6974,7 @@ index bf7396447284..57762c5fe68b 100644
  	if (rst_info.chkdsk_was_run ||
  	    (ra2 && ra2->client_idx[1] == LFS_NO_CLIENT_LE)) {
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index 9ed9dd0d8edf..0a82b1bf3ec2 100644
+index cac4ea099f97..b11b08669b88 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -172,8 +172,8 @@ int ntfs_fix_post_read(struct NTFS_RECORD_HEADER *rhdr, size_t bytes,
@@ -7008,7 +7008,7 @@ index 9ed9dd0d8edf..0a82b1bf3ec2 100644
  	block1 = sbi->mft.lbo >> sb->s_blocksize_bits;
  	block2 = sbi->mft.lbo2 >> sb->s_blocksize_bits;
 diff --git a/fs/ntfs3/index.c b/fs/ntfs3/index.c
-index 5d1ec0124137..0a48d2d67219 100644
+index 1be07a28a98a..b40da258e684 100644
 --- a/fs/ntfs3/index.c
 +++ b/fs/ntfs3/index.c
 @@ -431,8 +431,9 @@ static int scan_nres_bitmap(struct ntfs_inode *ni, struct ATTRIB *bitmap,
@@ -7033,7 +7033,7 @@ index 5d1ec0124137..0a48d2d67219 100644
  			goto fill_table;
  		}
  	} else if (diff2 < 0) {
-@@ -1170,8 +1170,10 @@ int indx_find(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -1176,8 +1176,10 @@ int indx_find(struct ntfs_index *indx, struct ntfs_inode *ni,
  
  		/* Read next level. */
  		err = indx_read(indx, ni, de_get_vbn(e), &node);
@@ -7045,7 +7045,7 @@ index 5d1ec0124137..0a48d2d67219 100644
  
  		/* Lookup entry that is <= to the search value. */
  		e = hdr_find_e(indx, &node->index->ihdr, key, key_len, ctx,
-@@ -1673,9 +1675,9 @@ static int indx_insert_into_root(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -1679,9 +1681,9 @@ static int indx_insert_into_root(struct ntfs_index *indx, struct ntfs_inode *ni,
  	mi->dirty = true;
  
  	/* Create alloc and bitmap attributes (if not). */
@@ -7058,7 +7058,7 @@ index 5d1ec0124137..0a48d2d67219 100644
  
  	/* Layout of record may be changed, so rescan root. */
  	root = indx_get_root(indx, ni, &attr, &mi);
-@@ -1865,9 +1867,9 @@ indx_insert_into_buffer(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -1871,9 +1873,9 @@ indx_insert_into_buffer(struct ntfs_index *indx, struct ntfs_inode *ni,
  	hdr_insert_de(indx,
  		      (*indx->cmp)(new_de + 1, le16_to_cpu(new_de->key_size),
  				   up_e + 1, le16_to_cpu(up_e->key_size),
@@ -7071,7 +7071,7 @@ index 5d1ec0124137..0a48d2d67219 100644
  		      new_de, NULL, ctx);
  
  	indx_mark_used(indx, ni, new_vbn >> indx->idx2vbn_bits);
-@@ -2337,8 +2339,8 @@ int indx_delete_entry(struct ntfs_index *indx, struct ntfs_inode *ni,
+@@ -2343,8 +2345,8 @@ int indx_delete_entry(struct ntfs_index *indx, struct ntfs_inode *ni,
  			err = level ? indx_insert_into_buffer(indx, ni, root,
  							      re, ctx,
  							      fnd->level - 1,
@@ -7219,10 +7219,10 @@ index dd819b59196b..15ffd92bf4c3 100644
  
  out2:
 diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index 7486ccedbf69..b6b9a5bf8e0d 100644
+index 6c96b55ca693..89ad37614167 100644
 --- a/fs/ntfs3/ntfs_fs.h
 +++ b/fs/ntfs3/ntfs_fs.h
-@@ -338,7 +338,7 @@ enum ntfs_inode_mutex_lock_class {
+@@ -340,7 +340,7 @@ enum ntfs_inode_mutex_lock_class {
  };
  
  /*
@@ -7231,7 +7231,7 @@ index 7486ccedbf69..b6b9a5bf8e0d 100644
   *
   * Ntfs inode - extends linux inode. consists of one or more MFT inodes.
   */
-@@ -697,9 +697,8 @@ int ntfs_get_block(struct inode *inode, sector_t vbn,
+@@ -699,9 +699,8 @@ int ntfs_get_block(struct inode *inode, sector_t vbn,
  		   struct buffer_head *bh_result, int create);
  int ntfs_write_begin(struct file *file, struct address_space *mapping,
  		     loff_t pos, u32 len, struct page **pagep, void **fsdata);
@@ -7244,10 +7244,10 @@ index 7486ccedbf69..b6b9a5bf8e0d 100644
  int ntfs_sync_inode(struct inode *inode);
  int ntfs_flush_inodes(struct super_block *sb, struct inode *i1,
 diff --git a/fs/ntfs3/record.c b/fs/ntfs3/record.c
-index 0603169ee8a0..2a281cead2bc 100644
+index 11ae9abd7ea3..7974ca35a15c 100644
 --- a/fs/ntfs3/record.c
 +++ b/fs/ntfs3/record.c
-@@ -419,10 +419,9 @@ struct ATTRIB *mi_insert_attr(struct mft_inode *mi, enum ATTR_TYPE type,
+@@ -425,10 +425,9 @@ struct ATTRIB *mi_insert_attr(struct mft_inode *mi, enum ATTR_TYPE type,
  	struct ntfs_sb_info *sbi = mi->sbi;
  	u32 used = le32_to_cpu(rec->used);
  	const u16 *upcase = sbi->upcase;
@@ -7259,7 +7259,7 @@ index 0603169ee8a0..2a281cead2bc 100644
  		return NULL;
  
  	/*
-@@ -431,7 +430,7 @@ struct ATTRIB *mi_insert_attr(struct mft_inode *mi, enum ATTR_TYPE type,
+@@ -437,7 +436,7 @@ struct ATTRIB *mi_insert_attr(struct mft_inode *mi, enum ATTR_TYPE type,
  	 */
  	attr = NULL;
  	while ((attr = mi_enum_attr(mi, attr))) {
@@ -7268,7 +7268,7 @@ index 0603169ee8a0..2a281cead2bc 100644
  
  		if (diff < 0)
  			continue;
-@@ -442,9 +441,11 @@ struct ATTRIB *mi_insert_attr(struct mft_inode *mi, enum ATTR_TYPE type,
+@@ -448,9 +447,11 @@ struct ATTRIB *mi_insert_attr(struct mft_inode *mi, enum ATTR_TYPE type,
  	}
  
  	if (!attr) {
@@ -7531,13 +7531,13 @@ index bcea1c6fe194..61a2f45c3297 100644
  						    le16_to_cpu(ea->elength)),
  				4);
 -- 
-2.41.0
+2.42.0
 
 
-From 1f79a9fa3877ed22a5bd63da93e2f73fcd62cfa6 Mon Sep 17 00:00:00 2001
+From f33520bbd08b2bda2334bce7e6a66bfd07d9fa1a Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Wed, 15 Feb 2023 13:24:23 +0400
-Subject: [PATCH 63/79] fs/ntfs3: Add missed "nocase" in ntfs_show_options
+Subject: [PATCH 63/81] fs/ntfs3: Add missed "nocase" in ntfs_show_options
 
 Sort processing ntfs3's mount options in same order they declared.
 
@@ -7636,13 +7636,13 @@ index 6a412826b43d..521ce31d67a1 100644
  	return 0;
  }
 -- 
-2.41.0
+2.42.0
 
 
-From 5f3aca84bbe7c1d88d4716ca916f852fcd9f83e3 Mon Sep 17 00:00:00 2001
+From d0100ad1af3f42bbf40c0314ce5c5e8060a9b560 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Wed, 15 Feb 2023 16:06:56 +0400
-Subject: [PATCH 64/79] fs/ntfs3: Print details about mount fails
+Subject: [PATCH 64/81] fs/ntfs3: Print details about mount fails
 
 Added error mesages with error codes.
 Minor refactoring and code formatting.
@@ -7655,10 +7655,10 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  3 files changed, 122 insertions(+), 92 deletions(-)
 
 diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index 481219f2a7cf..2bfcf1a989c9 100644
+index ff8889fa73f7..50214b77c6a3 100644
 --- a/fs/ntfs3/frecord.c
 +++ b/fs/ntfs3/frecord.c
-@@ -3360,7 +3360,7 @@ int ni_write_inode(struct inode *inode, int sync, const char *hint)
+@@ -3366,7 +3366,7 @@ int ni_write_inode(struct inode *inode, int sync, const char *hint)
  	ni_unlock(ni);
  
  	if (err) {
@@ -7668,7 +7668,7 @@ index 481219f2a7cf..2bfcf1a989c9 100644
  		return err;
  	}
 diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index 0a82b1bf3ec2..28cc421102e5 100644
+index b11b08669b88..21567e58265c 100644
 --- a/fs/ntfs3/fsntfs.c
 +++ b/fs/ntfs3/fsntfs.c
 @@ -223,7 +223,7 @@ int ntfs_extend_init(struct ntfs_sb_info *sbi)
@@ -8168,13 +8168,13 @@ index 521ce31d67a1..e0f78b306f15 100644
  	}
  
 -- 
-2.41.0
+2.42.0
 
 
-From 3a035aa46ebf04a256e2666694fbb64854c1e65a Mon Sep 17 00:00:00 2001
+From 05d2f814930769828a64797d871a439fc8d3e4ba Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 20 Feb 2023 09:39:35 +0400
-Subject: [PATCH 65/79] fs/ntfs3: Fix root inode checking
+Subject: [PATCH 65/81] fs/ntfs3: Fix root inode checking
 
 Separate checking inode->i_op and inode itself.
 
@@ -8214,13 +8214,90 @@ index e0f78b306f15..5158dd31fd97 100644
  	if (!sb->s_root) {
  		err = -ENOMEM;
 -- 
-2.41.0
+2.42.0
 
 
-From d8c951c404740cca85ab331d7573c3ab9d780501 Mon Sep 17 00:00:00 2001
+From 0ff79539435fc24666197855a3328b61f5ce4005 Mon Sep 17 00:00:00 2001
+From: David Howells <dhowells@redhat.com>
+Date: Mon, 22 May 2023 14:50:08 +0100
+Subject: [PATCH 66/81] ntfs3: Provide a splice-read wrapper
+
+Provide a splice_read wrapper for NTFS3 to perform various checks before
+allowing the operation to proceed.
+
+Signed-off-by: David Howells <dhowells@redhat.com>
+cc: Christoph Hellwig <hch@lst.de>
+cc: Al Viro <viro@zeniv.linux.org.uk>
+cc: Jens Axboe <axboe@kernel.dk>
+cc: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
+cc: ntfs3@lists.linux.dev
+cc: linux-fsdevel@vger.kernel.org
+cc: linux-block@vger.kernel.org
+cc: linux-mm@kvack.org
+Link: https://lore.kernel.org/r/20230522135018.2742245-22-dhowells@redhat.com
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Signed-off-by: Albert I <kras@raphielgang.org>
+---
+ fs/ntfs3/file.c | 31 ++++++++++++++++++++++++++++++-
+ 1 file changed, 30 insertions(+), 1 deletion(-)
+
+diff --git a/fs/ntfs3/file.c b/fs/ntfs3/file.c
+index f3065a12d373..bccec3692545 100644
+--- a/fs/ntfs3/file.c
++++ b/fs/ntfs3/file.c
+@@ -744,6 +744,35 @@ static ssize_t ntfs_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
+ 	return generic_file_read_iter(iocb, iter);
+ }
+ 
++static ssize_t ntfs_file_splice_read(struct file *in, loff_t *ppos,
++				     struct pipe_inode_info *pipe,
++				     size_t len, unsigned int flags)
++{
++	struct inode *inode = in->f_mapping->host;
++	struct ntfs_inode *ni = ntfs_i(inode);
++
++	if (is_encrypted(ni)) {
++		ntfs_inode_warn(inode, "encrypted i/o not supported");
++		return -EOPNOTSUPP;
++	}
++
++#ifndef CONFIG_NTFS3_LZX_XPRESS
++	if (ni->ni_flags & NI_FLAG_COMPRESSED_MASK) {
++		ntfs_inode_warn(
++			inode,
++			"activate CONFIG_NTFS3_LZX_XPRESS to read external compressed files");
++		return -EOPNOTSUPP;
++	}
++#endif
++
++	if (is_dedup(ni)) {
++		ntfs_inode_warn(inode, "read deduplicated not supported");
++		return -EOPNOTSUPP;
++	}
++
++	return generic_file_splice_read(in, ppos, pipe, len, flags);
++}
++
+ /*
+  * ntfs_get_frame_pages
+  *
+@@ -1159,7 +1188,7 @@ const struct file_operations ntfs_file_operations = {
+ #ifdef CONFIG_COMPAT
+ 	.compat_ioctl	= ntfs_compat_ioctl,
+ #endif
+-	.splice_read	= generic_file_splice_read,
++	.splice_read	= ntfs_file_splice_read,
+ 	.mmap		= ntfs_file_mmap,
+ 	.open		= ntfs_file_open,
+ 	.fsync		= generic_file_fsync,
+-- 
+2.42.0
+
+
+From f3c9df5e624f7acce7537671870d96a5fcae1aeb Mon Sep 17 00:00:00 2001
 From: Yangtao Li <frank.li@vivo.com>
 Date: Fri, 10 Mar 2023 11:08:19 +0800
-Subject: [PATCH 66/79] fs/ntfs3: Use wrapper i_blocksize() in
+Subject: [PATCH 67/81] fs/ntfs3: Use wrapper i_blocksize() in
  ntfs_zero_range()
 
 Convert to use i_blocksize() for readability.
@@ -8234,7 +8311,7 @@ Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/ntfs3/file.c b/fs/ntfs3/file.c
-index f3065a12d373..c4c2e8d9d03d 100644
+index bccec3692545..c9aeaf479fd7 100644
 --- a/fs/ntfs3/file.c
 +++ b/fs/ntfs3/file.c
 @@ -179,7 +179,7 @@ static int ntfs_zero_range(struct inode *inode, u64 vbo, u64 vbo_to)
@@ -8247,209 +8324,13 @@ index f3065a12d373..c4c2e8d9d03d 100644
  	u32 from = vbo & (PAGE_SIZE - 1);
  	pgoff_t idx_end = (vbo_to + PAGE_SIZE - 1) >> PAGE_SHIFT;
 -- 
-2.41.0
+2.42.0
 
 
-From d6e028bdcba3b1b461ea3ffbda040126a87a74b0 Mon Sep 17 00:00:00 2001
-From: Edward Lo <loyuantsung@gmail.com>
-Date: Thu, 16 Mar 2023 10:56:55 +0800
-Subject: [PATCH 67/79] fs/ntfs3: Enhance sanity check while generating
- attr_list
-
-ni_create_attr_list uses WARN_ON to catch error cases while generating
-attribute list, which only prints out stack trace and may not be enough.
-This repalces them with more proper error handling flow.
-
-[   59.666332] BUG: kernel NULL pointer dereference, address: 000000000000000e
-[   59.673268] #PF: supervisor read access in kernel mode
-[   59.678354] #PF: error_code(0x0000) - not-present page
-[   59.682831] PGD 8000000005ff1067 P4D 8000000005ff1067 PUD 7dee067 PMD 0
-[   59.688556] Oops: 0000 [#1] PREEMPT SMP KASAN PTI
-[   59.692642] CPU: 0 PID: 198 Comm: poc Tainted: G    B   W          6.2.0-rc1+ #4
-[   59.698868] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.16.0-0-gd239552ce722-prebuilt.qemu.org 04/01/2014
-[   59.708795] RIP: 0010:ni_create_attr_list+0x505/0x860
-[   59.713657] Code: 7e 10 e8 5e d0 d0 ff 45 0f b7 76 10 48 8d 7b 16 e8 00 d1 d0 ff 66 44 89 73 16 4d 8d 75 0e 4c 89 f7 e8 3f d0 d0 ff 4c 8d8
-[   59.731559] RSP: 0018:ffff88800a56f1e0 EFLAGS: 00010282
-[   59.735691] RAX: 0000000000000001 RBX: ffff88800b7b5088 RCX: ffffffffb83079fe
-[   59.741792] RDX: 0000000000000001 RSI: 0000000000000008 RDI: ffffffffbb7f9fc0
-[   59.748423] RBP: ffff88800a56f3a8 R08: ffff88800b7b50a0 R09: fffffbfff76ff3f9
-[   59.754654] R10: ffffffffbb7f9fc7 R11: fffffbfff76ff3f8 R12: ffff88800b756180
-[   59.761552] R13: 0000000000000000 R14: 000000000000000e R15: 0000000000000050
-[   59.768323] FS:  00007feaa8c96440(0000) GS:ffff88806d400000(0000) knlGS:0000000000000000
-[   59.776027] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[   59.781395] CR2: 00007f3a2e0b1000 CR3: 000000000a5bc000 CR4: 00000000000006f0
-[   59.787607] Call Trace:
-[   59.790271]  <TASK>
-[   59.792488]  ? __pfx_ni_create_attr_list+0x10/0x10
-[   59.797235]  ? kernel_text_address+0xd3/0xe0
-[   59.800856]  ? unwind_get_return_address+0x3e/0x60
-[   59.805101]  ? __kasan_check_write+0x18/0x20
-[   59.809296]  ? preempt_count_sub+0x1c/0xd0
-[   59.813421]  ni_ins_attr_ext+0x52c/0x5c0
-[   59.817034]  ? __pfx_ni_ins_attr_ext+0x10/0x10
-[   59.821926]  ? __vfs_setxattr+0x121/0x170
-[   59.825718]  ? __vfs_setxattr_noperm+0x97/0x300
-[   59.829562]  ? __vfs_setxattr_locked+0x145/0x170
-[   59.833987]  ? vfs_setxattr+0x137/0x2a0
-[   59.836732]  ? do_setxattr+0xce/0x150
-[   59.839807]  ? setxattr+0x126/0x140
-[   59.842353]  ? path_setxattr+0x164/0x180
-[   59.845275]  ? __x64_sys_setxattr+0x71/0x90
-[   59.848838]  ? do_syscall_64+0x3f/0x90
-[   59.851898]  ? entry_SYSCALL_64_after_hwframe+0x72/0xdc
-[   59.857046]  ? stack_depot_save+0x17/0x20
-[   59.860299]  ni_insert_attr+0x1ba/0x420
-[   59.863104]  ? __pfx_ni_insert_attr+0x10/0x10
-[   59.867069]  ? preempt_count_sub+0x1c/0xd0
-[   59.869897]  ? _raw_spin_unlock_irqrestore+0x2b/0x50
-[   59.874088]  ? __create_object+0x3ae/0x5d0
-[   59.877865]  ni_insert_resident+0xc4/0x1c0
-[   59.881430]  ? __pfx_ni_insert_resident+0x10/0x10
-[   59.886355]  ? kasan_save_alloc_info+0x1f/0x30
-[   59.891117]  ? __kasan_kmalloc+0x8b/0xa0
-[   59.894383]  ntfs_set_ea+0x90d/0xbf0
-[   59.897703]  ? __pfx_ntfs_set_ea+0x10/0x10
-[   59.901011]  ? kernel_text_address+0xd3/0xe0
-[   59.905308]  ? __kernel_text_address+0x16/0x50
-[   59.909811]  ? unwind_get_return_address+0x3e/0x60
-[   59.914898]  ? __pfx_stack_trace_consume_entry+0x10/0x10
-[   59.920250]  ? arch_stack_walk+0xa2/0x100
-[   59.924560]  ? filter_irq_stacks+0x27/0x80
-[   59.928722]  ntfs_setxattr+0x405/0x440
-[   59.932512]  ? __pfx_ntfs_setxattr+0x10/0x10
-[   59.936634]  ? kvmalloc_node+0x2d/0x120
-[   59.940378]  ? kasan_save_stack+0x41/0x60
-[   59.943870]  ? kasan_save_stack+0x2a/0x60
-[   59.947719]  ? kasan_set_track+0x29/0x40
-[   59.951417]  ? kasan_save_alloc_info+0x1f/0x30
-[   59.955733]  ? __kasan_kmalloc+0x8b/0xa0
-[   59.959598]  ? __kmalloc_node+0x68/0x150
-[   59.963163]  ? kvmalloc_node+0x2d/0x120
-[   59.966490]  ? vmemdup_user+0x2b/0xa0
-[   59.969060]  __vfs_setxattr+0x121/0x170
-[   59.972456]  ? __pfx___vfs_setxattr+0x10/0x10
-[   59.976008]  __vfs_setxattr_noperm+0x97/0x300
-[   59.981562]  __vfs_setxattr_locked+0x145/0x170
-[   59.986100]  vfs_setxattr+0x137/0x2a0
-[   59.989964]  ? __pfx_vfs_setxattr+0x10/0x10
-[   59.993616]  ? __kasan_check_write+0x18/0x20
-[   59.997425]  do_setxattr+0xce/0x150
-[   60.000304]  setxattr+0x126/0x140
-[   60.002967]  ? __pfx_setxattr+0x10/0x10
-[   60.006471]  ? __virt_addr_valid+0xcb/0x140
-[   60.010461]  ? __call_rcu_common.constprop.0+0x1c7/0x330
-[   60.016037]  ? debug_smp_processor_id+0x1b/0x30
-[   60.021008]  ? kasan_quarantine_put+0x5b/0x190
-[   60.025545]  ? putname+0x84/0xa0
-[   60.027910]  ? __kasan_slab_free+0x11e/0x1b0
-[   60.031483]  ? putname+0x84/0xa0
-[   60.033986]  ? preempt_count_sub+0x1c/0xd0
-[   60.036876]  ? __mnt_want_write+0xae/0x100
-[   60.040738]  ? mnt_want_write+0x8f/0x150
-[   60.044317]  path_setxattr+0x164/0x180
-[   60.048096]  ? __pfx_path_setxattr+0x10/0x10
-[   60.052096]  ? strncpy_from_user+0x175/0x1c0
-[   60.056482]  ? debug_smp_processor_id+0x1b/0x30
-[   60.059848]  ? fpregs_assert_state_consistent+0x6b/0x80
-[   60.064557]  __x64_sys_setxattr+0x71/0x90
-[   60.068892]  do_syscall_64+0x3f/0x90
-[   60.072868]  entry_SYSCALL_64_after_hwframe+0x72/0xdc
-[   60.077523] RIP: 0033:0x7feaa86e4469
-[   60.080915] Code: 00 f3 c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 088
-[   60.097353] RSP: 002b:00007ffdbd8311e8 EFLAGS: 00000286 ORIG_RAX: 00000000000000bc
-[   60.103386] RAX: ffffffffffffffda RBX: 9461c5e290baac00 RCX: 00007feaa86e4469
-[   60.110322] RDX: 00007ffdbd831fe0 RSI: 00007ffdbd831305 RDI: 00007ffdbd831263
-[   60.116808] RBP: 00007ffdbd836180 R08: 0000000000000001 R09: 00007ffdbd836268
-[   60.123879] R10: 000000000000007d R11: 0000000000000286 R12: 0000000000400500
-[   60.130540] R13: 00007ffdbd836260 R14: 0000000000000000 R15: 0000000000000000
-[   60.136553]  </TASK>
-[   60.138818] Modules linked in:
-[   60.141839] CR2: 000000000000000e
-[   60.144831] ---[ end trace 0000000000000000 ]---
-[   60.149058] RIP: 0010:ni_create_attr_list+0x505/0x860
-[   60.153975] Code: 7e 10 e8 5e d0 d0 ff 45 0f b7 76 10 48 8d 7b 16 e8 00 d1 d0 ff 66 44 89 73 16 4d 8d 75 0e 4c 89 f7 e8 3f d0 d0 ff 4c 8d8
-[   60.172443] RSP: 0018:ffff88800a56f1e0 EFLAGS: 00010282
-[   60.176246] RAX: 0000000000000001 RBX: ffff88800b7b5088 RCX: ffffffffb83079fe
-[   60.182752] RDX: 0000000000000001 RSI: 0000000000000008 RDI: ffffffffbb7f9fc0
-[   60.189949] RBP: ffff88800a56f3a8 R08: ffff88800b7b50a0 R09: fffffbfff76ff3f9
-[   60.196950] R10: ffffffffbb7f9fc7 R11: fffffbfff76ff3f8 R12: ffff88800b756180
-[   60.203671] R13: 0000000000000000 R14: 000000000000000e R15: 0000000000000050
-[   60.209595] FS:  00007feaa8c96440(0000) GS:ffff88806d400000(0000) knlGS:0000000000000000
-[   60.216299] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[   60.222276] CR2: 00007f3a2e0b1000 CR3: 000000000a5bc000 CR4: 00000000000006f0
-
-Signed-off-by: Edward Lo <loyuantsung@gmail.com>
-Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
----
- fs/ntfs3/frecord.c | 16 +++++++++++-----
- 1 file changed, 11 insertions(+), 5 deletions(-)
-
-diff --git a/fs/ntfs3/frecord.c b/fs/ntfs3/frecord.c
-index 2bfcf1a989c9..50214b77c6a3 100644
---- a/fs/ntfs3/frecord.c
-+++ b/fs/ntfs3/frecord.c
-@@ -874,6 +874,7 @@ int ni_create_attr_list(struct ntfs_inode *ni)
- 	if (err)
- 		goto out1;
- 
-+	err = -EINVAL;
- 	/* Call mi_remove_attr() in reverse order to keep pointers 'arr_move' valid. */
- 	while (to_free > 0) {
- 		struct ATTRIB *b = arr_move[--nb];
-@@ -882,7 +883,8 @@ int ni_create_attr_list(struct ntfs_inode *ni)
- 
- 		attr = mi_insert_attr(mi, b->type, Add2Ptr(b, name_off),
- 				      b->name_len, asize, name_off);
--		WARN_ON(!attr);
-+		if (!attr)
-+			goto out1;
- 
- 		mi_get_ref(mi, &le_b[nb]->ref);
- 		le_b[nb]->id = attr->id;
-@@ -892,17 +894,20 @@ int ni_create_attr_list(struct ntfs_inode *ni)
- 		attr->id = le_b[nb]->id;
- 
- 		/* Remove from primary record. */
--		WARN_ON(!mi_remove_attr(NULL, &ni->mi, b));
-+		if (!mi_remove_attr(NULL, &ni->mi, b))
-+			goto out1;
- 
- 		if (to_free <= asize)
- 			break;
- 		to_free -= asize;
--		WARN_ON(!nb);
-+		if (!nb)
-+			goto out1;
- 	}
- 
- 	attr = mi_insert_attr(&ni->mi, ATTR_LIST, NULL, 0,
- 			      lsize + SIZEOF_RESIDENT, SIZEOF_RESIDENT);
--	WARN_ON(!attr);
-+	if (!attr)
-+		goto out1;
- 
- 	attr->non_res = 0;
- 	attr->flags = 0;
-@@ -922,9 +927,10 @@ int ni_create_attr_list(struct ntfs_inode *ni)
- 	kfree(ni->attr_list.le);
- 	ni->attr_list.le = NULL;
- 	ni->attr_list.size = 0;
-+	return err;
- 
- out:
--	return err;
-+	return 0;
- }
- 
- /*
--- 
-2.41.0
-
-
-From a686381bb8683d9fd4548bef8e5c08c947bdc5a4 Mon Sep 17 00:00:00 2001
+From 61bcc5e3b29e4ee34948c29e3bd95664dcdb986b Mon Sep 17 00:00:00 2001
 From: Edward Lo <loyuantsung@gmail.com>
 Date: Fri, 17 Mar 2023 18:23:03 +0800
-Subject: [PATCH 68/79] fs/ntfs3: Return error for inconsistent extended
+Subject: [PATCH 68/81] fs/ntfs3: Return error for inconsistent extended
  attributes
 
 ntfs_read_ea is called when we want to read extended attributes. There
@@ -8547,72 +8428,13 @@ index 61a2f45c3297..3996f2f6b2af 100644
  	for (off = 0; off < size; off += ea_size) {
  		const struct EA_FULL *ef = Add2Ptr(ea_p, off);
 -- 
-2.41.0
+2.42.0
 
 
-From 3850e08b3637e79eb932a8df556ad6af60e7ef82 Mon Sep 17 00:00:00 2001
-From: Jia-Ju Bai <baijiaju@buaa.edu.cn>
-Date: Tue, 21 Mar 2023 21:22:11 +0800
-Subject: [PATCH 69/79] fs: ntfs3: Fix possible null-pointer dereferences in
- mi_read()
-
-In a previous commit 2681631c2973 ("fs/ntfs3: Add null pointer check to
-attr_load_runs_vcn"), ni can be NULL in attr_load_runs_vcn(), and thus it
-should be checked before being used.
-
-However, in the call stack of this commit, mft_ni in mi_read() is
-aliased with ni in attr_load_runs_vcn(), and it is also used in
-mi_read() at two places:
-
-mi_read()
-  rw_lock = &mft_ni->file.run_lock -> No check
-  attr_load_runs_vcn(mft_ni, ...)
-    ni (namely mft_ni) is checked in the previous commit
-  attr_load_runs_vcn(..., &mft_ni->file.run) -> No check
-
-Thus, to avoid possible null-pointer dereferences, the related checks
-should be added.
-
-These bugs are reported by a static analysis tool implemented by myself,
-and they are found by extending a known bug fixed in the previous commit.
-Thus, they could be theoretical bugs.
-
-Signed-off-by: Jia-Ju Bai <baijiaju@buaa.edu.cn>
-Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
----
- fs/ntfs3/record.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/fs/ntfs3/record.c b/fs/ntfs3/record.c
-index 2a281cead2bc..7060f784c2d7 100644
---- a/fs/ntfs3/record.c
-+++ b/fs/ntfs3/record.c
-@@ -124,7 +124,7 @@ int mi_read(struct mft_inode *mi, bool is_mft)
- 	struct rw_semaphore *rw_lock = NULL;
- 
- 	if (is_mounted(sbi)) {
--		if (!is_mft) {
-+		if (!is_mft && mft_ni) {
- 			rw_lock = &mft_ni->file.run_lock;
- 			down_read(rw_lock);
- 		}
-@@ -148,7 +148,7 @@ int mi_read(struct mft_inode *mi, bool is_mft)
- 		ni_lock(mft_ni);
- 		down_write(rw_lock);
- 	}
--	err = attr_load_runs_vcn(mft_ni, ATTR_DATA, NULL, 0, &mft_ni->file.run,
-+	err = attr_load_runs_vcn(mft_ni, ATTR_DATA, NULL, 0, run,
- 				 vbo >> sbi->cluster_bits);
- 	if (rw_lock) {
- 		up_write(rw_lock);
--- 
-2.41.0
-
-
-From 31522debe6766ac9b4957053556495f04507ccdd Mon Sep 17 00:00:00 2001
+From ae6fb827c9ebdadfd4ae66e683cc897ed5396e4f Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 13:32:10 +0400
-Subject: [PATCH 70/79] fs/ntfs3: Correct checking while generating attr_list
+Subject: [PATCH 69/81] fs/ntfs3: Correct checking while generating attr_list
 
 Correct slightly previous commit:
 Enhance sanity check while generating attr_list
@@ -8708,91 +8530,13 @@ index 50214b77c6a3..66f3341c65ec 100644
  
  /*
 -- 
-2.41.0
+2.42.0
 
 
-From deb6233b74cb019409d227ee30e60ddd92acaee5 Mon Sep 17 00:00:00 2001
-From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
-Date: Mon, 8 May 2023 11:36:28 +0400
-Subject: [PATCH 71/79] fs/ntfs3: Mark ntfs dirty when on-disk struct is
- corrupted
-
-Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
----
- fs/ntfs3/fsntfs.c  | 2 +-
- fs/ntfs3/index.c   | 6 ++++++
- fs/ntfs3/ntfs_fs.h | 2 ++
- fs/ntfs3/record.c  | 6 ++++++
- 4 files changed, 15 insertions(+), 1 deletion(-)
-
-diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index 28cc421102e5..21567e58265c 100644
---- a/fs/ntfs3/fsntfs.c
-+++ b/fs/ntfs3/fsntfs.c
-@@ -178,7 +178,7 @@ int ntfs_fix_post_read(struct NTFS_RECORD_HEADER *rhdr, size_t bytes,
- 	/* Check errors. */
- 	if ((fo & 1) || fo + fn * sizeof(short) > SECTOR_SIZE || !fn-- ||
- 	    fn * SECTOR_SIZE > bytes) {
--		return -EINVAL; /* Native chkntfs returns ok! */
-+		return -E_NTFS_CORRUPT;
- 	}
- 
- 	/* Get fixup pointer. */
-diff --git a/fs/ntfs3/index.c b/fs/ntfs3/index.c
-index 0a48d2d67219..b40da258e684 100644
---- a/fs/ntfs3/index.c
-+++ b/fs/ntfs3/index.c
-@@ -1113,6 +1113,12 @@ int indx_read(struct ntfs_index *indx, struct ntfs_inode *ni, CLST vbn,
- 	*node = in;
- 
- out:
-+	if (err == -E_NTFS_CORRUPT) {
-+		ntfs_inode_err(&ni->vfs_inode, "directory corrupted");
-+		ntfs_set_state(ni->mi.sbi, NTFS_DIRTY_ERROR);
-+		err = -EINVAL;
-+	}
-+
- 	if (ib != in->index)
- 		kfree(ib);
- 
-diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
-index b6b9a5bf8e0d..89ad37614167 100644
---- a/fs/ntfs3/ntfs_fs.h
-+++ b/fs/ntfs3/ntfs_fs.h
-@@ -53,6 +53,8 @@ enum utf16_endian;
- #define E_NTFS_NONRESIDENT		556
- /* NTFS specific error code about punch hole. */
- #define E_NTFS_NOTALIGNED		557
-+/* NTFS specific error code when on-disk struct is corrupted. */
-+#define E_NTFS_CORRUPT			558
- 
- 
- /* sbi->flags */
-diff --git a/fs/ntfs3/record.c b/fs/ntfs3/record.c
-index 7060f784c2d7..7974ca35a15c 100644
---- a/fs/ntfs3/record.c
-+++ b/fs/ntfs3/record.c
-@@ -180,6 +180,12 @@ int mi_read(struct mft_inode *mi, bool is_mft)
- 	return 0;
- 
- out:
-+	if (err == -E_NTFS_CORRUPT) {
-+		ntfs_err(sbi->sb, "mft corrupted");
-+		ntfs_set_state(sbi, NTFS_DIRTY_ERROR);
-+		err = -EINVAL;
-+	}
-+
- 	return err;
- }
- 
--- 
-2.41.0
-
-
-From 2bcbb06a04335e9db7859e1a331e5357cbaf5af5 Mon Sep 17 00:00:00 2001
+From 420f0dc97b7e1e28ef55e27d24505d861317e6b8 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 11:56:13 +0400
-Subject: [PATCH 72/79] fs/ntfs3: Alternative boot if primary boot is corrupted
+Subject: [PATCH 70/81] fs/ntfs3: Alternative boot if primary boot is corrupted
 
 Some code refactoring added also.
 
@@ -9002,13 +8746,13 @@ index 5158dd31fd97..ecf899d571d8 100644
  
  		if (wnd_set_used_safe(&sbi->used.bitmap, lcn, len, &tt) || tt) {
 -- 
-2.41.0
+2.42.0
 
 
-From 93ac430214ffa4636b23afcce708ad556337475b Mon Sep 17 00:00:00 2001
+From 481062c936a3f20dca65ec32e3804c5b5cf5bde7 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 12:09:10 +0400
-Subject: [PATCH 73/79] fs/ntfs3: Do not update primary boot in
+Subject: [PATCH 71/81] fs/ntfs3: Do not update primary boot in
  ntfs_init_from_boot()
 
 'cause it may be faked boot.
@@ -9126,13 +8870,13 @@ index ecf899d571d8..2b48b45238ea 100644
  	return err;
  }
 -- 
-2.41.0
+2.42.0
 
 
-From 5265acf947ca9d316cb8f6358c777114712befca Mon Sep 17 00:00:00 2001
+From 748a21c61b91645d288a6f4b4878c570f2866a45 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 12:22:05 +0400
-Subject: [PATCH 74/79] fs/ntfs3: Code formatting
+Subject: [PATCH 72/81] fs/ntfs3: Code formatting
 
 clang-format-15 was used to format code according kernel's .clang-format.
 
@@ -9201,7 +8945,7 @@ index 9a6c6a09d70c..107e808e06ea 100644
  	}
  
 diff --git a/fs/ntfs3/file.c b/fs/ntfs3/file.c
-index c4c2e8d9d03d..5b3f1ba2f691 100644
+index c9aeaf479fd7..3be1be602ab9 100644
 --- a/fs/ntfs3/file.c
 +++ b/fs/ntfs3/file.c
 @@ -192,7 +192,7 @@ static int ntfs_zero_range(struct inode *inode, u64 vbo, u64 vbo_to)
@@ -9213,7 +8957,7 @@ index c4c2e8d9d03d..5b3f1ba2f691 100644
  		iblock = page_off >> inode->i_blkbits;
  
  		page = find_or_create_page(mapping, idx,
-@@ -1052,7 +1052,7 @@ static ssize_t ntfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+@@ -1081,7 +1081,7 @@ static ssize_t ntfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
  		goto out;
  
  	ret = is_compressed(ni) ? ntfs_compress_write(iocb, from) :
@@ -9651,13 +9395,13 @@ index 3996f2f6b2af..a38e1302535a 100644
  						    le16_to_cpu(ea->elength)),
  				4);
 -- 
-2.41.0
+2.42.0
 
 
-From 3732a351269b5e5034ad30a053175ffca8df4149 Mon Sep 17 00:00:00 2001
+From 34ad3aaa9504187e8d6a66f60582e5eccfc02415 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 12:59:06 +0400
-Subject: [PATCH 75/79] fs/ntfs3: Code refactoring
+Subject: [PATCH 73/81] fs/ntfs3: Code refactoring
 
 Check functions arguments. Use u8 instead of size_t for ntfs names, more consts and other.
 
@@ -10138,13 +9882,13 @@ index 7974ca35a15c..e73ca2df42eb 100644
  	u32 type_in = le32_to_cpu(type);
  	u32 atype;
 -- 
-2.41.0
+2.42.0
 
 
-From 182004827bcc116bffd781f544025e76c6b795b4 Mon Sep 17 00:00:00 2001
+From 69bac001f688f5534a22108f758ad41071a350f9 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 13:37:22 +0400
-Subject: [PATCH 76/79] fs/ntfs3: Add ability to format new mft records with
+Subject: [PATCH 74/81] fs/ntfs3: Add ability to format new mft records with
  bigger/smaller header
 
 Just define in ntfs.h
@@ -10219,13 +9963,13 @@ index 12019bfe1325..7ab0a79c7d84 100644
  	rec->used = cpu_to_le32(ao + ALIGN(sizeof(enum ATTR_TYPE), 8));
  	rec->total = cpu_to_le32(sbi->record_size);
 -- 
-2.41.0
+2.42.0
 
 
-From bf8f618f3f4232040659682693ed553600a0c48f Mon Sep 17 00:00:00 2001
+From 44b123e60353c6cc80598834b1f0315cabb8bc6d Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 13:41:24 +0400
-Subject: [PATCH 77/79] fs/ntfs3: Fix endian problem
+Subject: [PATCH 75/81] fs/ntfs3: Fix endian problem
 
 Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 ---
@@ -10297,13 +10041,13 @@ index 691c2ad13477..29e1a2a0d7fb 100644
  				     struct mft_inode **mi,
  				     struct ATTR_LIST_ENTRY **entry);
 -- 
-2.41.0
+2.42.0
 
 
-From 41fd7258de7b76b656f8b8395ce4892a92037e27 Mon Sep 17 00:00:00 2001
+From 8bf88d01305c2229ec4e60f404ff4ee8ad7a393c Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Mon, 8 May 2023 13:39:45 +0400
-Subject: [PATCH 78/79] fs/ntfs3: Add support /proc/fs/ntfs3/<dev>/volinfo and
+Subject: [PATCH 76/81] fs/ntfs3: Add support /proc/fs/ntfs3/<dev>/volinfo and
  /proc/fs/ntfs3/<dev>/label
 
 Metafile /proc/fs/ntfs3/<dev>/label allows to read/write current ntfs label.
@@ -10607,13 +10351,13 @@ index 7ab0a79c7d84..e36769eac7de 100644
  
  MODULE_LICENSE("GPL");
 -- 
-2.41.0
+2.42.0
 
 
-From 726ac0938982ec58466f9a8a1d43c32861c5ee88 Mon Sep 17 00:00:00 2001
+From 48232878f951857685ccc314e1a3f3faabd780f6 Mon Sep 17 00:00:00 2001
 From: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
 Date: Fri, 30 Jun 2023 15:23:07 +0400
-Subject: [PATCH 79/79] fs/ntfs3: Correct mode for label entry inside
+Subject: [PATCH 77/81] fs/ntfs3: Correct mode for label entry inside
  /proc/fs/ntfs3/
 
 Suggested-by: Dan Carpenter <dan.carpenter@linaro.org>
@@ -10643,5 +10387,262 @@ index e36769eac7de..1a02072b6b0e 100644
  		}
  	}
 -- 
-2.41.0
+2.42.0
+
+
+From 499b8cd11467f208aa33476d48899dfbfac3dff5 Mon Sep 17 00:00:00 2001
+From: Christoph Hellwig <hch@lst.de>
+Date: Wed, 9 Aug 2023 15:05:43 -0700
+Subject: [PATCH 78/81] ntfs3: rename put_ntfs ntfs3_free_sbi
+
+put_ntfs is a rather unconventional name for a function that frees the
+sbi and associated resources.  Give it a more descriptive name and drop
+the duplicate name in the top of the function comment.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Christian Brauner <brauner@kernel.org>
+Message-Id: <20230809220545.1308228-12-hch@lst.de>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+Signed-off-by: Albert I <kras@raphielgang.org>
+---
+ fs/ntfs3/super.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+index 1a02072b6b0e..bb985d3756d9 100644
+--- a/fs/ntfs3/super.c
++++ b/fs/ntfs3/super.c
+@@ -569,9 +569,9 @@ static void init_once(void *foo)
+ }
+ 
+ /*
+- * put_ntfs - Noinline to reduce binary size.
++ * Noinline to reduce binary size.
+  */
+-static noinline void put_ntfs(struct ntfs_sb_info *sbi)
++static noinline void ntfs3_free_sbi(struct ntfs_sb_info *sbi)
+ {
+ 	kfree(sbi->new_rec);
+ 	kvfree(ntfs_put_shared(sbi->upcase));
+@@ -627,7 +627,7 @@ static void ntfs_put_super(struct super_block *sb)
+ 	ntfs_set_state(sbi, NTFS_DIRTY_CLEAR);
+ 
+ 	put_mount_options(sbi->options);
+-	put_ntfs(sbi);
++	ntfs3_free_sbi(sbi);
+ 	sb->s_fs_info = NULL;
+ 
+ 	sync_blockdev(sb->s_bdev);
+@@ -1569,7 +1569,7 @@ static int ntfs_fill_super(struct super_block *sb, struct fs_context *fc)
+ 	 * ntfs_fs_free will be called with fc->s_fs_info = NULL
+ 	 */
+ 	put_mount_options(sbi->options);
+-	put_ntfs(sbi);
++	ntfs3_free_sbi(sbi);
+ 	sb->s_fs_info = NULL;
+ 	kfree(boot2);
+ 
+@@ -1659,7 +1659,7 @@ static void ntfs_fs_free(struct fs_context *fc)
+ 	struct ntfs_sb_info *sbi = fc->s_fs_info;
+ 
+ 	if (sbi)
+-		put_ntfs(sbi);
++		ntfs3_free_sbi(sbi);
+ 
+ 	if (opts)
+ 		put_mount_options(opts);
+-- 
+2.42.0
+
+
+From 2cd6d4bc58d4b8171a5d50556a76da3c0545919b Mon Sep 17 00:00:00 2001
+From: Christoph Hellwig <hch@lst.de>
+Date: Wed, 9 Aug 2023 15:05:44 -0700
+Subject: [PATCH 79/81] ntfs3: don't call sync_blockdev in ntfs_put_super
+
+kill_block_super will call sync_blockdev just a tad later already.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Christian Brauner <brauner@kernel.org>
+Message-Id: <20230809220545.1308228-13-hch@lst.de>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+Signed-off-by: Albert I <kras@raphielgang.org>
+---
+ fs/ntfs3/super.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+index bb985d3756d9..727138933a93 100644
+--- a/fs/ntfs3/super.c
++++ b/fs/ntfs3/super.c
+@@ -629,8 +629,6 @@ static void ntfs_put_super(struct super_block *sb)
+ 	put_mount_options(sbi->options);
+ 	ntfs3_free_sbi(sbi);
+ 	sb->s_fs_info = NULL;
+-
+-	sync_blockdev(sb->s_bdev);
+ }
+ 
+ static int ntfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+-- 
+2.42.0
+
+
+From b714fa5f1dddb2d8223a146bb35582aa1b6ecab4 Mon Sep 17 00:00:00 2001
+From: Christoph Hellwig <hch@lst.de>
+Date: Wed, 9 Aug 2023 15:05:45 -0700
+Subject: [PATCH 80/81] ntfs3: free the sbi in ->kill_sb
+
+As a rule of thumb everything allocated to the fs_context and moved into
+the super_block should be freed by ->kill_sb so that the teardown
+handling doesn't need to be duplicated between the fill_super error
+path and put_super.  Implement an ntfs3-specific kill_sb method to do
+that.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Christian Brauner <brauner@kernel.org>
+Message-Id: <20230809220545.1308228-14-hch@lst.de>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+Signed-off-by: Albert I <kras@raphielgang.org>
+---
+ fs/ntfs3/super.c | 25 ++++++++++++-------------
+ 1 file changed, 12 insertions(+), 13 deletions(-)
+
+diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+index 727138933a93..5fffddea554f 100644
+--- a/fs/ntfs3/super.c
++++ b/fs/ntfs3/super.c
+@@ -625,10 +625,6 @@ static void ntfs_put_super(struct super_block *sb)
+ 
+ 	/* Mark rw ntfs as clear, if possible. */
+ 	ntfs_set_state(sbi, NTFS_DIRTY_CLEAR);
+-
+-	put_mount_options(sbi->options);
+-	ntfs3_free_sbi(sbi);
+-	sb->s_fs_info = NULL;
+ }
+ 
+ static int ntfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+@@ -1562,15 +1558,7 @@ static int ntfs_fill_super(struct super_block *sb, struct fs_context *fc)
+ put_inode_out:
+ 	iput(inode);
+ out:
+-	/*
+-	 * Free resources here.
+-	 * ntfs_fs_free will be called with fc->s_fs_info = NULL
+-	 */
+-	put_mount_options(sbi->options);
+-	ntfs3_free_sbi(sbi);
+-	sb->s_fs_info = NULL;
+ 	kfree(boot2);
+-
+ 	return err;
+ }
+ 
+@@ -1726,13 +1714,24 @@ static int ntfs_init_fs_context(struct fs_context *fc)
+ 	return -ENOMEM;
+ }
+ 
++static void ntfs3_kill_sb(struct super_block *sb)
++{
++	struct ntfs_sb_info *sbi = sb->s_fs_info;
++
++	kill_block_super(sb);
++
++	if (sbi->options)
++		put_mount_options(sbi->options);
++	ntfs3_free_sbi(sbi);
++}
++
+ // clang-format off
+ static struct file_system_type ntfs_fs_type = {
+ 	.owner			= THIS_MODULE,
+ 	.name			= "ntfs3",
+ 	.init_fs_context	= ntfs_init_fs_context,
+ 	.parameters		= ntfs_fs_parameters,
+-	.kill_sb		= kill_block_super,
++	.kill_sb		= ntfs3_kill_sb,
+ 	.fs_flags		= FS_REQUIRES_DEV | FS_ALLOW_IDMAP,
+ };
+ // clang-format on
+-- 
+2.42.0
+
+
+From 067480d7494e51e721adc0b16405b126adb0862d Mon Sep 17 00:00:00 2001
+From: Christian Brauner <brauner@kernel.org>
+Date: Thu, 7 Sep 2023 18:03:40 +0200
+Subject: [PATCH 81/81] ntfs3: drop inode references in ntfs_put_super()
+
+Recently we moved most cleanup from ntfs_put_super() into
+ntfs3_kill_sb() as part of a bigger cleanup.  This accidently also moved
+dropping inode references stashed in ntfs3's sb->s_fs_info from
+@sb->put_super() to @sb->kill_sb().  But generic_shutdown_super()
+verifies that there are no busy inodes past sb->put_super().  Fix this
+and disentangle dropping inode references from freeing @sb->s_fs_info.
+
+Fixes: a4f64a300a29 ("ntfs3: free the sbi in ->kill_sb") # mainline only
+Reported-by: Guenter Roeck <linux@roeck-us.net>
+Tested-by: Guenter Roeck <linux@roeck-us.net>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Albert I <kras@raphielgang.org>
+---
+ fs/ntfs3/super.c | 18 ++++++++++++------
+ 1 file changed, 12 insertions(+), 6 deletions(-)
+
+diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+index 5fffddea554f..cfec5e0c7f66 100644
+--- a/fs/ntfs3/super.c
++++ b/fs/ntfs3/super.c
+@@ -571,12 +571,8 @@ static void init_once(void *foo)
+ /*
+  * Noinline to reduce binary size.
+  */
+-static noinline void ntfs3_free_sbi(struct ntfs_sb_info *sbi)
++static noinline void ntfs3_put_sbi(struct ntfs_sb_info *sbi)
+ {
+-	kfree(sbi->new_rec);
+-	kvfree(ntfs_put_shared(sbi->upcase));
+-	kfree(sbi->def_table);
+-
+ 	wnd_close(&sbi->mft.bitmap);
+ 	wnd_close(&sbi->used.bitmap);
+ 
+@@ -601,6 +597,13 @@ static noinline void ntfs3_free_sbi(struct ntfs_sb_info *sbi)
+ 	indx_clear(&sbi->security.index_sdh);
+ 	indx_clear(&sbi->reparse.index_r);
+ 	indx_clear(&sbi->objid.index_o);
++}
++
++static void ntfs3_free_sbi(struct ntfs_sb_info *sbi)
++{
++	kfree(sbi->new_rec);
++	kvfree(ntfs_put_shared(sbi->upcase));
++	kfree(sbi->def_table);
+ 	kfree(sbi->compress.lznt);
+ #ifdef CONFIG_NTFS3_LZX_XPRESS
+ 	xpress_free_decompressor(sbi->compress.xpress);
+@@ -625,6 +628,7 @@ static void ntfs_put_super(struct super_block *sb)
+ 
+ 	/* Mark rw ntfs as clear, if possible. */
+ 	ntfs_set_state(sbi, NTFS_DIRTY_CLEAR);
++	ntfs3_put_sbi(sbi);
+ }
+ 
+ static int ntfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+@@ -1644,8 +1648,10 @@ static void ntfs_fs_free(struct fs_context *fc)
+ 	struct ntfs_mount_options *opts = fc->fs_private;
+ 	struct ntfs_sb_info *sbi = fc->s_fs_info;
+ 
+-	if (sbi)
++	if (sbi) {
++		ntfs3_put_sbi(sbi);
+ 		ntfs3_free_sbi(sbi);
++	}
+ 
+ 	if (opts)
+ 		put_mount_options(opts);
+-- 
+2.42.0
 
