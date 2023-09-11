@@ -12,7 +12,7 @@ will be applied regardless if we are using BORE or not which is doesn't matter.
 https://github.com/firelzrd/bore-scheduler/blob/main/bore-stable/0002-constgran-vanilla-max.patch
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 5929970a6..94720d033 100644
+index 02741a824374..e910f6360a35 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -70,9 +70,13 @@
@@ -60,7 +60,7 @@ index 5929970a6..94720d033 100644
  unsigned int sysctl_sched_min_granularity			= 400000ULL;
  static unsigned int normalized_sysctl_sched_min_granularity	= 400000ULL;
  #else
-@@ -136,10 +149,16 @@ unsigned int sysctl_sched_child_runs_first __read_mostly;
+@@ -136,9 +149,15 @@ unsigned int sysctl_sched_child_runs_first __read_mostly;
   * and reduces their over-scheduling. Synchronous workloads will still
   * have immediate wakeup/sleep latencies.
   *
@@ -68,13 +68,13 @@ index 5929970a6..94720d033 100644
 + * (BORE default: 4 msec constant, units: nanoseconds)
 + * (CFS  default: 1 msec * (1 + ilog(ncpus)), units: nanoseconds)
   */
-+#ifdef CONFIG_SCHED_BORE
+-#ifdef CONFIG_ZENIFY
++#if defined(CONFIG_SCHED_BORE)
 +unsigned int sysctl_sched_wakeup_granularity			= 4000000UL;
 +static unsigned int normalized_sysctl_sched_wakeup_granularity	= 4000000UL;
-+#else
- unsigned int sysctl_sched_wakeup_granularity			= 1000000UL;
- static unsigned int normalized_sysctl_sched_wakeup_granularity	= 1000000UL;
-+#endif
- 
- const_debug unsigned int sysctl_sched_migration_cost	= 500000UL;
++
++const_debug unsigned int sysctl_sched_migration_cost	= 500000UL;
++#elif defined(CONFIG_ZENIFY)
+ unsigned int sysctl_sched_wakeup_granularity			= 500000UL;
+ static unsigned int normalized_sysctl_sched_wakeup_granularity	= 500000UL;
  
