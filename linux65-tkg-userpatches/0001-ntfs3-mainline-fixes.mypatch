@@ -1,0 +1,323 @@
+From 030c9e5b8780531e06d2236b3010f9fcd14a7ec8 Mon Sep 17 00:00:00 2001
+From: Christoph Hellwig <hch@lst.de>
+Date: Wed, 9 Aug 2023 15:05:43 -0700
+Subject: [PATCH 1/5] ntfs3: rename put_ntfs ntfs3_free_sbi
+
+put_ntfs is a rather unconventional name for a function that frees the
+sbi and associated resources.  Give it a more descriptive name and drop
+the duplicate name in the top of the function comment.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Christian Brauner <brauner@kernel.org>
+Message-Id: <20230809220545.1308228-12-hch@lst.de>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ fs/ntfs3/super.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+index 1a02072b6b0e..bb985d3756d9 100644
+--- a/fs/ntfs3/super.c
++++ b/fs/ntfs3/super.c
+@@ -569,9 +569,9 @@ static void init_once(void *foo)
+ }
+ 
+ /*
+- * put_ntfs - Noinline to reduce binary size.
++ * Noinline to reduce binary size.
+  */
+-static noinline void put_ntfs(struct ntfs_sb_info *sbi)
++static noinline void ntfs3_free_sbi(struct ntfs_sb_info *sbi)
+ {
+ 	kfree(sbi->new_rec);
+ 	kvfree(ntfs_put_shared(sbi->upcase));
+@@ -627,7 +627,7 @@ static void ntfs_put_super(struct super_block *sb)
+ 	ntfs_set_state(sbi, NTFS_DIRTY_CLEAR);
+ 
+ 	put_mount_options(sbi->options);
+-	put_ntfs(sbi);
++	ntfs3_free_sbi(sbi);
+ 	sb->s_fs_info = NULL;
+ 
+ 	sync_blockdev(sb->s_bdev);
+@@ -1569,7 +1569,7 @@ static int ntfs_fill_super(struct super_block *sb, struct fs_context *fc)
+ 	 * ntfs_fs_free will be called with fc->s_fs_info = NULL
+ 	 */
+ 	put_mount_options(sbi->options);
+-	put_ntfs(sbi);
++	ntfs3_free_sbi(sbi);
+ 	sb->s_fs_info = NULL;
+ 	kfree(boot2);
+ 
+@@ -1659,7 +1659,7 @@ static void ntfs_fs_free(struct fs_context *fc)
+ 	struct ntfs_sb_info *sbi = fc->s_fs_info;
+ 
+ 	if (sbi)
+-		put_ntfs(sbi);
++		ntfs3_free_sbi(sbi);
+ 
+ 	if (opts)
+ 		put_mount_options(opts);
+-- 
+2.42.0
+
+
+From d10ba05a8fccda992dc2eee1ad42166e043c28a8 Mon Sep 17 00:00:00 2001
+From: Christoph Hellwig <hch@lst.de>
+Date: Wed, 9 Aug 2023 15:05:44 -0700
+Subject: [PATCH 2/5] ntfs3: don't call sync_blockdev in ntfs_put_super
+
+kill_block_super will call sync_blockdev just a tad later already.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Christian Brauner <brauner@kernel.org>
+Message-Id: <20230809220545.1308228-13-hch@lst.de>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ fs/ntfs3/super.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+index bb985d3756d9..727138933a93 100644
+--- a/fs/ntfs3/super.c
++++ b/fs/ntfs3/super.c
+@@ -629,8 +629,6 @@ static void ntfs_put_super(struct super_block *sb)
+ 	put_mount_options(sbi->options);
+ 	ntfs3_free_sbi(sbi);
+ 	sb->s_fs_info = NULL;
+-
+-	sync_blockdev(sb->s_bdev);
+ }
+ 
+ static int ntfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+-- 
+2.42.0
+
+
+From 332a2d80a45e753c687cc254a4bda6ec4e681ad8 Mon Sep 17 00:00:00 2001
+From: Christoph Hellwig <hch@lst.de>
+Date: Wed, 9 Aug 2023 15:05:45 -0700
+Subject: [PATCH 3/5] ntfs3: free the sbi in ->kill_sb
+
+As a rule of thumb everything allocated to the fs_context and moved into
+the super_block should be freed by ->kill_sb so that the teardown
+handling doesn't need to be duplicated between the fill_super error
+path and put_super.  Implement an ntfs3-specific kill_sb method to do
+that.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Christian Brauner <brauner@kernel.org>
+Message-Id: <20230809220545.1308228-14-hch@lst.de>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ fs/ntfs3/super.c | 25 ++++++++++++-------------
+ 1 file changed, 12 insertions(+), 13 deletions(-)
+
+diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+index 727138933a93..5fffddea554f 100644
+--- a/fs/ntfs3/super.c
++++ b/fs/ntfs3/super.c
+@@ -625,10 +625,6 @@ static void ntfs_put_super(struct super_block *sb)
+ 
+ 	/* Mark rw ntfs as clear, if possible. */
+ 	ntfs_set_state(sbi, NTFS_DIRTY_CLEAR);
+-
+-	put_mount_options(sbi->options);
+-	ntfs3_free_sbi(sbi);
+-	sb->s_fs_info = NULL;
+ }
+ 
+ static int ntfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+@@ -1562,15 +1558,7 @@ static int ntfs_fill_super(struct super_block *sb, struct fs_context *fc)
+ put_inode_out:
+ 	iput(inode);
+ out:
+-	/*
+-	 * Free resources here.
+-	 * ntfs_fs_free will be called with fc->s_fs_info = NULL
+-	 */
+-	put_mount_options(sbi->options);
+-	ntfs3_free_sbi(sbi);
+-	sb->s_fs_info = NULL;
+ 	kfree(boot2);
+-
+ 	return err;
+ }
+ 
+@@ -1726,13 +1714,24 @@ static int ntfs_init_fs_context(struct fs_context *fc)
+ 	return -ENOMEM;
+ }
+ 
++static void ntfs3_kill_sb(struct super_block *sb)
++{
++	struct ntfs_sb_info *sbi = sb->s_fs_info;
++
++	kill_block_super(sb);
++
++	if (sbi->options)
++		put_mount_options(sbi->options);
++	ntfs3_free_sbi(sbi);
++}
++
+ // clang-format off
+ static struct file_system_type ntfs_fs_type = {
+ 	.owner			= THIS_MODULE,
+ 	.name			= "ntfs3",
+ 	.init_fs_context	= ntfs_init_fs_context,
+ 	.parameters		= ntfs_fs_parameters,
+-	.kill_sb		= kill_block_super,
++	.kill_sb		= ntfs3_kill_sb,
+ 	.fs_flags		= FS_REQUIRES_DEV | FS_ALLOW_IDMAP,
+ };
+ // clang-format on
+-- 
+2.42.0
+
+
+From 1a8f29c39484ef3de7970d9e8b2a6be2c9c80971 Mon Sep 17 00:00:00 2001
+From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Date: Thu, 13 Jul 2023 04:55:10 +0100
+Subject: [PATCH 4/5] ntfs3: convert ntfs_get_block_vbo() to use a folio
+
+Remove a user of set_bh_page().
+
+Link: https://lkml.kernel.org/r/20230713035512.4139457-6-willy@infradead.org
+Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+Cc: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
+Cc: Nathan Chancellor <nathan@kernel.org>
+Cc: Nick Desaulniers <ndesaulniers@google.com>
+Cc: Tom Rix <trix@redhat.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: Christian Brauner <brauner@kernel.org>
+Cc: David Sterba <dsterba@suse.com>
+Cc: Jan Kara <jack@suse.com>
+Cc: Pankaj Raghav <p.raghav@samsung.com>
+Cc: "Theodore Ts'o" <tytso@mit.edu>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ fs/ntfs3/inode.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/fs/ntfs3/inode.c b/fs/ntfs3/inode.c
+index dc7e7ab701c6..8ae572aacc69 100644
+--- a/fs/ntfs3/inode.c
++++ b/fs/ntfs3/inode.c
+@@ -554,7 +554,7 @@ static noinline int ntfs_get_block_vbo(struct inode *inode, u64 vbo,
+ 	struct super_block *sb = inode->i_sb;
+ 	struct ntfs_sb_info *sbi = sb->s_fs_info;
+ 	struct ntfs_inode *ni = ntfs_i(inode);
+-	struct page *page = bh->b_page;
++	struct folio *folio = bh->b_folio;
+ 	u8 cluster_bits = sbi->cluster_bits;
+ 	u32 block_size = sb->s_blocksize;
+ 	u64 bytes, lbo, valid;
+@@ -569,7 +569,7 @@ static noinline int ntfs_get_block_vbo(struct inode *inode, u64 vbo,
+ 
+ 	if (is_resident(ni)) {
+ 		ni_lock(ni);
+-		err = attr_data_read_resident(ni, page);
++		err = attr_data_read_resident(ni, &folio->page);
+ 		ni_unlock(ni);
+ 
+ 		if (!err)
+@@ -642,17 +642,17 @@ static noinline int ntfs_get_block_vbo(struct inode *inode, u64 vbo,
+ 		 */
+ 		bytes = block_size;
+ 
+-		if (page) {
++		if (folio) {
+ 			u32 voff = valid - vbo;
+ 
+ 			bh->b_size = block_size;
+ 			off = vbo & (PAGE_SIZE - 1);
+-			set_bh_page(bh, page, off);
++			folio_set_bh(bh, folio, off);
+ 
+ 			err = bh_read(bh, 0);
+ 			if (err < 0)
+ 				goto out;
+-			zero_user_segment(page, off + voff, off + block_size);
++			folio_zero_segment(folio, off + voff, off + block_size);
+ 		}
+ 	}
+ 
+-- 
+2.42.0
+
+
+From feed305b495af6d1066f54e94a937d3e337af97a Mon Sep 17 00:00:00 2001
+From: Christian Brauner <brauner@kernel.org>
+Date: Thu, 7 Sep 2023 18:03:40 +0200
+Subject: [PATCH 5/5] ntfs3: drop inode references in ntfs_put_super()
+
+Recently we moved most cleanup from ntfs_put_super() into
+ntfs3_kill_sb() as part of a bigger cleanup.  This accidently also moved
+dropping inode references stashed in ntfs3's sb->s_fs_info from
+@sb->put_super() to @sb->kill_sb().  But generic_shutdown_super()
+verifies that there are no busy inodes past sb->put_super().  Fix this
+and disentangle dropping inode references from freeing @sb->s_fs_info.
+
+Fixes: a4f64a300a29 ("ntfs3: free the sbi in ->kill_sb") # mainline only
+Reported-by: Guenter Roeck <linux@roeck-us.net>
+Tested-by: Guenter Roeck <linux@roeck-us.net>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+---
+ fs/ntfs3/super.c | 18 ++++++++++++------
+ 1 file changed, 12 insertions(+), 6 deletions(-)
+
+diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+index 5fffddea554f..cfec5e0c7f66 100644
+--- a/fs/ntfs3/super.c
++++ b/fs/ntfs3/super.c
+@@ -571,12 +571,8 @@ static void init_once(void *foo)
+ /*
+  * Noinline to reduce binary size.
+  */
+-static noinline void ntfs3_free_sbi(struct ntfs_sb_info *sbi)
++static noinline void ntfs3_put_sbi(struct ntfs_sb_info *sbi)
+ {
+-	kfree(sbi->new_rec);
+-	kvfree(ntfs_put_shared(sbi->upcase));
+-	kfree(sbi->def_table);
+-
+ 	wnd_close(&sbi->mft.bitmap);
+ 	wnd_close(&sbi->used.bitmap);
+ 
+@@ -601,6 +597,13 @@ static noinline void ntfs3_free_sbi(struct ntfs_sb_info *sbi)
+ 	indx_clear(&sbi->security.index_sdh);
+ 	indx_clear(&sbi->reparse.index_r);
+ 	indx_clear(&sbi->objid.index_o);
++}
++
++static void ntfs3_free_sbi(struct ntfs_sb_info *sbi)
++{
++	kfree(sbi->new_rec);
++	kvfree(ntfs_put_shared(sbi->upcase));
++	kfree(sbi->def_table);
+ 	kfree(sbi->compress.lznt);
+ #ifdef CONFIG_NTFS3_LZX_XPRESS
+ 	xpress_free_decompressor(sbi->compress.xpress);
+@@ -625,6 +628,7 @@ static void ntfs_put_super(struct super_block *sb)
+ 
+ 	/* Mark rw ntfs as clear, if possible. */
+ 	ntfs_set_state(sbi, NTFS_DIRTY_CLEAR);
++	ntfs3_put_sbi(sbi);
+ }
+ 
+ static int ntfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+@@ -1644,8 +1648,10 @@ static void ntfs_fs_free(struct fs_context *fc)
+ 	struct ntfs_mount_options *opts = fc->fs_private;
+ 	struct ntfs_sb_info *sbi = fc->s_fs_info;
+ 
+-	if (sbi)
++	if (sbi) {
++		ntfs3_put_sbi(sbi);
+ 		ntfs3_free_sbi(sbi);
++	}
+ 
+ 	if (opts)
+ 		put_mount_options(opts);
+-- 
+2.42.0
+
