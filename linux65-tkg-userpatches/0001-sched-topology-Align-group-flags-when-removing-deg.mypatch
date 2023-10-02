@@ -1,0 +1,44 @@
+From fd7ef98c9d171ad07397c044edf2e9d94c474fbf Mon Sep 17 00:00:00 2001
+From: Chen Yu <yu.c.chen@intel.com>
+Date: Thu, 13 Jul 2023 09:31:33 +0800
+Subject: [PATCH] sched/topology: Align group flags when removing degenerate
+ domain
+
+The flags of the child of a given scheduling domain are used to initialize
+the flags of its scheduling groups. When the child of a scheduling domain
+is degenerated, the flags of its local scheduling group need to be updated
+to align with the flags of its new child domain.
+
+The flag SD_SHARE_CPUCAPACITY was aligned in
+Commit bf2dc42d6beb ("sched/topology: Propagate SMT flags when removing degenerate domain").
+Further generalize this alignment so other flags can be used later, such as
+in cluster-based task wakeup. [1]
+
+Reported-by: Yicong Yang <yangyicong@huawei.com>
+Suggested-by: Ricardo Neri <ricardo.neri@intel.com>
+Signed-off-by: Chen Yu <yu.c.chen@intel.com>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Reviewed-by: Tim Chen <tim.c.chen@linux.intel.com>
+Reviewed-by: Yicong Yang <yangyicong@hisilicon.com>
+Link: https://lore.kernel.org/r/20230713013133.2314153-1-yu.c.chen@intel.com
+---
+ kernel/sched/topology.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/kernel/sched/topology.c b/kernel/sched/topology.c
+index d3a3b2646ec4..ff02d7deec0c 100644
+--- a/kernel/sched/topology.c
++++ b/kernel/sched/topology.c
+@@ -722,8 +722,7 @@ cpu_attach_domain(struct sched_domain *sd, struct root_domain *rd, int cpu)
+ 
+ 			if (parent->parent) {
+ 				parent->parent->child = tmp;
+-				if (tmp->flags & SD_SHARE_CPUCAPACITY)
+-					parent->parent->groups->flags |= SD_SHARE_CPUCAPACITY;
++				parent->parent->groups->flags = tmp->flags;
+ 			}
+ 
+ 			/*
+-- 
+2.42.0
+

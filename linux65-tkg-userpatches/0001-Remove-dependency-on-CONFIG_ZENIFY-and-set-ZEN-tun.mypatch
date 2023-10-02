@@ -1,0 +1,133 @@
+From 95c2fae1b3372cffc4c058ae157e2b54636654ba Mon Sep 17 00:00:00 2001
+From: Albert I <kras@raphielgang.org>
+Date: Wed, 13 Sep 2023 00:21:18 +0800
+Subject: [PATCH] Remove dependency on CONFIG_ZENIFY and set ZEN tunables
+ directly
+
+Carefully apply some tunable changes from 0003-glitched-cfs-additions.patch
+that actually still apply on EEVDF.
+
+This commit is also squashed into this patch directly:
+
+  From: Steven Barrett <steven@liquorix.net>
+  Date: Wed, 11 Aug 2021 18:47:46 -0500
+  Subject: [PATCH] ZEN: INTERACTIVE: Tune mgLRU to protect cache used in the
+   last second
+
+  Although not identical to the le9 patches that protect a byte-amount of
+  cache through tunables, multigenerational LRU now supports protecting
+  cache accessed in the last X milliseconds.
+
+  In #218, Yu recommends starting with 1000ms and tuning as needed.  This
+  looks like a safe default and turning on this feature should help users
+  that don't know they need it.
+
+Signed-off-by: Albert I <kras@raphielgang.org>
+---
+ kernel/sched/fair.c     | 8 ++++----
+ kernel/sched/topology.c | 2 +-
+ mm/huge_memory.c        | 4 ----
+ mm/page-writeback.c     | 4 ++--
+ mm/vmscan.c             | 2 +-
+ 5 files changed, 8 insertions(+), 12 deletions(-)
+
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index f51d0f93d00e..801597254b29 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -78,8 +78,8 @@ unsigned int sysctl_sched_tunable_scaling = SCHED_TUNABLESCALING_LOG;
+  *
+  * (default: 0.75 msec * (1 + ilog(ncpus)), units: nanoseconds)
+  */
+-unsigned int sysctl_sched_base_slice			= 750000ULL;
+-static unsigned int normalized_sysctl_sched_base_slice	= 750000ULL;
++unsigned int sysctl_sched_base_slice			= 300000ULL;
++static unsigned int normalized_sysctl_sched_base_slice	= 300000ULL;
+ 
+ /*
+  * After fork, child runs first. If set to 0 (default) then
+@@ -87,7 +87,7 @@ static unsigned int normalized_sysctl_sched_base_slice	= 750000ULL;
+  */
+ unsigned int sysctl_sched_child_runs_first __read_mostly;
+ 
+-const_debug unsigned int sysctl_sched_migration_cost	= 500000UL;
++const_debug unsigned int sysctl_sched_migration_cost	= 50000UL;
+ 
+ #ifdef CONFIG_SCHED_BORE
+ unsigned int __read_mostly sched_bore                  = 1;
+@@ -198,7 +198,7 @@ int __weak arch_asym_cpu_priority(int cpu)
+  *
+  * (default: 5 msec, units: microseconds)
+  */
+-static unsigned int sysctl_sched_cfs_bandwidth_slice		= 5000UL;
++static unsigned int sysctl_sched_cfs_bandwidth_slice		= 3000UL;
+ #endif
+ 
+ #ifdef CONFIG_NUMA_BALANCING
+diff --git a/kernel/sched/topology.c b/kernel/sched/topology.c
+index d3a3b2646ec4..a247e699023f 100644
+--- a/kernel/sched/topology.c
++++ b/kernel/sched/topology.c
+@@ -208,7 +208,7 @@ sd_parent_degenerate(struct sched_domain *sd, struct sched_domain *parent)
+ 
+ #if defined(CONFIG_ENERGY_MODEL) && defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
+ DEFINE_STATIC_KEY_FALSE(sched_energy_present);
+-static unsigned int sysctl_sched_energy_aware = 1;
++static unsigned int sysctl_sched_energy_aware = 0;
+ static DEFINE_MUTEX(sched_energy_mutex);
+ static bool sched_energy_update;
+ 
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index db5c4947226b..d0ba9d4598de 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -61,11 +61,7 @@ unsigned long transparent_hugepage_flags __read_mostly =
+ #ifdef CONFIG_TRANSPARENT_HUGEPAGE_MADVISE
+ 	(1<<TRANSPARENT_HUGEPAGE_REQ_MADV_FLAG)|
+ #endif
+-#ifdef CONFIG_ZENIFY
+ 	(1<<TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_OR_MADV_FLAG)|
+-#else
+-	(1<<TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG)|
+-#endif
+ 	(1<<TRANSPARENT_HUGEPAGE_DEFRAG_KHUGEPAGED_FLAG)|
+ 	(1<<TRANSPARENT_HUGEPAGE_USE_ZERO_PAGE_FLAG);
+ 
+diff --git a/mm/page-writeback.c b/mm/page-writeback.c
+index d3f42009bb70..921fd95d94a9 100644
+--- a/mm/page-writeback.c
++++ b/mm/page-writeback.c
+@@ -71,7 +71,7 @@ static long ratelimit_pages = 32;
+ /*
+  * Start background writeback (via writeback threads) at this percentage
+  */
+-static int dirty_background_ratio = 10;
++static int dirty_background_ratio = 20;
+ 
+ /*
+  * dirty_background_bytes starts at 0 (disabled) so that it is a function of
+@@ -88,7 +88,7 @@ static int vm_highmem_is_dirtyable;
+ /*
+  * The generator of dirty data starts writeback at this percentage
+  */
+-static int vm_dirty_ratio = 20;
++static int vm_dirty_ratio = 50;
+ 
+ /*
+  * vm_dirty_bytes starts at 0 (disabled) so that it is a function of
+diff --git a/mm/vmscan.c b/mm/vmscan.c
+index 2fe4a11d63f4..d8c5dc1ca0a4 100644
+--- a/mm/vmscan.c
++++ b/mm/vmscan.c
+@@ -4594,7 +4594,7 @@ static bool lruvec_is_reclaimable(struct lruvec *lruvec, struct scan_control *sc
+ }
+ 
+ /* to protect the working set of the last N jiffies */
+-static unsigned long lru_gen_min_ttl __read_mostly;
++static unsigned long lru_gen_min_ttl __read_mostly = HZ;
+ 
+ static void lru_gen_age_node(struct pglist_data *pgdat, struct scan_control *sc)
+ {
+-- 
+2.42.0
+
