@@ -1,4 +1,4 @@
-From 6ae5654bac60db7150d1bed836cd50d790d9998e Mon Sep 17 00:00:00 2001
+From bc0b77af3ca5163ed76605628eb2cc7e606542bf Mon Sep 17 00:00:00 2001
 From: Albert I <kras@raphielgang.org>
 Date: Sun, 18 Jun 2023 16:10:01 +0800
 Subject: [PATCH] Kconfig: Stop hiding io_uring behind CONFIG_EXPERT
@@ -21,10 +21,10 @@ Signed-off-by: Albert I <kras@raphielgang.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/init/Kconfig b/init/Kconfig
-index 41168e1b72fd..841301d3c0ba 100644
+index fd3d298216fd..e2ddbf96f478 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1752,7 +1752,7 @@ config AIO
+@@ -1753,7 +1753,7 @@ config AIO
  	  this option saves about 7k.
  
  config IO_URING

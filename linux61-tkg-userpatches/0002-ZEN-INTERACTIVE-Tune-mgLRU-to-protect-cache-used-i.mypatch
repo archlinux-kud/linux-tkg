@@ -1,7 +1,7 @@
-From a29081c8daefbe61212f98428e4cbc48dc61505d Mon Sep 17 00:00:00 2001
+From 4a28e8dd610080cfe5e9b9a1a2b0536b2ce940c3 Mon Sep 17 00:00:00 2001
 From: Steven Barrett <steven@liquorix.net>
 Date: Wed, 11 Aug 2021 18:47:46 -0500
-Subject: [PATCH] ZEN: INTERACTIVE: Tune mgLRU to protect cache used in the
+Subject: [PATCH 2/2] ZEN: INTERACTIVE: Tune mgLRU to protect cache used in the
  last second
 
 Although not identical to the le9 patches that protect a byte-amount of
@@ -16,10 +16,10 @@ that don't know they need it.
  1 file changed, 4 insertions(+)
 
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 91ac65dff3ce..cf91d00d5297 100644
+index 94928e79cbdf..5fa598667af1 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -4533,7 +4533,11 @@ static bool age_lruvec(struct lruvec *lruvec, struct scan_control *sc, unsigned
+@@ -4535,7 +4535,11 @@ static bool age_lruvec(struct lruvec *lruvec, struct scan_control *sc, unsigned
  }
  
  /* to protect the working set of the last N jiffies */
@@ -32,5 +32,5 @@ index 91ac65dff3ce..cf91d00d5297 100644
  static void lru_gen_age_node(struct pglist_data *pgdat, struct scan_control *sc)
  {
 -- 
-2.40.1
+2.42.0
 

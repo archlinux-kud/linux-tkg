@@ -1,7 +1,7 @@
-From ab6fc0acb45c1e3940d320ecfaeebbac99a5ebb0 Mon Sep 17 00:00:00 2001
+From 01c66695670f1b636e769cca7b1a54729b52ab30 Mon Sep 17 00:00:00 2001
 From: Yu Zhao <yuzhao@google.com>
 Date: Tue, 15 Nov 2022 18:38:08 -0700
-Subject: [PATCH] mm: multi-gen LRU: remove NULL checks on NODE_DATA()
+Subject: [PATCH 1/2] mm: multi-gen LRU: remove NULL checks on NODE_DATA()
 
 NODE_DATA() is preallocated for all possible nodes after commit
 09f49dca570a ("mm: handle uninitialized numa nodes gracefully").  Checking
@@ -15,7 +15,7 @@ Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
  1 file changed, 2 insertions(+), 11 deletions(-)
 
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index d18296109aa7..91ac65dff3ce 100644
+index 93d6f27dd40b..94928e79cbdf 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
 @@ -3159,7 +3159,7 @@ static struct lruvec *get_lruvec(struct mem_cgroup *memcg, int nid)
@@ -56,7 +56,7 @@ index d18296109aa7..91ac65dff3ce 100644
  		/* where the last iteration ended (exclusive) */
  		if (lruvec->mm_state.tail == &mm->lru_gen.list)
  			lruvec->mm_state.tail = lruvec->mm_state.tail->next;
-@@ -5344,9 +5338,6 @@ static void lru_gen_change_state(bool enabled)
+@@ -5356,9 +5350,6 @@ static void lru_gen_change_state(bool enabled)
  		for_each_node(nid) {
  			struct lruvec *lruvec = get_lruvec(memcg, nid);
  
@@ -67,5 +67,5 @@ index d18296109aa7..91ac65dff3ce 100644
  
  			VM_WARN_ON_ONCE(!seq_is_valid(lruvec));
 -- 
-2.40.1
+2.42.0
 
