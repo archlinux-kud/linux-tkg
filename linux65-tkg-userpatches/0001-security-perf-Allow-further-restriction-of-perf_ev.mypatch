@@ -1,4 +1,4 @@
-From 93ebc7e4f7c6bacc71207e7c4660bb9521615288 Mon Sep 17 00:00:00 2001
+From de6afe440a81a8903af2d32679ba5241be4955f5 Mon Sep 17 00:00:00 2001
 From: Ben Hutchings <ben@decadent.org.uk>
 Date: Mon, 11 Jan 2016 15:23:55 +0000
 Subject: [PATCH] security,perf: Allow further restriction of perf_event_open
@@ -37,7 +37,7 @@ Signed-off-by: Levente Polyak <levente@leventepolyak.net>
  6 files changed, 27 insertions(+), 1 deletion(-)
 
 diff --git a/Documentation/admin-guide/sysctl/kernel.rst b/Documentation/admin-guide/sysctl/kernel.rst
-index 3800fab1619b..e3ffd6c3be83 100644
+index 3800fab1619b2..e3ffd6c3be835 100644
 --- a/Documentation/admin-guide/sysctl/kernel.rst
 +++ b/Documentation/admin-guide/sysctl/kernel.rst
 @@ -904,6 +904,8 @@ with respect to CAP_PERFMON use cases.
@@ -50,10 +50,10 @@ index 3800fab1619b..e3ffd6c3be83 100644
  
  
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index 2166a69e3bf2..04173e3019e2 100644
+index e657916c9509c..dc07bf3eb5488 100644
 --- a/include/linux/perf_event.h
 +++ b/include/linux/perf_event.h
-@@ -1576,6 +1576,14 @@ static inline int perf_is_paranoid(void)
+@@ -1592,6 +1592,14 @@ static inline int perf_is_paranoid(void)
  	return sysctl_perf_event_paranoid > -1;
  }
  
@@ -69,7 +69,7 @@ index 2166a69e3bf2..04173e3019e2 100644
  {
  	if (sysctl_perf_event_paranoid > 1 && !perfmon_capable())
 diff --git a/kernel/events/core.c b/kernel/events/core.c
-index 78ae7b6f90fd..28c43946b40f 100644
+index 78ae7b6f90fdb..28c43946b40f6 100644
 --- a/kernel/events/core.c
 +++ b/kernel/events/core.c
 @@ -414,8 +414,13 @@ static struct kmem_cache *perf_event_cache;
@@ -96,7 +96,7 @@ index 78ae7b6f90fd..28c43946b40f 100644
  		return err;
  
 diff --git a/security/Kconfig b/security/Kconfig
-index 52c9af08ad35..2a4686048fff 100644
+index 453b4daa59780..8d210b6ceda02 100644
 --- a/security/Kconfig
 +++ b/security/Kconfig
 @@ -19,6 +19,15 @@ config SECURITY_DMESG_RESTRICT
@@ -116,7 +116,7 @@ index 52c9af08ad35..2a4686048fff 100644
  	bool "Enable different security models"
  	depends on SYSFS
 diff --git a/tools/perf/Documentation/security.txt b/tools/perf/Documentation/security.txt
-index 4fe3b8b1958f..a7d88cc23a70 100644
+index 4fe3b8b1958f6..a7d88cc23a70c 100644
 --- a/tools/perf/Documentation/security.txt
 +++ b/tools/perf/Documentation/security.txt
 @@ -148,6 +148,7 @@ Perf tool provides a message similar to the one below:
@@ -128,7 +128,7 @@ index 4fe3b8b1958f..a7d88cc23a70 100644
     in /etc/sysctl.conf (e.g. kernel.perf_event_paranoid = <setting>)
  
 diff --git a/tools/perf/util/evsel.c b/tools/perf/util/evsel.c
-index 762e2b2634a5..1075e357adb6 100644
+index 762e2b2634a55..1075e357adb67 100644
 --- a/tools/perf/util/evsel.c
 +++ b/tools/perf/util/evsel.c
 @@ -2969,6 +2969,7 @@ int evsel__open_strerror(struct evsel *evsel, struct target *target,
@@ -139,6 +139,3 @@ index 762e2b2634a5..1075e357adb6 100644
  		 "To make the adjusted perf_event_paranoid setting permanent preserve it\n"
  		 "in /etc/sysctl.conf (e.g. kernel.perf_event_paranoid = <setting>)",
  		 perf_event_paranoid());
--- 
-2.42.0
-

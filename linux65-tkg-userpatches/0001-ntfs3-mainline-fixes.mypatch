@@ -1,7 +1,7 @@
 From 030c9e5b8780531e06d2236b3010f9fcd14a7ec8 Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Wed, 9 Aug 2023 15:05:43 -0700
-Subject: [PATCH 1/5] ntfs3: rename put_ntfs ntfs3_free_sbi
+Subject: [PATCH 1/6] ntfs3: rename put_ntfs ntfs3_free_sbi
 
 put_ntfs is a rather unconventional name for a function that frees the
 sbi and associated resources.  Give it a more descriptive name and drop
@@ -65,7 +65,7 @@ index 1a02072b6b0e..bb985d3756d9 100644
 From d10ba05a8fccda992dc2eee1ad42166e043c28a8 Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Wed, 9 Aug 2023 15:05:44 -0700
-Subject: [PATCH 2/5] ntfs3: don't call sync_blockdev in ntfs_put_super
+Subject: [PATCH 2/6] ntfs3: don't call sync_blockdev in ntfs_put_super
 
 kill_block_super will call sync_blockdev just a tad later already.
 
@@ -97,7 +97,7 @@ index bb985d3756d9..727138933a93 100644
 From 332a2d80a45e753c687cc254a4bda6ec4e681ad8 Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Wed, 9 Aug 2023 15:05:45 -0700
-Subject: [PATCH 3/5] ntfs3: free the sbi in ->kill_sb
+Subject: [PATCH 3/6] ntfs3: free the sbi in ->kill_sb
 
 As a rule of thumb everything allocated to the fs_context and moved into
 the super_block should be freed by ->kill_sb so that the teardown
@@ -177,7 +177,7 @@ index 727138933a93..5fffddea554f 100644
 From 1a8f29c39484ef3de7970d9e8b2a6be2c9c80971 Mon Sep 17 00:00:00 2001
 From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
 Date: Thu, 13 Jul 2023 04:55:10 +0100
-Subject: [PATCH 4/5] ntfs3: convert ntfs_get_block_vbo() to use a folio
+Subject: [PATCH 4/6] ntfs3: convert ntfs_get_block_vbo() to use a folio
 
 Remove a user of set_bh_page().
 
@@ -248,7 +248,7 @@ index dc7e7ab701c6..8ae572aacc69 100644
 From feed305b495af6d1066f54e94a937d3e337af97a Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Thu, 7 Sep 2023 18:03:40 +0200
-Subject: [PATCH 5/5] ntfs3: drop inode references in ntfs_put_super()
+Subject: [PATCH 5/6] ntfs3: drop inode references in ntfs_put_super()
 
 Recently we moved most cleanup from ntfs_put_super() into
 ntfs3_kill_sb() as part of a bigger cleanup.  This accidently also moved
@@ -318,6 +318,38 @@ index 5fffddea554f..cfec5e0c7f66 100644
  
  	if (opts)
  		put_mount_options(opts);
+-- 
+2.42.0
+
+
+From 29f031d3e3ba4826a4aa1f5530ad55798b82dd9a Mon Sep 17 00:00:00 2001
+From: Christian Brauner <brauner@kernel.org>
+Date: Mon, 25 Sep 2023 13:08:52 +0200
+Subject: [PATCH 6/6] ntfs3: put resources during ntfs_fill_super()
+
+During ntfs_fill_super() some resources are allocated that we need to
+cleanup in ->put_super() such as additional inodes. When
+ntfs_fill_super() fails these resources need to be cleaned up as well.
+
+Reported-by: syzbot+2751da923b5eb8307b0b@syzkaller.appspotmail.com
+Fixes: 78a06688a4d4 ("ntfs3: drop inode references in ntfs_put_super()")
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ fs/ntfs3/super.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+index cfec5e0c7f66..5661a363005e 100644
+--- a/fs/ntfs3/super.c
++++ b/fs/ntfs3/super.c
+@@ -1562,6 +1562,7 @@ static int ntfs_fill_super(struct super_block *sb, struct fs_context *fc)
+ put_inode_out:
+ 	iput(inode);
+ out:
++	ntfs3_put_sbi(sbi);
+ 	kfree(boot2);
+ 	return err;
+ }
 -- 
 2.42.0
 

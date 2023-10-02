@@ -1,642 +1,7 @@
-From 40842cd09916501183efc707fe42a884b23df418 Mon Sep 17 00:00:00 2001
-From: Naohiro Aota <naohiro.aota@wdc.com>
-Date: Sat, 19 Aug 2023 01:26:07 +0900
-Subject: [PATCH 01/14] btrfs: zoned: skip splitting and logical rewriting on
- pre-alloc write
-
-[ Upstream commit c02d35d89b317994bd713ba82e160c5e7f22d9c8 ]
-
-When doing a relocation, there is a chance that at the time of
-btrfs_reloc_clone_csums(), there is no checksum for the corresponding
-region.
-
-In this case, btrfs_finish_ordered_zoned()'s sum points to an invalid item
-and so ordered_extent's logical is set to some invalid value. Then,
-btrfs_lookup_block_group() in btrfs_zone_finish_endio() failed to find a
-block group and will hit an assert or a null pointer dereference as
-following.
-
-This can be reprodcued by running btrfs/028 several times (e.g, 4 to 16
-times) with a null_blk setup. The device's zone size and capacity is set to
-32 MB and the storage size is set to 5 GB on my setup.
-
-    KASAN: null-ptr-deref in range [0x0000000000000088-0x000000000000008f]
-    CPU: 6 PID: 3105720 Comm: kworker/u16:13 Tainted: G        W          6.5.0-rc6-kts+ #1
-    Hardware name: Supermicro Super Server/X10SRL-F, BIOS 2.0 12/17/2015
-    Workqueue: btrfs-endio-write btrfs_work_helper [btrfs]
-    RIP: 0010:btrfs_zone_finish_endio.part.0+0x34/0x160 [btrfs]
-    Code: 41 54 49 89 fc 55 48 89 f5 53 e8 57 7d fc ff 48 8d b8 88 00 00 00 48 89 c3 48 b8 00 00 00 00 00
-    > 3c 02 00 0f 85 02 01 00 00 f6 83 88 00 00 00 01 0f 84 a8 00 00
-    RSP: 0018:ffff88833cf87b08 EFLAGS: 00010206
-    RAX: dffffc0000000000 RBX: 0000000000000000 RCX: 0000000000000000
-    RDX: 0000000000000011 RSI: 0000000000000004 RDI: 0000000000000088
-    RBP: 0000000000000002 R08: 0000000000000001 R09: ffffed102877b827
-    R10: ffff888143bdc13b R11: ffff888125b1cbc0 R12: ffff888143bdc000
-    R13: 0000000000007000 R14: ffff888125b1cba8 R15: 0000000000000000
-    FS:  0000000000000000(0000) GS:ffff88881e500000(0000) knlGS:0000000000000000
-    CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-    CR2: 00007f3ed85223d5 CR3: 00000001519b4005 CR4: 00000000001706e0
-    Call Trace:
-     <TASK>
-     ? die_addr+0x3c/0xa0
-     ? exc_general_protection+0x148/0x220
-     ? asm_exc_general_protection+0x22/0x30
-     ? btrfs_zone_finish_endio.part.0+0x34/0x160 [btrfs]
-     ? btrfs_zone_finish_endio.part.0+0x19/0x160 [btrfs]
-     btrfs_finish_one_ordered+0x7b8/0x1de0 [btrfs]
-     ? rcu_is_watching+0x11/0xb0
-     ? lock_release+0x47a/0x620
-     ? btrfs_finish_ordered_zoned+0x59b/0x800 [btrfs]
-     ? __pfx_btrfs_finish_one_ordered+0x10/0x10 [btrfs]
-     ? btrfs_finish_ordered_zoned+0x358/0x800 [btrfs]
-     ? __smp_call_single_queue+0x124/0x350
-     ? rcu_is_watching+0x11/0xb0
-     btrfs_work_helper+0x19f/0xc60 [btrfs]
-     ? __pfx_try_to_wake_up+0x10/0x10
-     ? _raw_spin_unlock_irq+0x24/0x50
-     ? rcu_is_watching+0x11/0xb0
-     process_one_work+0x8c1/0x1430
-     ? __pfx_lock_acquire+0x10/0x10
-     ? __pfx_process_one_work+0x10/0x10
-     ? __pfx_do_raw_spin_lock+0x10/0x10
-     ? _raw_spin_lock_irq+0x52/0x60
-     worker_thread+0x100/0x12c0
-     ? __kthread_parkme+0xc1/0x1f0
-     ? __pfx_worker_thread+0x10/0x10
-     kthread+0x2ea/0x3c0
-     ? __pfx_kthread+0x10/0x10
-     ret_from_fork+0x30/0x70
-     ? __pfx_kthread+0x10/0x10
-     ret_from_fork_asm+0x1b/0x30
-     </TASK>
-
-On the zoned mode, writing to pre-allocated region means data relocation
-write. Such write always uses WRITE command so there is no need of splitting
-and rewriting logical address. Thus, we can just skip the function for the
-case.
-
-Fixes: cbfce4c7fbde ("btrfs: optimize the logical to physical mapping for zoned writes")
-Signed-off-by: Naohiro Aota <naohiro.aota@wdc.com>
-Signed-off-by: David Sterba <dsterba@suse.com>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
----
- fs/btrfs/zoned.c | 19 +++++++++++++++----
- 1 file changed, 15 insertions(+), 4 deletions(-)
-
-diff --git a/fs/btrfs/zoned.c b/fs/btrfs/zoned.c
-index 72b90bc19a19..249030135001 100644
---- a/fs/btrfs/zoned.c
-+++ b/fs/btrfs/zoned.c
-@@ -1707,10 +1707,21 @@ void btrfs_finish_ordered_zoned(struct btrfs_ordered_extent *ordered)
- {
- 	struct btrfs_inode *inode = BTRFS_I(ordered->inode);
- 	struct btrfs_fs_info *fs_info = inode->root->fs_info;
--	struct btrfs_ordered_sum *sum =
--		list_first_entry(&ordered->list, typeof(*sum), list);
--	u64 logical = sum->logical;
--	u64 len = sum->len;
-+	struct btrfs_ordered_sum *sum;
-+	u64 logical, len;
-+
-+	/*
-+	 * Write to pre-allocated region is for the data relocation, and so
-+	 * it should use WRITE operation. No split/rewrite are necessary.
-+	 */
-+	if (test_bit(BTRFS_ORDERED_PREALLOC, &ordered->flags))
-+		return;
-+
-+	ASSERT(!list_empty(&ordered->list));
-+	/* The ordered->list can be empty in the above pre-alloc case. */
-+	sum = list_first_entry(&ordered->list, struct btrfs_ordered_sum, list);
-+	logical = sum->logical;
-+	len = sum->len;
- 
- 	while (len < ordered->disk_num_bytes) {
- 		sum = list_next_entry(sum, list);
--- 
-2.42.0
-
-
-From c4508c345fa52070fef2fdd4eb50c9d9713d3428 Mon Sep 17 00:00:00 2001
-From: Boris Burkov <boris@bur.io>
-Date: Fri, 21 Jul 2023 09:02:06 -0700
-Subject: [PATCH 02/14] btrfs: free qgroup rsv on io failure
-
-If we do a write whose bio suffers an error, we will never reclaim the
-qgroup reserved space for it. We allocate the space in the write_iter
-codepath, then release the reservation as we allocate the ordered
-extent, but we only create a delayed ref if the ordered extent finishes.
-If it has an error, we simply leak the rsv. This is apparent in running
-any error injecting (dmerror) fstests like btrfs/146 or btrfs/160. Such
-tests fail due to dmesg on umount complaining about the leaked qgroup
-data space.
-
-When we clean up other aspects of space on failed ordered_extents, also
-free the qgroup rsv.
-
-Reviewed-by: Josef Bacik <josef@toxicpanda.com>
-CC: stable@vger.kernel.org # 5.10+
-Signed-off-by: Boris Burkov <boris@bur.io>
-Signed-off-by: David Sterba <dsterba@suse.com>
----
- fs/btrfs/inode.c | 7 +++++++
- 1 file changed, 7 insertions(+)
-
-diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index aa090b0b5d29..db2b33a822fc 100644
---- a/fs/btrfs/inode.c
-+++ b/fs/btrfs/inode.c
-@@ -3359,6 +3359,13 @@ int btrfs_finish_one_ordered(struct btrfs_ordered_extent *ordered_extent)
- 			btrfs_free_reserved_extent(fs_info,
- 					ordered_extent->disk_bytenr,
- 					ordered_extent->disk_num_bytes, 1);
-+			/*
-+			 * Actually free the qgroup rsv which was released when
-+			 * the ordered extent was created.
-+			 */
-+			btrfs_qgroup_free_refroot(fs_info, inode->root->root_key.objectid,
-+						  ordered_extent->qgroup_rsv,
-+						  BTRFS_QGROUP_RSV_DATA);
- 		}
- 	}
- 
--- 
-2.42.0
-
-
-From 0cba062d21edf1e6b7f6fe5792f314737066cec5 Mon Sep 17 00:00:00 2001
-From: Boris Burkov <boris@bur.io>
-Date: Fri, 21 Jul 2023 09:02:07 -0700
-Subject: [PATCH 03/14] btrfs: fix start transaction qgroup rsv double free
-
-btrfs_start_transaction reserves metadata space of the PERTRANS type
-before it identifies a transaction to start/join. This allows flushing
-when reserving that space without a deadlock. However, it results in a
-race which temporarily breaks qgroup rsv accounting.
-
-T1                                              T2
-start_transaction
-do_stuff
-                                            start_transaction
-                                                qgroup_reserve_meta_pertrans
-commit_transaction
-    qgroup_free_meta_all_pertrans
-                                            hit an error starting txn
-                                            goto reserve_fail
-                                            qgroup_free_meta_pertrans (already freed!)
-
-The basic issue is that there is nothing preventing another commit from
-committing before start_transaction finishes (in fact sometimes we
-intentionally wait for it) so any error path that frees the reserve is
-at risk of this race.
-
-While this exact space was getting freed anyway, and it's not a huge
-deal to double free it (just a warning, the free code catches this), it
-can result in incorrectly freeing some other pertrans reservation in
-this same reservation, which could then lead to spuriously granting
-reservations we might not have the space for. Therefore, I do believe it
-is worth fixing.
-
-To fix it, use the existing prealloc->pertrans conversion mechanism.
-When we first reserve the space, we reserve prealloc space and only when
-we are sure we have a transaction do we convert it to pertrans. This way
-any racing commits do not blow away our reservation, but we still get a
-pertrans reservation that is freed when _this_ transaction gets committed.
-
-This issue can be reproduced by running generic/269 with either qgroups
-or squotas enabled via mkfs on the scratch device.
-
-Reviewed-by: Josef Bacik <josef@toxicpanda.com>
-CC: stable@vger.kernel.org # 5.10+
-Signed-off-by: Boris Burkov <boris@bur.io>
-Signed-off-by: David Sterba <dsterba@suse.com>
----
- fs/btrfs/transaction.c | 19 ++++++++++++++++---
- 1 file changed, 16 insertions(+), 3 deletions(-)
-
-diff --git a/fs/btrfs/transaction.c b/fs/btrfs/transaction.c
-index 91b6c2fdc420..5905c85a8a5e 100644
---- a/fs/btrfs/transaction.c
-+++ b/fs/btrfs/transaction.c
-@@ -591,8 +591,13 @@ start_transaction(struct btrfs_root *root, unsigned int num_items,
- 		u64 delayed_refs_bytes = 0;
- 
- 		qgroup_reserved = num_items * fs_info->nodesize;
--		ret = btrfs_qgroup_reserve_meta_pertrans(root, qgroup_reserved,
--				enforce_qgroups);
-+		/*
-+		 * Use prealloc for now, as there might be a currently running
-+		 * transaction that could free this reserved space prematurely
-+		 * by committing.
-+		 */
-+		ret = btrfs_qgroup_reserve_meta_prealloc(root, qgroup_reserved,
-+							 enforce_qgroups, false);
- 		if (ret)
- 			return ERR_PTR(ret);
- 
-@@ -705,6 +710,14 @@ start_transaction(struct btrfs_root *root, unsigned int num_items,
- 		h->reloc_reserved = reloc_reserved;
- 	}
- 
-+	/*
-+	 * Now that we have found a transaction to be a part of, convert the
-+	 * qgroup reservation from prealloc to pertrans. A different transaction
-+	 * can't race in and free our pertrans out from under us.
-+	 */
-+	if (qgroup_reserved)
-+		btrfs_qgroup_convert_reserved_meta(root, qgroup_reserved);
-+
- got_it:
- 	if (!current->journal_info)
- 		current->journal_info = h;
-@@ -752,7 +765,7 @@ start_transaction(struct btrfs_root *root, unsigned int num_items,
- 		btrfs_block_rsv_release(fs_info, &fs_info->trans_block_rsv,
- 					num_bytes, NULL);
- reserve_fail:
--	btrfs_qgroup_free_meta_pertrans(root, qgroup_reserved);
-+	btrfs_qgroup_free_meta_prealloc(root, qgroup_reserved);
- 	return ERR_PTR(ret);
- }
- 
--- 
-2.42.0
-
-
-From 67eb638e5ff4398c507338ed69c44db4f2e1ee91 Mon Sep 17 00:00:00 2001
-From: Filipe Manana <fdmanana@suse.com>
-Date: Wed, 26 Jul 2023 16:56:57 +0100
-Subject: [PATCH 04/14] btrfs: don't start transaction when joining with
- TRANS_JOIN_NOSTART
-
-When joining a transaction with TRANS_JOIN_NOSTART, if we don't find a
-running transaction we end up creating one. This goes against the purpose
-of TRANS_JOIN_NOSTART which is to join a running transaction if its state
-is at or below the state TRANS_STATE_COMMIT_START, otherwise return an
--ENOENT error and don't start a new transaction. So fix this to not create
-a new transaction if there's no running transaction at or below that
-state.
-
-CC: stable@vger.kernel.org # 4.14+
-Fixes: a6d155d2e363 ("Btrfs: fix deadlock between fiemap and transaction commits")
-Signed-off-by: Filipe Manana <fdmanana@suse.com>
-Signed-off-by: David Sterba <dsterba@suse.com>
----
- fs/btrfs/transaction.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
-
-diff --git a/fs/btrfs/transaction.c b/fs/btrfs/transaction.c
-index 5905c85a8a5e..5bbd288b9cb5 100644
---- a/fs/btrfs/transaction.c
-+++ b/fs/btrfs/transaction.c
-@@ -292,10 +292,11 @@ static noinline int join_transaction(struct btrfs_fs_info *fs_info,
- 	spin_unlock(&fs_info->trans_lock);
- 
- 	/*
--	 * If we are ATTACH, we just want to catch the current transaction,
--	 * and commit it. If there is no transaction, just return ENOENT.
-+	 * If we are ATTACH or TRANS_JOIN_NOSTART, we just want to catch the
-+	 * current transaction, and commit it. If there is no transaction, just
-+	 * return ENOENT.
- 	 */
--	if (type == TRANS_ATTACH)
-+	if (type == TRANS_ATTACH || type == TRANS_JOIN_NOSTART)
- 		return -ENOENT;
- 
- 	/*
--- 
-2.42.0
-
-
-From 39d6fbbd9d293ce2789f538c1a2875e5fe154865 Mon Sep 17 00:00:00 2001
-From: Josef Bacik <josef@toxicpanda.com>
-Date: Mon, 31 Jul 2023 11:13:00 -0400
-Subject: [PATCH 05/14] btrfs: set page extent mapped after read_folio in
- relocate_one_page
-
-One of the CI runs triggered the following panic
-
-  assertion failed: PagePrivate(page) && page->private, in fs/btrfs/subpage.c:229
-  ------------[ cut here ]------------
-  kernel BUG at fs/btrfs/subpage.c:229!
-  Internal error: Oops - BUG: 00000000f2000800 [#1] SMP
-  CPU: 0 PID: 923660 Comm: btrfs Not tainted 6.5.0-rc3+ #1
-  pstate: 61400005 (nZCv daif +PAN -UAO -TCO +DIT -SSBS BTYPE=--)
-  pc : btrfs_subpage_assert+0xbc/0xf0
-  lr : btrfs_subpage_assert+0xbc/0xf0
-  sp : ffff800093213720
-  x29: ffff800093213720 x28: ffff8000932138b4 x27: 000000000c280000
-  x26: 00000001b5d00000 x25: 000000000c281000 x24: 000000000c281fff
-  x23: 0000000000001000 x22: 0000000000000000 x21: ffffff42b95bf880
-  x20: ffff42b9528e0000 x19: 0000000000001000 x18: ffffffffffffffff
-  x17: 667274622f736620 x16: 6e69202c65746176 x15: 0000000000000028
-  x14: 0000000000000003 x13: 00000000002672d7 x12: 0000000000000000
-  x11: ffffcd3f0ccd9204 x10: ffffcd3f0554ae50 x9 : ffffcd3f0379528c
-  x8 : ffff800093213428 x7 : 0000000000000000 x6 : ffffcd3f091771e8
-  x5 : ffff42b97f333948 x4 : 0000000000000000 x3 : 0000000000000000
-  x2 : 0000000000000000 x1 : ffff42b9556cde80 x0 : 000000000000004f
-  Call trace:
-   btrfs_subpage_assert+0xbc/0xf0
-   btrfs_subpage_set_dirty+0x38/0xa0
-   btrfs_page_set_dirty+0x58/0x88
-   relocate_one_page+0x204/0x5f0
-   relocate_file_extent_cluster+0x11c/0x180
-   relocate_data_extent+0xd0/0xf8
-   relocate_block_group+0x3d0/0x4e8
-   btrfs_relocate_block_group+0x2d8/0x490
-   btrfs_relocate_chunk+0x54/0x1a8
-   btrfs_balance+0x7f4/0x1150
-   btrfs_ioctl+0x10f0/0x20b8
-   __arm64_sys_ioctl+0x120/0x11d8
-   invoke_syscall.constprop.0+0x80/0xd8
-   do_el0_svc+0x6c/0x158
-   el0_svc+0x50/0x1b0
-   el0t_64_sync_handler+0x120/0x130
-   el0t_64_sync+0x194/0x198
-  Code: 91098021 b0007fa0 91346000 97e9c6d2 (d4210000)
-
-This is the same problem outlined in 17b17fcd6d44 ("btrfs:
-set_page_extent_mapped after read_folio in btrfs_cont_expand") , and the
-fix is the same.  I originally looked for the same pattern elsewhere in
-our code, but mistakenly skipped over this code because I saw the page
-cache readahead before we set_page_extent_mapped, not realizing that
-this was only in the !page case, that we can still end up with a
-!uptodate page and then do the btrfs_read_folio further down.
-
-The fix here is the same as the above mentioned patch, move the
-set_page_extent_mapped call to after the btrfs_read_folio() block to
-make sure that we have the subpage blocksize stuff setup properly before
-using the page.
-
-CC: stable@vger.kernel.org # 6.1+
-Reviewed-by: Filipe Manana <fdmanana@suse.com>
-Signed-off-by: Josef Bacik <josef@toxicpanda.com>
-Signed-off-by: David Sterba <dsterba@suse.com>
----
- fs/btrfs/relocation.c | 12 +++++++++---
- 1 file changed, 9 insertions(+), 3 deletions(-)
-
-diff --git a/fs/btrfs/relocation.c b/fs/btrfs/relocation.c
-index 46c3c1d57266..5f4ff7d5b5c1 100644
---- a/fs/btrfs/relocation.c
-+++ b/fs/btrfs/relocation.c
-@@ -3006,9 +3006,6 @@ static int relocate_one_page(struct inode *inode, struct file_ra_state *ra,
- 		if (!page)
- 			return -ENOMEM;
- 	}
--	ret = set_page_extent_mapped(page);
--	if (ret < 0)
--		goto release_page;
- 
- 	if (PageReadahead(page))
- 		page_cache_async_readahead(inode->i_mapping, ra, NULL,
-@@ -3024,6 +3021,15 @@ static int relocate_one_page(struct inode *inode, struct file_ra_state *ra,
- 		}
- 	}
- 
-+	/*
-+	 * We could have lost page private when we dropped the lock to read the
-+	 * page above, make sure we set_page_extent_mapped here so we have any
-+	 * of the subpage blocksize stuff we need in place.
-+	 */
-+	ret = set_page_extent_mapped(page);
-+	if (ret < 0)
-+		goto release_page;
-+
- 	page_start = page_offset(page);
- 	page_end = page_start + PAGE_SIZE - 1;
- 
--- 
-2.42.0
-
-
-From 8a34d24147f9460c2e3be5299beb40065c7c5197 Mon Sep 17 00:00:00 2001
-From: Naohiro Aota <naohiro.aota@wdc.com>
-Date: Fri, 21 Jul 2023 16:42:14 +0900
-Subject: [PATCH 06/14] btrfs: zoned: do not zone finish data relocation block
- group
-
-When multiple writes happen at once, we may need to sacrifice a currently
-active block group to be zone finished for a new allocation. We choose a
-block group with the least free space left, and zone finish it.
-
-To do the finishing, we need to send IOs for already allocated region
-and wait for them and on-going IOs. Otherwise, these IOs fail because the
-zone is already finished at the time the IO reach a device.
-
-However, if a block group dedicated to the data relocation is zone
-finished, there is a chance that finishing it before an ongoing write IO
-reaches the device. That is because there is timing gap between an
-allocation is done (block_group->reservations == 0, as pre-allocation is
-done) and an ordered extent is created when the relocation IO starts.
-Thus, if we finish the zone between them, we can fail the IOs.
-
-We cannot simply use "fs_info->data_reloc_bg == block_group->start" to
-avoid the zone finishing. Because, the data_reloc_bg may already switch to
-a new block group, while there are still ongoing write IOs to the old
-data_reloc_bg.
-
-So, this patch reworks the BLOCK_GROUP_FLAG_ZONED_DATA_RELOC bit to
-indicate there is a data relocation allocation and/or ongoing write to the
-block group. The bit is set on allocation and cleared in end_io function of
-the last IO for the currently allocated region.
-
-To change the timing of the bit setting also solves the issue that the bit
-being left even after there is no IO going on. With the current code, if
-the data_reloc_bg switches after the last IO to the current data_reloc_bg,
-the bit is set at this timing and there is no one clearing that bit. As a
-result, that block group is kept unallocatable for anything.
-
-Fixes: 343d8a30851c ("btrfs: zoned: prevent allocation from previous data relocation BG")
-Fixes: 74e91b12b115 ("btrfs: zoned: zone finish unused block group")
-CC: stable@vger.kernel.org # 6.1+
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-Signed-off-by: Naohiro Aota <naohiro.aota@wdc.com>
-Signed-off-by: David Sterba <dsterba@suse.com>
----
- fs/btrfs/extent-tree.c | 43 ++++++++++++++++++++++--------------------
- fs/btrfs/zoned.c       | 16 +++++++++++++---
- 2 files changed, 36 insertions(+), 23 deletions(-)
-
-diff --git a/fs/btrfs/extent-tree.c b/fs/btrfs/extent-tree.c
-index f396a9afa403..e5566827da17 100644
---- a/fs/btrfs/extent-tree.c
-+++ b/fs/btrfs/extent-tree.c
-@@ -3709,7 +3709,8 @@ static int do_allocation_zoned(struct btrfs_block_group *block_group,
- 	       fs_info->data_reloc_bg == 0);
- 
- 	if (block_group->ro ||
--	    test_bit(BLOCK_GROUP_FLAG_ZONED_DATA_RELOC, &block_group->runtime_flags)) {
-+	    (!ffe_ctl->for_data_reloc &&
-+	     test_bit(BLOCK_GROUP_FLAG_ZONED_DATA_RELOC, &block_group->runtime_flags))) {
- 		ret = 1;
- 		goto out;
- 	}
-@@ -3752,8 +3753,26 @@ static int do_allocation_zoned(struct btrfs_block_group *block_group,
- 	if (ffe_ctl->for_treelog && !fs_info->treelog_bg)
- 		fs_info->treelog_bg = block_group->start;
- 
--	if (ffe_ctl->for_data_reloc && !fs_info->data_reloc_bg)
--		fs_info->data_reloc_bg = block_group->start;
-+	if (ffe_ctl->for_data_reloc) {
-+		if (!fs_info->data_reloc_bg)
-+			fs_info->data_reloc_bg = block_group->start;
-+		/*
-+		 * Do not allow allocations from this block group, unless it is
-+		 * for data relocation. Compared to increasing the ->ro, setting
-+		 * the ->zoned_data_reloc_ongoing flag still allows nocow
-+		 * writers to come in. See btrfs_inc_nocow_writers().
-+		 *
-+		 * We need to disable an allocation to avoid an allocation of
-+		 * regular (non-relocation data) extent. With mix of relocation
-+		 * extents and regular extents, we can dispatch WRITE commands
-+		 * (for relocation extents) and ZONE APPEND commands (for
-+		 * regular extents) at the same time to the same zone, which
-+		 * easily break the write pointer.
-+		 *
-+		 * Also, this flag avoids this block group to be zone finished.
-+		 */
-+		set_bit(BLOCK_GROUP_FLAG_ZONED_DATA_RELOC, &block_group->runtime_flags);
-+	}
- 
- 	ffe_ctl->found_offset = start + block_group->alloc_offset;
- 	block_group->alloc_offset += num_bytes;
-@@ -3771,24 +3790,8 @@ static int do_allocation_zoned(struct btrfs_block_group *block_group,
- out:
- 	if (ret && ffe_ctl->for_treelog)
- 		fs_info->treelog_bg = 0;
--	if (ret && ffe_ctl->for_data_reloc &&
--	    fs_info->data_reloc_bg == block_group->start) {
--		/*
--		 * Do not allow further allocations from this block group.
--		 * Compared to increasing the ->ro, setting the
--		 * ->zoned_data_reloc_ongoing flag still allows nocow
--		 *  writers to come in. See btrfs_inc_nocow_writers().
--		 *
--		 * We need to disable an allocation to avoid an allocation of
--		 * regular (non-relocation data) extent. With mix of relocation
--		 * extents and regular extents, we can dispatch WRITE commands
--		 * (for relocation extents) and ZONE APPEND commands (for
--		 * regular extents) at the same time to the same zone, which
--		 * easily break the write pointer.
--		 */
--		set_bit(BLOCK_GROUP_FLAG_ZONED_DATA_RELOC, &block_group->runtime_flags);
-+	if (ret && ffe_ctl->for_data_reloc)
- 		fs_info->data_reloc_bg = 0;
--	}
- 	spin_unlock(&fs_info->relocation_bg_lock);
- 	spin_unlock(&fs_info->treelog_bg_lock);
- 	spin_unlock(&block_group->lock);
-diff --git a/fs/btrfs/zoned.c b/fs/btrfs/zoned.c
-index 249030135001..d9e6df2da272 100644
---- a/fs/btrfs/zoned.c
-+++ b/fs/btrfs/zoned.c
-@@ -2017,6 +2017,10 @@ static int do_zone_finish(struct btrfs_block_group *block_group, bool fully_writ
- 	 * and block_group->meta_write_pointer for metadata.
- 	 */
- 	if (!fully_written) {
-+		if (test_bit(BLOCK_GROUP_FLAG_ZONED_DATA_RELOC, &block_group->runtime_flags)) {
-+			spin_unlock(&block_group->lock);
-+			return -EAGAIN;
-+		}
- 		spin_unlock(&block_group->lock);
- 
- 		ret = btrfs_inc_block_group_ro(block_group, false);
-@@ -2045,7 +2049,9 @@ static int do_zone_finish(struct btrfs_block_group *block_group, bool fully_writ
- 			return 0;
- 		}
- 
--		if (block_group->reserved) {
-+		if (block_group->reserved ||
-+		    test_bit(BLOCK_GROUP_FLAG_ZONED_DATA_RELOC,
-+			     &block_group->runtime_flags)) {
- 			spin_unlock(&block_group->lock);
- 			btrfs_dec_block_group_ro(block_group);
- 			return -EAGAIN;
-@@ -2276,7 +2282,10 @@ void btrfs_zoned_release_data_reloc_bg(struct btrfs_fs_info *fs_info, u64 logica
- 
- 	/* All relocation extents are written. */
- 	if (block_group->start + block_group->alloc_offset == logical + length) {
--		/* Now, release this block group for further allocations. */
-+		/*
-+		 * Now, release this block group for further allocations and
-+		 * zone finish.
-+		 */
- 		clear_bit(BLOCK_GROUP_FLAG_ZONED_DATA_RELOC,
- 			  &block_group->runtime_flags);
- 	}
-@@ -2300,7 +2309,8 @@ int btrfs_zone_finish_one_bg(struct btrfs_fs_info *fs_info)
- 
- 		spin_lock(&block_group->lock);
- 		if (block_group->reserved || block_group->alloc_offset == 0 ||
--		    (block_group->flags & BTRFS_BLOCK_GROUP_SYSTEM)) {
-+		    (block_group->flags & BTRFS_BLOCK_GROUP_SYSTEM) ||
-+		    test_bit(BLOCK_GROUP_FLAG_ZONED_DATA_RELOC, &block_group->runtime_flags)) {
- 			spin_unlock(&block_group->lock);
- 			continue;
- 		}
--- 
-2.42.0
-
-
-From 229fbb3dd5162af9904478cdbcb10a0984ad3b50 Mon Sep 17 00:00:00 2001
-From: Anand Jain <anand.jain@oracle.com>
-Date: Mon, 31 Jul 2023 19:16:32 +0800
-Subject: [PATCH 07/14] btrfs: add a helper to read the superblock
- metadata_uuid
-
-In some cases, we need to read the FSID from the superblock when the
-metadata_uuid is not set, and otherwise, read the metadata_uuid. So,
-add a helper.
-
-Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-Tested-by: Guilherme G. Piccoli <gpiccoli@igalia.com>
-Signed-off-by: Anand Jain <anand.jain@oracle.com>
-Reviewed-by: David Sterba <dsterba@suse.com>
-Signed-off-by: David Sterba <dsterba@suse.com>
----
- fs/btrfs/volumes.c | 8 ++++++++
- fs/btrfs/volumes.h | 1 +
- 2 files changed, 9 insertions(+)
-
-diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
-index 6aa9bf3661ac..51070c0d4141 100644
---- a/fs/btrfs/volumes.c
-+++ b/fs/btrfs/volumes.c
-@@ -681,6 +681,14 @@ static int btrfs_open_one_device(struct btrfs_fs_devices *fs_devices,
- 	return -EINVAL;
- }
- 
-+u8 *btrfs_sb_fsid_ptr(struct btrfs_super_block *sb)
-+{
-+	bool has_metadata_uuid = (btrfs_super_incompat_flags(sb) &
-+				  BTRFS_FEATURE_INCOMPAT_METADATA_UUID);
-+
-+	return has_metadata_uuid ? sb->metadata_uuid : sb->fsid;
-+}
-+
- /*
-  * Handle scanned device having its CHANGING_FSID_V2 flag set and the fs_devices
-  * being created with a disk that has already completed its fsid change. Such
-diff --git a/fs/btrfs/volumes.h b/fs/btrfs/volumes.h
-index b8c51f16ba86..0f87057bb575 100644
---- a/fs/btrfs/volumes.h
-+++ b/fs/btrfs/volumes.h
-@@ -749,5 +749,6 @@ int btrfs_verify_dev_extents(struct btrfs_fs_info *fs_info);
- bool btrfs_repair_one_zone(struct btrfs_fs_info *fs_info, u64 logical);
- 
- bool btrfs_pinned_by_swapfile(struct btrfs_fs_info *fs_info, void *ptr);
-+u8 *btrfs_sb_fsid_ptr(struct btrfs_super_block *sb);
- 
- #endif
--- 
-2.42.0
-
-
-From 6826ab2d8e4925e5d08f7d207176e7aff806570f Mon Sep 17 00:00:00 2001
+From 221956d7352ea80cb279292bdabaa0ecc07e01a3 Mon Sep 17 00:00:00 2001
 From: Anand Jain <anand.jain@oracle.com>
 Date: Mon, 31 Jul 2023 19:16:33 +0800
-Subject: [PATCH 08/14] btrfs: simplify memcpy either of metadata_uuid or fsid
+Subject: [PATCH 01/10] btrfs: simplify memcpy either of metadata_uuid or fsid
 
 There is a helper which provides either metadata_uuid or fsid as per
 METADATA_UUID flag. So use it.
@@ -676,132 +41,10 @@ index 51070c0d4141..e6b25bbd156e 100644
 2.42.0
 
 
-From 7db4f21368579019ff63e539290a8bfa82523347 Mon Sep 17 00:00:00 2001
-From: Anand Jain <anand.jain@oracle.com>
-Date: Mon, 31 Jul 2023 19:16:34 +0800
-Subject: [PATCH 09/14] btrfs: use the correct superblock to compare fsid in
- btrfs_validate_super
-
-The function btrfs_validate_super() should verify the fsid in the provided
-superblock argument. Because, all its callers expect it to do that.
-
-Such as in the following stack:
-
-   write_all_supers()
-       sb = fs_info->super_for_commit;
-       btrfs_validate_write_super(.., sb)
-         btrfs_validate_super(.., sb, ..)
-
-   scrub_one_super()
-	btrfs_validate_super(.., sb, ..)
-
-And
-   check_dev_super()
-	btrfs_validate_super(.., sb, ..)
-
-However, it currently verifies the fs_info::super_copy::fsid instead,
-which is not correct.  Fix this using the correct fsid in the superblock
-argument.
-
-CC: stable@vger.kernel.org # 5.4+
-Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-Tested-by: Guilherme G. Piccoli <gpiccoli@igalia.com>
-Signed-off-by: Anand Jain <anand.jain@oracle.com>
-Reviewed-by: David Sterba <dsterba@suse.com>
-Signed-off-by: David Sterba <dsterba@suse.com>
----
- fs/btrfs/disk-io.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
-
-diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
-index a9a2c5446c18..4494883a19ab 100644
---- a/fs/btrfs/disk-io.c
-+++ b/fs/btrfs/disk-io.c
-@@ -2384,11 +2384,10 @@ int btrfs_validate_super(struct btrfs_fs_info *fs_info,
- 		ret = -EINVAL;
- 	}
- 
--	if (memcmp(fs_info->fs_devices->fsid, fs_info->super_copy->fsid,
--		   BTRFS_FSID_SIZE)) {
-+	if (memcmp(fs_info->fs_devices->fsid, sb->fsid, BTRFS_FSID_SIZE) != 0) {
- 		btrfs_err(fs_info,
- 		"superblock fsid doesn't match fsid of fs_devices: %pU != %pU",
--			fs_info->super_copy->fsid, fs_info->fs_devices->fsid);
-+			  sb->fsid, fs_info->fs_devices->fsid);
- 		ret = -EINVAL;
- 	}
- 
--- 
-2.42.0
-
-
-From 496c93f72d8196d1030d2c55508e4a4369fe5f56 Mon Sep 17 00:00:00 2001
-From: Anand Jain <anand.jain@oracle.com>
-Date: Mon, 31 Jul 2023 19:16:35 +0800
-Subject: [PATCH 10/14] btrfs: compare the correct fsid/metadata_uuid in
- btrfs_validate_super
-
-The function btrfs_validate_super() should verify the metadata_uuid in
-the provided superblock argument. Because, all its callers expect it to
-do that.
-
-Such as in the following stacks:
-
-  write_all_supers()
-   sb = fs_info->super_for_commit;
-   btrfs_validate_write_super(.., sb)
-     btrfs_validate_super(.., sb, ..)
-
-  scrub_one_super()
-	btrfs_validate_super(.., sb, ..)
-
-And
-   check_dev_super()
-	btrfs_validate_super(.., sb, ..)
-
-However, it currently verifies the fs_info::super_copy::metadata_uuid
-instead.  Fix this using the correct metadata_uuid in the superblock
-argument.
-
-CC: stable@vger.kernel.org # 5.4+
-Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-Tested-by: Guilherme G. Piccoli <gpiccoli@igalia.com>
-Signed-off-by: Anand Jain <anand.jain@oracle.com>
-Reviewed-by: David Sterba <dsterba@suse.com>
-Signed-off-by: David Sterba <dsterba@suse.com>
----
- fs/btrfs/disk-io.c | 8 +++-----
- 1 file changed, 3 insertions(+), 5 deletions(-)
-
-diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
-index 4494883a19ab..0593f8f458a6 100644
---- a/fs/btrfs/disk-io.c
-+++ b/fs/btrfs/disk-io.c
-@@ -2391,13 +2391,11 @@ int btrfs_validate_super(struct btrfs_fs_info *fs_info,
- 		ret = -EINVAL;
- 	}
- 
--	if (btrfs_fs_incompat(fs_info, METADATA_UUID) &&
--	    memcmp(fs_info->fs_devices->metadata_uuid,
--		   fs_info->super_copy->metadata_uuid, BTRFS_FSID_SIZE)) {
-+	if (memcmp(fs_info->fs_devices->metadata_uuid, btrfs_sb_fsid_ptr(sb),
-+		   BTRFS_FSID_SIZE) != 0) {
- 		btrfs_err(fs_info,
- "superblock metadata_uuid doesn't match metadata uuid of fs_devices: %pU != %pU",
--			fs_info->super_copy->metadata_uuid,
--			fs_info->fs_devices->metadata_uuid);
-+			  btrfs_sb_fsid_ptr(sb), fs_info->fs_devices->metadata_uuid);
- 		ret = -EINVAL;
- 	}
- 
--- 
-2.42.0
-
-
-From e4f32565c541190465a19c4f7858f1716f3bcc90 Mon Sep 17 00:00:00 2001
+From 5a19cede7b061ec6e2a4e9f6055d04b33988b788 Mon Sep 17 00:00:00 2001
 From: Anand Jain <anand.jain@oracle.com>
 Date: Mon, 31 Jul 2023 19:16:36 +0800
-Subject: [PATCH 11/14] btrfs: drop redundant check to use
+Subject: [PATCH 02/10] btrfs: drop redundant check to use
  fs_devices::metadata_uuid
 
 fs_devices::metadata_uuid value is already updated based on the
@@ -818,7 +61,7 @@ Signed-off-by: David Sterba <dsterba@suse.com>
  1 file changed, 5 insertions(+), 10 deletions(-)
 
 diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
-index 0593f8f458a6..3fab29e76e67 100644
+index 681594df7334..3b79167eea74 100644
 --- a/fs/btrfs/disk-io.c
 +++ b/fs/btrfs/disk-io.c
 @@ -313,21 +313,16 @@ static bool check_tree_block_fsid(struct extent_buffer *eb)
@@ -852,735 +95,729 @@ index 0593f8f458a6..3fab29e76e67 100644
 2.42.0
 
 
-From 167cf94b66e5042ff32c47bb66c987aa6ca919e7 Mon Sep 17 00:00:00 2001
-From: Qu Wenruo <wqu@suse.com>
-Date: Thu, 3 Aug 2023 14:33:29 +0800
-Subject: [PATCH 12/14] btrfs: scrub: avoid unnecessary extent tree search
- preparing stripes
+From 8b667d79a773424f40cd767b4d16739ea766a82f Mon Sep 17 00:00:00 2001
+From: Filipe Manana <fdmanana@suse.com>
+Date: Mon, 28 Aug 2023 09:06:42 +0100
+Subject: [PATCH 03/10] btrfs: improve error message after failure to add
+ delayed dir index item
 
-Since commit e02ee89baa66 ("btrfs: scrub: switch scrub_simple_mirror()
-to scrub_stripe infrastructure"), scrub no longer re-use the same path
-for extent tree search.
+If we fail to add a delayed dir index item because there's already another
+item with the same index number, we print an error message (and then BUG).
+However that message isn't very helpful to debug anything because we don't
+know what's the index number and what are the values of index counters in
+the inode and its delayed inode (index_cnt fields of struct btrfs_inode
+and struct btrfs_delayed_node).
 
-This can lead to unnecessary extent tree search, especially for the new
-stripe based scrub, as we have way more stripes to prepare.
+So update the error message to include the index number and counters.
 
-This patch would re-introduce a shared path for extent tree search, and
-properly release it when the block group is scrubbed.
+We actually had a recent case where this issue was hit by a syzbot report
+(see the link below).
 
-This change alone can improve scrub performance slightly by reducing the
-time spend preparing the stripe thus improving the queue depth.
-
-Before (with regression):
-
- Device         r/s      rkB/s   rrqm/s  %rrqm r_await rareq-sz aqu-sz  %util
- nvme0n1p3 15578.00  993616.00     5.00   0.03    0.09    63.78   1.32 100.00
-
-After (with this patch):
-
- nvme0n1p3 15875.00 1013328.00    12.00   0.08    0.08    63.83   1.35 100.00
-
-Fixes: e02ee89baa66 ("btrfs: scrub: switch scrub_simple_mirror() to scrub_stripe infrastructure")
-CC: stable@vger.kernel.org # 6.4+
-Signed-off-by: Qu Wenruo <wqu@suse.com>
+Link: https://lore.kernel.org/linux-btrfs/00000000000036e1290603e097e0@google.com/
+Reviewed-by: Qu Wenruo <wqu@suse.com>
+Signed-off-by: Filipe Manana <fdmanana@suse.com>
 Reviewed-by: David Sterba <dsterba@suse.com>
 Signed-off-by: David Sterba <dsterba@suse.com>
 ---
- fs/btrfs/scrub.c | 41 +++++++++++++++++++++++++++++------------
- 1 file changed, 29 insertions(+), 12 deletions(-)
+ fs/btrfs/delayed-inode.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
-diff --git a/fs/btrfs/scrub.c b/fs/btrfs/scrub.c
-index 7289f5bff397..98800506f574 100644
---- a/fs/btrfs/scrub.c
-+++ b/fs/btrfs/scrub.c
-@@ -175,6 +175,7 @@ struct scrub_ctx {
- 	struct scrub_stripe	stripes[SCRUB_STRIPES_PER_SCTX];
- 	struct scrub_stripe	*raid56_data_stripes;
- 	struct btrfs_fs_info	*fs_info;
-+	struct btrfs_path	extent_path;
- 	int			first_free;
- 	int			cur_stripe;
- 	atomic_t		cancel_req;
-@@ -339,6 +340,8 @@ static noinline_for_stack struct scrub_ctx *scrub_setup_ctx(
- 	refcount_set(&sctx->refs, 1);
- 	sctx->is_dev_replace = is_dev_replace;
- 	sctx->fs_info = fs_info;
-+	sctx->extent_path.search_commit_root = 1;
-+	sctx->extent_path.skip_locking = 1;
- 	for (i = 0; i < SCRUB_STRIPES_PER_SCTX; i++) {
- 		int ret;
- 
-@@ -1468,6 +1471,7 @@ static void scrub_stripe_reset_bitmaps(struct scrub_stripe *stripe)
-  * Return <0 for error.
-  */
- static int scrub_find_fill_first_stripe(struct btrfs_block_group *bg,
-+					struct btrfs_path *extent_path,
- 					struct btrfs_device *dev, u64 physical,
- 					int mirror_num, u64 logical_start,
- 					u32 logical_len,
-@@ -1477,7 +1481,6 @@ static int scrub_find_fill_first_stripe(struct btrfs_block_group *bg,
- 	struct btrfs_root *extent_root = btrfs_extent_root(fs_info, bg->start);
- 	struct btrfs_root *csum_root = btrfs_csum_root(fs_info, bg->start);
- 	const u64 logical_end = logical_start + logical_len;
--	struct btrfs_path path = { 0 };
- 	u64 cur_logical = logical_start;
- 	u64 stripe_end;
- 	u64 extent_start;
-@@ -1493,14 +1496,13 @@ static int scrub_find_fill_first_stripe(struct btrfs_block_group *bg,
- 	/* The range must be inside the bg. */
- 	ASSERT(logical_start >= bg->start && logical_end <= bg->start + bg->length);
- 
--	path.search_commit_root = 1;
--	path.skip_locking = 1;
--
--	ret = find_first_extent_item(extent_root, &path, logical_start, logical_len);
-+	ret = find_first_extent_item(extent_root, extent_path, logical_start,
-+				     logical_len);
- 	/* Either error or not found. */
- 	if (ret)
- 		goto out;
--	get_extent_info(&path, &extent_start, &extent_len, &extent_flags, &extent_gen);
-+	get_extent_info(extent_path, &extent_start, &extent_len, &extent_flags,
-+			&extent_gen);
- 	if (extent_flags & BTRFS_EXTENT_FLAG_TREE_BLOCK)
- 		stripe->nr_meta_extents++;
- 	if (extent_flags & BTRFS_EXTENT_FLAG_DATA)
-@@ -1528,7 +1530,7 @@ static int scrub_find_fill_first_stripe(struct btrfs_block_group *bg,
- 
- 	/* Fill the extent info for the remaining sectors. */
- 	while (cur_logical <= stripe_end) {
--		ret = find_first_extent_item(extent_root, &path, cur_logical,
-+		ret = find_first_extent_item(extent_root, extent_path, cur_logical,
- 					     stripe_end - cur_logical + 1);
- 		if (ret < 0)
- 			goto out;
-@@ -1536,7 +1538,7 @@ static int scrub_find_fill_first_stripe(struct btrfs_block_group *bg,
- 			ret = 0;
- 			break;
- 		}
--		get_extent_info(&path, &extent_start, &extent_len,
-+		get_extent_info(extent_path, &extent_start, &extent_len,
- 				&extent_flags, &extent_gen);
- 		if (extent_flags & BTRFS_EXTENT_FLAG_TREE_BLOCK)
- 			stripe->nr_meta_extents++;
-@@ -1576,7 +1578,6 @@ static int scrub_find_fill_first_stripe(struct btrfs_block_group *bg,
+diff --git a/fs/btrfs/delayed-inode.c b/fs/btrfs/delayed-inode.c
+index 0f147240ce9b..1a050e48e0e5 100644
+--- a/fs/btrfs/delayed-inode.c
++++ b/fs/btrfs/delayed-inode.c
+@@ -1511,9 +1511,10 @@ int btrfs_insert_delayed_dir_index(struct btrfs_trans_handle *trans,
+ 	ret = __btrfs_add_delayed_item(delayed_node, delayed_item);
+ 	if (unlikely(ret)) {
+ 		btrfs_err(trans->fs_info,
+-			  "err add delayed dir index item(name: %.*s) into the insertion tree of the delayed node(root id: %llu, inode id: %llu, errno: %d)",
+-			  name_len, name, delayed_node->root->root_key.objectid,
+-			  delayed_node->inode_id, ret);
++"error adding delayed dir index item, name: %.*s, index: %llu, root: %llu, dir: %llu, dir->index_cnt: %llu, delayed_node->index_cnt: %llu, error: %d",
++			  name_len, name, index, btrfs_root_id(delayed_node->root),
++			  delayed_node->inode_id, dir->index_cnt,
++			  delayed_node->index_cnt, ret);
+ 		BUG();
  	}
- 	set_bit(SCRUB_STRIPE_FLAG_INITIALIZED, &stripe->state);
- out:
--	btrfs_release_path(&path);
- 	return ret;
- }
- 
-@@ -1766,8 +1767,9 @@ static int queue_scrub_stripe(struct scrub_ctx *sctx, struct btrfs_block_group *
- 
- 	/* We can queue one stripe using the remaining slot. */
- 	scrub_reset_stripe(stripe);
--	ret = scrub_find_fill_first_stripe(bg, dev, physical, mirror_num,
--					   logical, length, stripe);
-+	ret = scrub_find_fill_first_stripe(bg, &sctx->extent_path, dev,
-+					   physical, mirror_num, logical,
-+					   length, stripe);
- 	/* Either >0 as no more extents or <0 for error. */
- 	if (ret)
- 		return ret;
-@@ -1785,6 +1787,7 @@ static int scrub_raid56_parity_stripe(struct scrub_ctx *sctx,
- 	struct btrfs_fs_info *fs_info = sctx->fs_info;
- 	struct btrfs_raid_bio *rbio;
- 	struct btrfs_io_context *bioc = NULL;
-+	struct btrfs_path extent_path = { 0 };
- 	struct bio *bio;
- 	struct scrub_stripe *stripe;
- 	bool all_empty = true;
-@@ -1795,6 +1798,14 @@ static int scrub_raid56_parity_stripe(struct scrub_ctx *sctx,
- 
- 	ASSERT(sctx->raid56_data_stripes);
- 
-+	/*
-+	 * For data stripe search, we cannot re-use the same extent path, as
-+	 * the data stripe bytenr may be smaller than previous extent.  Thus we
-+	 * have to use our own extent path.
-+	 */
-+	extent_path.search_commit_root = 1;
-+	extent_path.skip_locking = 1;
-+
- 	for (int i = 0; i < data_stripes; i++) {
- 		int stripe_index;
- 		int rot;
-@@ -1809,7 +1820,7 @@ static int scrub_raid56_parity_stripe(struct scrub_ctx *sctx,
- 
- 		scrub_reset_stripe(stripe);
- 		set_bit(SCRUB_STRIPE_FLAG_NO_REPORT, &stripe->state);
--		ret = scrub_find_fill_first_stripe(bg,
-+		ret = scrub_find_fill_first_stripe(bg, &extent_path,
- 				map->stripes[stripe_index].dev, physical, 1,
- 				full_stripe_start + btrfs_stripe_nr_to_offset(i),
- 				BTRFS_STRIPE_LEN, stripe);
-@@ -1937,6 +1948,7 @@ static int scrub_raid56_parity_stripe(struct scrub_ctx *sctx,
- 	bio_put(bio);
- 	btrfs_bio_counter_dec(fs_info);
- 
-+	btrfs_release_path(&extent_path);
- out:
- 	return ret;
- }
-@@ -2109,6 +2121,9 @@ static noinline_for_stack int scrub_stripe(struct scrub_ctx *sctx,
- 	u64 stripe_logical;
- 	int stop_loop = 0;
- 
-+	/* Extent_path should be released by now. */
-+	ASSERT(sctx->extent_path.nodes[0] == NULL);
-+
- 	scrub_blocked_if_needed(fs_info);
- 
- 	if (sctx->is_dev_replace &&
-@@ -2227,6 +2242,8 @@ static noinline_for_stack int scrub_stripe(struct scrub_ctx *sctx,
- 	ret2 = flush_scrub_stripes(sctx);
- 	if (!ret)
- 		ret = ret2;
-+	btrfs_release_path(&sctx->extent_path);
-+
- 	if (sctx->raid56_data_stripes) {
- 		for (int i = 0; i < nr_data_stripes(map); i++)
- 			release_scrub_stripe(&sctx->raid56_data_stripes[i]);
+ 	mutex_unlock(&delayed_node->mutex);
 -- 
 2.42.0
 
 
-From bdcbfed044fa552cb12e8d847effa1de2121dd31 Mon Sep 17 00:00:00 2001
-From: Qu Wenruo <wqu@suse.com>
-Date: Thu, 3 Aug 2023 14:33:30 +0800
-Subject: [PATCH 13/14] btrfs: scrub: avoid unnecessary csum tree search
- preparing stripes
+From eee5b43a888d80f0886e7af653c247d4ccf433c2 Mon Sep 17 00:00:00 2001
+From: Filipe Manana <fdmanana@suse.com>
+Date: Mon, 28 Aug 2023 09:06:43 +0100
+Subject: [PATCH 04/10] btrfs: remove BUG() after failure to insert delayed dir
+ index item
 
-One of the bottleneck of the new scrub code is the extra csum tree
-search.
+Instead of calling BUG() when we fail to insert a delayed dir index item
+into the delayed node's tree, we can just release all the resources we
+have allocated/acquired before and return the error to the caller. This is
+fine because all existing call chains undo anything they have done before
+calling btrfs_insert_delayed_dir_index() or BUG_ON (when creating pending
+snapshots in the transaction commit path).
 
-The old code would only do the csum tree search for each scrub bio,
-which can be as large as 512KiB, thus they can afford to allocate a new
-path each time.
+So remove the BUG() call and do proper error handling.
 
-But the new scrub code is doing csum tree search for each stripe, which
-is only 64KiB, this means we'd better re-use the same csum path during
-each search.
+This relates to a syzbot report linked below, but does not fix it because
+it only prevents hitting a BUG(), it does not fix the issue where somehow
+we attempt to use twice the same index number for different index items.
 
-This patch would introduce a per-sctx path for csum tree search, as we
-don't need to re-allocate the path every time we need to do a csum tree
-search.
-
-With this change we can further improve the queue depth and improve the
-scrub read performance:
-
-Before (with regression and cached extent tree path):
-
- Device         r/s      rkB/s   rrqm/s  %rrqm r_await rareq-sz aqu-sz  %util
- nvme0n1p3 15875.00 1013328.00    12.00   0.08    0.08    63.83   1.35 100.00
-
-After (with both cached extent/csum tree path):
-
- nvme0n1p3 17759.00 1133280.00    10.00   0.06    0.08    63.81   1.50 100.00
-
-Fixes: e02ee89baa66 ("btrfs: scrub: switch scrub_simple_mirror() to scrub_stripe infrastructure")
-CC: stable@vger.kernel.org # 6.4+
-Signed-off-by: Qu Wenruo <wqu@suse.com>
+Link: https://lore.kernel.org/linux-btrfs/00000000000036e1290603e097e0@google.com/
+CC: stable@vger.kernel.org # 5.4+
+Reviewed-by: Qu Wenruo <wqu@suse.com>
+Signed-off-by: Filipe Manana <fdmanana@suse.com>
 Reviewed-by: David Sterba <dsterba@suse.com>
 Signed-off-by: David Sterba <dsterba@suse.com>
 ---
- fs/btrfs/file-item.c | 34 ++++++++++++++++++++++------------
- fs/btrfs/file-item.h |  6 +++---
- fs/btrfs/raid56.c    |  4 ++--
- fs/btrfs/scrub.c     | 29 +++++++++++++++++++----------
- 4 files changed, 46 insertions(+), 27 deletions(-)
+ fs/btrfs/delayed-inode.c | 74 +++++++++++++++++++++++++---------------
+ 1 file changed, 47 insertions(+), 27 deletions(-)
 
-diff --git a/fs/btrfs/file-item.c b/fs/btrfs/file-item.c
-index 696bf695d8eb..1ce5dd154499 100644
---- a/fs/btrfs/file-item.c
-+++ b/fs/btrfs/file-item.c
-@@ -597,29 +597,37 @@ int btrfs_lookup_csums_list(struct btrfs_root *root, u64 start, u64 end,
-  * Each bit represents a sector. Thus caller should ensure @csum_buf passed
-  * in is large enough to contain all csums.
-  */
--int btrfs_lookup_csums_bitmap(struct btrfs_root *root, u64 start, u64 end,
--			      u8 *csum_buf, unsigned long *csum_bitmap,
--			      bool search_commit)
-+int btrfs_lookup_csums_bitmap(struct btrfs_root *root, struct btrfs_path *path,
-+			      u64 start, u64 end, u8 *csum_buf,
-+			      unsigned long *csum_bitmap)
- {
- 	struct btrfs_fs_info *fs_info = root->fs_info;
- 	struct btrfs_key key;
--	struct btrfs_path *path;
- 	struct extent_buffer *leaf;
- 	struct btrfs_csum_item *item;
- 	const u64 orig_start = start;
-+	bool free_path = false;
- 	int ret;
- 
- 	ASSERT(IS_ALIGNED(start, fs_info->sectorsize) &&
- 	       IS_ALIGNED(end + 1, fs_info->sectorsize));
- 
--	path = btrfs_alloc_path();
--	if (!path)
--		return -ENOMEM;
-+	if (!path) {
-+		path = btrfs_alloc_path();
-+		if (!path)
-+			return -ENOMEM;
-+		free_path = true;
-+	}
- 
--	if (search_commit) {
--		path->skip_locking = 1;
--		path->reada = READA_FORWARD;
--		path->search_commit_root = 1;
-+	/* Check if we can reuse the previous path. */
-+	if (path->nodes[0]) {
-+		btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
-+
-+		if (key.objectid == BTRFS_EXTENT_CSUM_OBJECTID &&
-+		    key.type == BTRFS_EXTENT_CSUM_KEY &&
-+		    key.offset <= start)
-+			goto search_forward;
-+		btrfs_release_path(path);
- 	}
- 
- 	key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
-@@ -656,6 +664,7 @@ int btrfs_lookup_csums_bitmap(struct btrfs_root *root, u64 start, u64 end,
- 		}
- 	}
- 
-+search_forward:
- 	while (start <= end) {
- 		u64 csum_end;
- 
-@@ -712,7 +721,8 @@ int btrfs_lookup_csums_bitmap(struct btrfs_root *root, u64 start, u64 end,
- 	}
- 	ret = 0;
- fail:
--	btrfs_free_path(path);
-+	if (free_path)
-+		btrfs_free_path(path);
- 	return ret;
+diff --git a/fs/btrfs/delayed-inode.c b/fs/btrfs/delayed-inode.c
+index 1a050e48e0e5..b5f684cb4e74 100644
+--- a/fs/btrfs/delayed-inode.c
++++ b/fs/btrfs/delayed-inode.c
+@@ -1426,7 +1426,29 @@ void btrfs_balance_delayed_items(struct btrfs_fs_info *fs_info)
+ 	btrfs_wq_run_delayed_node(delayed_root, fs_info, BTRFS_DELAYED_BATCH);
  }
  
-diff --git a/fs/btrfs/file-item.h b/fs/btrfs/file-item.h
-index 4ec669b69008..04bd2d34efb1 100644
---- a/fs/btrfs/file-item.h
-+++ b/fs/btrfs/file-item.h
-@@ -57,9 +57,9 @@ int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
- int btrfs_lookup_csums_list(struct btrfs_root *root, u64 start, u64 end,
- 			    struct list_head *list, int search_commit,
- 			    bool nowait);
--int btrfs_lookup_csums_bitmap(struct btrfs_root *root, u64 start, u64 end,
--			      u8 *csum_buf, unsigned long *csum_bitmap,
--			      bool search_commit);
-+int btrfs_lookup_csums_bitmap(struct btrfs_root *root, struct btrfs_path *path,
-+			      u64 start, u64 end, u8 *csum_buf,
-+			      unsigned long *csum_bitmap);
- void btrfs_extent_item_to_extent_map(struct btrfs_inode *inode,
- 				     const struct btrfs_path *path,
- 				     struct btrfs_file_extent_item *fi,
-diff --git a/fs/btrfs/raid56.c b/fs/btrfs/raid56.c
-index 0249ea52bb80..3e388e0431e3 100644
---- a/fs/btrfs/raid56.c
-+++ b/fs/btrfs/raid56.c
-@@ -2112,8 +2112,8 @@ static void fill_data_csums(struct btrfs_raid_bio *rbio)
- 		goto error;
- 	}
- 
--	ret = btrfs_lookup_csums_bitmap(csum_root, start, start + len - 1,
--					rbio->csum_buf, rbio->csum_bitmap, false);
-+	ret = btrfs_lookup_csums_bitmap(csum_root, NULL, start, start + len - 1,
-+					rbio->csum_buf, rbio->csum_bitmap);
- 	if (ret < 0)
- 		goto error;
- 	if (bitmap_empty(rbio->csum_bitmap, len >> fs_info->sectorsize_bits))
-diff --git a/fs/btrfs/scrub.c b/fs/btrfs/scrub.c
-index 98800506f574..281b7783e64f 100644
---- a/fs/btrfs/scrub.c
-+++ b/fs/btrfs/scrub.c
-@@ -176,6 +176,7 @@ struct scrub_ctx {
- 	struct scrub_stripe	*raid56_data_stripes;
- 	struct btrfs_fs_info	*fs_info;
- 	struct btrfs_path	extent_path;
-+	struct btrfs_path	csum_path;
- 	int			first_free;
- 	int			cur_stripe;
- 	atomic_t		cancel_req;
-@@ -342,6 +343,8 @@ static noinline_for_stack struct scrub_ctx *scrub_setup_ctx(
- 	sctx->fs_info = fs_info;
- 	sctx->extent_path.search_commit_root = 1;
- 	sctx->extent_path.skip_locking = 1;
-+	sctx->csum_path.search_commit_root = 1;
-+	sctx->csum_path.skip_locking = 1;
- 	for (i = 0; i < SCRUB_STRIPES_PER_SCTX; i++) {
- 		int ret;
- 
-@@ -1472,6 +1475,7 @@ static void scrub_stripe_reset_bitmaps(struct scrub_stripe *stripe)
-  */
- static int scrub_find_fill_first_stripe(struct btrfs_block_group *bg,
- 					struct btrfs_path *extent_path,
-+					struct btrfs_path *csum_path,
- 					struct btrfs_device *dev, u64 physical,
- 					int mirror_num, u64 logical_start,
- 					u32 logical_len,
-@@ -1563,9 +1567,9 @@ static int scrub_find_fill_first_stripe(struct btrfs_block_group *bg,
- 		 */
- 		ASSERT(BITS_PER_LONG >= BTRFS_STRIPE_LEN >> fs_info->sectorsize_bits);
- 
--		ret = btrfs_lookup_csums_bitmap(csum_root, stripe->logical,
--						stripe_end, stripe->csums,
--						&csum_bitmap, true);
-+		ret = btrfs_lookup_csums_bitmap(csum_root, csum_path,
-+						stripe->logical, stripe_end,
-+						stripe->csums, &csum_bitmap);
- 		if (ret < 0)
- 			goto out;
- 		if (ret > 0)
-@@ -1767,9 +1771,9 @@ static int queue_scrub_stripe(struct scrub_ctx *sctx, struct btrfs_block_group *
- 
- 	/* We can queue one stripe using the remaining slot. */
- 	scrub_reset_stripe(stripe);
--	ret = scrub_find_fill_first_stripe(bg, &sctx->extent_path, dev,
--					   physical, mirror_num, logical,
--					   length, stripe);
-+	ret = scrub_find_fill_first_stripe(bg, &sctx->extent_path,
-+					   &sctx->csum_path, dev, physical,
-+					   mirror_num, logical, length, stripe);
- 	/* Either >0 as no more extents or <0 for error. */
- 	if (ret)
- 		return ret;
-@@ -1788,6 +1792,7 @@ static int scrub_raid56_parity_stripe(struct scrub_ctx *sctx,
- 	struct btrfs_raid_bio *rbio;
- 	struct btrfs_io_context *bioc = NULL;
- 	struct btrfs_path extent_path = { 0 };
-+	struct btrfs_path csum_path = { 0 };
- 	struct bio *bio;
- 	struct scrub_stripe *stripe;
- 	bool all_empty = true;
-@@ -1799,12 +1804,14 @@ static int scrub_raid56_parity_stripe(struct scrub_ctx *sctx,
- 	ASSERT(sctx->raid56_data_stripes);
- 
- 	/*
--	 * For data stripe search, we cannot re-use the same extent path, as
--	 * the data stripe bytenr may be smaller than previous extent.  Thus we
--	 * have to use our own extent path.
-+	 * For data stripe search, we cannot re-use the same extent/csum paths,
-+	 * as the data stripe bytenr may be smaller than previous extent.  Thus
-+	 * we have to use our own extent/csum paths.
- 	 */
- 	extent_path.search_commit_root = 1;
- 	extent_path.skip_locking = 1;
-+	csum_path.search_commit_root = 1;
-+	csum_path.skip_locking = 1;
- 
- 	for (int i = 0; i < data_stripes; i++) {
- 		int stripe_index;
-@@ -1820,7 +1827,7 @@ static int scrub_raid56_parity_stripe(struct scrub_ctx *sctx,
- 
- 		scrub_reset_stripe(stripe);
- 		set_bit(SCRUB_STRIPE_FLAG_NO_REPORT, &stripe->state);
--		ret = scrub_find_fill_first_stripe(bg, &extent_path,
-+		ret = scrub_find_fill_first_stripe(bg, &extent_path, &csum_path,
- 				map->stripes[stripe_index].dev, physical, 1,
- 				full_stripe_start + btrfs_stripe_nr_to_offset(i),
- 				BTRFS_STRIPE_LEN, stripe);
-@@ -1949,6 +1956,7 @@ static int scrub_raid56_parity_stripe(struct scrub_ctx *sctx,
- 	btrfs_bio_counter_dec(fs_info);
- 
- 	btrfs_release_path(&extent_path);
-+	btrfs_release_path(&csum_path);
- out:
- 	return ret;
- }
-@@ -2243,6 +2251,7 @@ static noinline_for_stack int scrub_stripe(struct scrub_ctx *sctx,
- 	if (!ret)
- 		ret = ret2;
- 	btrfs_release_path(&sctx->extent_path);
-+	btrfs_release_path(&sctx->csum_path);
- 
- 	if (sctx->raid56_data_stripes) {
- 		for (int i = 0; i < nr_data_stripes(map); i++)
--- 
-2.42.0
-
-
-From 10a1ecf883161caa474ded02052dd4c6f0b50a08 Mon Sep 17 00:00:00 2001
-From: Qu Wenruo <wqu@suse.com>
-Date: Thu, 3 Aug 2023 14:33:31 +0800
-Subject: [PATCH 14/14] btrfs: scrub: fix grouping of read IO
-
-[REGRESSION]
-There are several regression reports about the scrub performance with
-v6.4 kernel.
-
-On a PCIe 3.0 device, the old v6.3 kernel can go 3GB/s scrub speed, but
-v6.4 can only go 1GB/s, an obvious 66% performance drop.
-
-[CAUSE]
-Iostat shows a very different behavior between v6.3 and v6.4 kernel:
-
-  Device         r/s      rkB/s   rrqm/s  %rrqm r_await rareq-sz aqu-sz  %util
-  nvme0n1p3  9731.00 3425544.00 17237.00  63.92    2.18   352.02  21.18 100.00
-  nvme0n1p3 15578.00  993616.00     5.00   0.03    0.09    63.78   1.32 100.00
-
-The upper one is v6.3 while the lower one is v6.4.
-
-There are several obvious differences:
-
-- Very few read merges
-  This turns out to be a behavior change that we no longer do bio
-  plug/unplug.
-
-- Very low aqu-sz
-  This is due to the submit-and-wait behavior of flush_scrub_stripes(),
-  and extra extent/csum tree search.
-
-Both behaviors are not that obvious on SATA SSDs, as SATA SSDs have NCQ
-to merge the reads, while SATA SSDs can not handle high queue depth well
-either.
-
-[FIX]
-For now this patch focuses on the read speed fix. Dev-replace replace
-speed needs more work.
-
-For the read part, we go two directions to fix the problems:
-
-- Re-introduce blk plug/unplug to merge read requests
-  This is pretty simple, and the behavior is pretty easy to observe.
-
-  This would enlarge the average read request size to 512K.
-
-- Introduce multi-group reads and no longer wait for each group
-  Instead of the old behavior, which submits 8 stripes and waits for
-  them, here we would enlarge the total number of stripes to 16 * 8.
-  Which is 8M per device, the same limit as the old scrub in-flight
-  bios size limit.
-
-  Now every time we fill a group (8 stripes), we submit them and
-  continue to next stripes.
-
-  Only when the full 16 * 8 stripes are all filled, we submit the
-  remaining ones (the last group), and wait for all groups to finish.
-  Then submit the repair writes and dev-replace writes.
-
-  This should enlarge the queue depth.
-
-This would greatly improve the merge rate (thus read block size) and
-queue depth:
-
-Before (with regression, and cached extent/csum path):
-
- Device         r/s      rkB/s   rrqm/s  %rrqm r_await rareq-sz aqu-sz  %util
- nvme0n1p3 20666.00 1318240.00    10.00   0.05    0.08    63.79   1.63 100.00
-
-After (with all patches applied):
-
- nvme0n1p3  5165.00 2278304.00 30557.00  85.54    0.55   441.10   2.81 100.00
-
-i.e. 1287 to 2224 MB/s.
-
-CC: stable@vger.kernel.org # 6.4+
-Signed-off-by: Qu Wenruo <wqu@suse.com>
-Reviewed-by: David Sterba <dsterba@suse.com>
-Signed-off-by: David Sterba <dsterba@suse.com>
----
- fs/btrfs/scrub.c | 96 +++++++++++++++++++++++++++++++++++-------------
- 1 file changed, 71 insertions(+), 25 deletions(-)
-
-diff --git a/fs/btrfs/scrub.c b/fs/btrfs/scrub.c
-index 281b7783e64f..cfbd6b1c4b7f 100644
---- a/fs/btrfs/scrub.c
-+++ b/fs/btrfs/scrub.c
-@@ -43,9 +43,20 @@ struct scrub_ctx;
- /*
-  * The following value only influences the performance.
-  *
-- * This determines the batch size for stripe submitted in one go.
-+ * This detemines how many stripes would be submitted in one go,
-+ * which is 512KiB (BTRFS_STRIPE_LEN * SCRUB_STRIPES_PER_GROUP).
-  */
--#define SCRUB_STRIPES_PER_SCTX	8	/* That would be 8 64K stripe per-device. */
-+#define SCRUB_STRIPES_PER_GROUP		8
-+
-+/*
-+ * How many groups we have for each sctx.
-+ *
-+ * This would be 8M per device, the same value as the old scrub in-flight bios
-+ * size limit.
-+ */
-+#define SCRUB_GROUPS_PER_SCTX		16
-+
-+#define SCRUB_TOTAL_STRIPES		(SCRUB_GROUPS_PER_SCTX * SCRUB_STRIPES_PER_GROUP)
- 
- /*
-  * The following value times PAGE_SIZE needs to be large enough to match the
-@@ -172,7 +183,7 @@ struct scrub_stripe {
- };
- 
- struct scrub_ctx {
--	struct scrub_stripe	stripes[SCRUB_STRIPES_PER_SCTX];
-+	struct scrub_stripe	stripes[SCRUB_TOTAL_STRIPES];
- 	struct scrub_stripe	*raid56_data_stripes;
- 	struct btrfs_fs_info	*fs_info;
- 	struct btrfs_path	extent_path;
-@@ -317,10 +328,10 @@ static noinline_for_stack void scrub_free_ctx(struct scrub_ctx *sctx)
- 	if (!sctx)
- 		return;
- 
--	for (i = 0; i < SCRUB_STRIPES_PER_SCTX; i++)
-+	for (i = 0; i < SCRUB_TOTAL_STRIPES; i++)
- 		release_scrub_stripe(&sctx->stripes[i]);
- 
--	kfree(sctx);
-+	kvfree(sctx);
- }
- 
- static void scrub_put_ctx(struct scrub_ctx *sctx)
-@@ -335,7 +346,10 @@ static noinline_for_stack struct scrub_ctx *scrub_setup_ctx(
- 	struct scrub_ctx *sctx;
- 	int		i;
- 
--	sctx = kzalloc(sizeof(*sctx), GFP_KERNEL);
-+	/* Since sctx has inline 128 stripes, it can go beyond 64K easily.  Use
-+	 * kvzalloc().
-+	 */
-+	sctx = kvzalloc(sizeof(*sctx), GFP_KERNEL);
- 	if (!sctx)
- 		goto nomem;
- 	refcount_set(&sctx->refs, 1);
-@@ -345,7 +359,7 @@ static noinline_for_stack struct scrub_ctx *scrub_setup_ctx(
- 	sctx->extent_path.skip_locking = 1;
- 	sctx->csum_path.search_commit_root = 1;
- 	sctx->csum_path.skip_locking = 1;
--	for (i = 0; i < SCRUB_STRIPES_PER_SCTX; i++) {
-+	for (i = 0; i < SCRUB_TOTAL_STRIPES; i++) {
- 		int ret;
- 
- 		ret = init_scrub_stripe(fs_info, &sctx->stripes[i]);
-@@ -1659,6 +1673,28 @@ static bool stripe_has_metadata_error(struct scrub_stripe *stripe)
- 	return false;
- }
- 
-+static void submit_initial_group_read(struct scrub_ctx *sctx,
-+				      unsigned int first_slot,
-+				      unsigned int nr_stripes)
+-/* Will return 0 or -ENOMEM */
++static void btrfs_release_dir_index_item_space(struct btrfs_trans_handle *trans)
 +{
-+	struct blk_plug plug;
++	struct btrfs_fs_info *fs_info = trans->fs_info;
++	const u64 bytes = btrfs_calc_insert_metadata_size(fs_info, 1);
 +
-+	ASSERT(first_slot < SCRUB_TOTAL_STRIPES);
-+	ASSERT(first_slot + nr_stripes <= SCRUB_TOTAL_STRIPES);
++	if (test_bit(BTRFS_FS_LOG_RECOVERING, &fs_info->flags))
++		return;
 +
-+	scrub_throttle_dev_io(sctx, sctx->stripes[0].dev,
-+			      btrfs_stripe_nr_to_offset(nr_stripes));
-+	blk_start_plug(&plug);
-+	for (int i = 0; i < nr_stripes; i++) {
-+		struct scrub_stripe *stripe = &sctx->stripes[first_slot + i];
-+
-+		/* Those stripes should be initialized. */
-+		ASSERT(test_bit(SCRUB_STRIPE_FLAG_INITIALIZED, &stripe->state));
-+		scrub_submit_initial_read(sctx, stripe);
-+	}
-+	blk_finish_plug(&plug);
++	/*
++	 * Adding the new dir index item does not require touching another
++	 * leaf, so we can release 1 unit of metadata that was previously
++	 * reserved when starting the transaction. This applies only to
++	 * the case where we had a transaction start and excludes the
++	 * transaction join case (when replaying log trees).
++	 */
++	trace_btrfs_space_reservation(fs_info, "transaction",
++				      trans->transid, bytes, 0);
++	btrfs_block_rsv_release(fs_info, trans->block_rsv, bytes, NULL);
++	ASSERT(trans->bytes_reserved >= bytes);
++	trans->bytes_reserved -= bytes;
 +}
 +
- static int flush_scrub_stripes(struct scrub_ctx *sctx)
- {
- 	struct btrfs_fs_info *fs_info = sctx->fs_info;
-@@ -1671,11 +1707,11 @@ static int flush_scrub_stripes(struct scrub_ctx *sctx)
++/* Will return 0, -ENOMEM or -EEXIST (index number collision, unexpected). */
+ int btrfs_insert_delayed_dir_index(struct btrfs_trans_handle *trans,
+ 				   const char *name, int name_len,
+ 				   struct btrfs_inode *dir,
+@@ -1468,6 +1490,27 @@ int btrfs_insert_delayed_dir_index(struct btrfs_trans_handle *trans,
  
- 	ASSERT(test_bit(SCRUB_STRIPE_FLAG_INITIALIZED, &sctx->stripes[0].state));
+ 	mutex_lock(&delayed_node->mutex);
  
--	scrub_throttle_dev_io(sctx, sctx->stripes[0].dev,
--			      btrfs_stripe_nr_to_offset(nr_stripes));
--	for (int i = 0; i < nr_stripes; i++) {
--		stripe = &sctx->stripes[i];
--		scrub_submit_initial_read(sctx, stripe);
-+	/* Submit the stripes which are populated but not submitted. */
-+	if (nr_stripes % SCRUB_STRIPES_PER_GROUP) {
-+		const int first_slot = round_down(nr_stripes, SCRUB_STRIPES_PER_GROUP);
-+
-+		submit_initial_group_read(sctx, first_slot, nr_stripes - first_slot);
- 	}
- 
- 	for (int i = 0; i < nr_stripes; i++) {
-@@ -1755,21 +1791,19 @@ static void raid56_scrub_wait_endio(struct bio *bio)
- 
- static int queue_scrub_stripe(struct scrub_ctx *sctx, struct btrfs_block_group *bg,
- 			      struct btrfs_device *dev, int mirror_num,
--			      u64 logical, u32 length, u64 physical)
-+			      u64 logical, u32 length, u64 physical,
-+			      u64 *found_logical_ret)
- {
- 	struct scrub_stripe *stripe;
- 	int ret;
- 
--	/* No available slot, submit all stripes and wait for them. */
--	if (sctx->cur_stripe >= SCRUB_STRIPES_PER_SCTX) {
--		ret = flush_scrub_stripes(sctx);
--		if (ret < 0)
--			return ret;
--	}
 +	/*
-+	 * There should always be one slot left, as caller filling the last
-+	 * slot should flush them all.
++	 * First attempt to insert the delayed item. This is to make the error
++	 * handling path simpler in case we fail (-EEXIST). There's no risk of
++	 * any other task coming in and running the delayed item before we do
++	 * the metadata space reservation below, because we are holding the
++	 * delayed node's mutex and that mutex must also be locked before the
++	 * node's delayed items can be run.
 +	 */
-+	ASSERT(sctx->cur_stripe < SCRUB_TOTAL_STRIPES);
- 
- 	stripe = &sctx->stripes[sctx->cur_stripe];
--
--	/* We can queue one stripe using the remaining slot. */
- 	scrub_reset_stripe(stripe);
- 	ret = scrub_find_fill_first_stripe(bg, &sctx->extent_path,
- 					   &sctx->csum_path, dev, physical,
-@@ -1777,7 +1811,20 @@ static int queue_scrub_stripe(struct scrub_ctx *sctx, struct btrfs_block_group *
- 	/* Either >0 as no more extents or <0 for error. */
- 	if (ret)
- 		return ret;
-+	if (found_logical_ret)
-+		*found_logical_ret = stripe->logical;
- 	sctx->cur_stripe++;
-+
-+	/* We filled one group, submit it. */
-+	if (sctx->cur_stripe % SCRUB_STRIPES_PER_GROUP == 0) {
-+		const int first_slot = sctx->cur_stripe - SCRUB_STRIPES_PER_GROUP;
-+
-+		submit_initial_group_read(sctx, first_slot, SCRUB_STRIPES_PER_GROUP);
++	ret = __btrfs_add_delayed_item(delayed_node, delayed_item);
++	if (unlikely(ret)) {
++		btrfs_err(trans->fs_info,
++"error adding delayed dir index item, name: %.*s, index: %llu, root: %llu, dir: %llu, dir->index_cnt: %llu, delayed_node->index_cnt: %llu, error: %d",
++			  name_len, name, index, btrfs_root_id(delayed_node->root),
++			  delayed_node->inode_id, dir->index_cnt,
++			  delayed_node->index_cnt, ret);
++		btrfs_release_delayed_item(delayed_item);
++		btrfs_release_dir_index_item_space(trans);
++		mutex_unlock(&delayed_node->mutex);
++		goto release_node;
 +	}
 +
-+	/* Last slot used, flush them all. */
-+	if (sctx->cur_stripe == SCRUB_TOTAL_STRIPES)
-+		return flush_scrub_stripes(sctx);
+ 	if (delayed_node->index_item_leaves == 0 ||
+ 	    delayed_node->curr_index_batch_size + data_len > leaf_data_size) {
+ 		delayed_node->curr_index_batch_size = data_len;
+@@ -1485,37 +1528,14 @@ int btrfs_insert_delayed_dir_index(struct btrfs_trans_handle *trans,
+ 		 * impossible.
+ 		 */
+ 		if (WARN_ON(ret)) {
+-			mutex_unlock(&delayed_node->mutex);
+ 			btrfs_release_delayed_item(delayed_item);
++			mutex_unlock(&delayed_node->mutex);
+ 			goto release_node;
+ 		}
+ 
+ 		delayed_node->index_item_leaves++;
+-	} else if (!test_bit(BTRFS_FS_LOG_RECOVERING, &fs_info->flags)) {
+-		const u64 bytes = btrfs_calc_insert_metadata_size(fs_info, 1);
+-
+-		/*
+-		 * Adding the new dir index item does not require touching another
+-		 * leaf, so we can release 1 unit of metadata that was previously
+-		 * reserved when starting the transaction. This applies only to
+-		 * the case where we had a transaction start and excludes the
+-		 * transaction join case (when replaying log trees).
+-		 */
+-		trace_btrfs_space_reservation(fs_info, "transaction",
+-					      trans->transid, bytes, 0);
+-		btrfs_block_rsv_release(fs_info, trans->block_rsv, bytes, NULL);
+-		ASSERT(trans->bytes_reserved >= bytes);
+-		trans->bytes_reserved -= bytes;
+-	}
+-
+-	ret = __btrfs_add_delayed_item(delayed_node, delayed_item);
+-	if (unlikely(ret)) {
+-		btrfs_err(trans->fs_info,
+-"error adding delayed dir index item, name: %.*s, index: %llu, root: %llu, dir: %llu, dir->index_cnt: %llu, delayed_node->index_cnt: %llu, error: %d",
+-			  name_len, name, index, btrfs_root_id(delayed_node->root),
+-			  delayed_node->inode_id, dir->index_cnt,
+-			  delayed_node->index_cnt, ret);
+-		BUG();
++	} else {
++		btrfs_release_dir_index_item_space(trans);
+ 	}
+ 	mutex_unlock(&delayed_node->mutex);
+ 
+-- 
+2.42.0
+
+
+From 2d65803b68908b293fd3ba1783db4df3bb124e6d Mon Sep 17 00:00:00 2001
+From: Bernd Schubert <bschubert@ddn.com>
+Date: Wed, 6 Sep 2023 17:59:03 +0200
+Subject: [PATCH 05/10] btrfs: file_remove_privs needs an exclusive lock in
+ direct io write
+
+This was noticed by Miklos that file_remove_privs might call into
+notify_change(), which requires to hold an exclusive lock. The problem
+exists in FUSE and btrfs. We can fix it without any additional helpers
+from VFS, in case the privileges would need to be dropped, change the
+lock type to be exclusive and redo the loop.
+
+Fixes: e9adabb9712e ("btrfs: use shared lock for direct writes within EOF")
+CC: Miklos Szeredi <miklos@szeredi.hu>
+CC: stable@vger.kernel.org # 5.15+
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Bernd Schubert <bschubert@ddn.com>
+Reviewed-by: David Sterba <dsterba@suse.com>
+Signed-off-by: David Sterba <dsterba@suse.com>
+---
+ fs/btrfs/file.c | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
+index fd03e689a6be..eae9175f2c29 100644
+--- a/fs/btrfs/file.c
++++ b/fs/btrfs/file.c
+@@ -1466,8 +1466,13 @@ static ssize_t btrfs_direct_write(struct kiocb *iocb, struct iov_iter *from)
+ 	if (iocb->ki_flags & IOCB_NOWAIT)
+ 		ilock_flags |= BTRFS_ILOCK_TRY;
+ 
+-	/* If the write DIO is within EOF, use a shared lock */
+-	if (iocb->ki_pos + iov_iter_count(from) <= i_size_read(inode))
++	/*
++	 * If the write DIO is within EOF, use a shared lock and also only if
++	 * security bits will likely not be dropped by file_remove_privs() called
++	 * from btrfs_write_check(). Either will need to be rechecked after the
++	 * lock was acquired.
++	 */
++	if (iocb->ki_pos + iov_iter_count(from) <= i_size_read(inode) && IS_NOSEC(inode))
+ 		ilock_flags |= BTRFS_ILOCK_SHARED;
+ 
+ relock:
+@@ -1475,6 +1480,13 @@ static ssize_t btrfs_direct_write(struct kiocb *iocb, struct iov_iter *from)
+ 	if (err < 0)
+ 		return err;
+ 
++	/* Shared lock cannot be used with security bits set. */
++	if ((ilock_flags & BTRFS_ILOCK_SHARED) && !IS_NOSEC(inode)) {
++		btrfs_inode_unlock(BTRFS_I(inode), ilock_flags);
++		ilock_flags &= ~BTRFS_ILOCK_SHARED;
++		goto relock;
++	}
++
+ 	err = generic_write_checks(iocb, from);
+ 	if (err <= 0) {
+ 		btrfs_inode_unlock(BTRFS_I(inode), ilock_flags);
+-- 
+2.42.0
+
+
+From 841bcba6754d1e35f5ec241df0bf3b42c37ba1e1 Mon Sep 17 00:00:00 2001
+From: Josef Bacik <josef@toxicpanda.com>
+Date: Fri, 8 Sep 2023 15:31:39 -0400
+Subject: [PATCH 06/10] btrfs: don't clear uptodate on write errors
+
+We have been consistently seeing hangs with generic/648 in our subpage
+GitHub CI setup.  This is a classic deadlock, we are calling
+btrfs_read_folio() on a folio, which requires holding the folio lock on
+the folio, and then finding a ordered extent that overlaps that range
+and calling btrfs_start_ordered_extent(), which then tries to write out
+the dirty page, which requires taking the folio lock and then we
+deadlock.
+
+The hang happens because we're writing to range [1271750656, 1271767040),
+page index [77621, 77622], and page 77621 is !Uptodate.  It is also Dirty,
+so we call btrfs_read_folio() for 77621 and which does
+btrfs_lock_and_flush_ordered_range() for that range, and we find an ordered
+extent which is [1271644160, 1271746560), page index [77615, 77621].
+The page indexes overlap, but the actual bytes don't overlap.  We're
+holding the page lock for 77621, then call
+btrfs_lock_and_flush_ordered_range() which tries to flush the dirty
+page, and tries to lock 77621 again and then we deadlock.
+
+The byte ranges do not overlap, but with subpage support if we clear
+uptodate on any portion of the page we mark the entire thing as not
+uptodate.
+
+We have been clearing page uptodate on write errors, but no other file
+system does this, and is in fact incorrect.  This doesn't hurt us in the
+!subpage case because we can't end up with overlapped ranges that don't
+also overlap on the page.
+
+Fix this by not clearing uptodate when we have a write error.  The only
+thing we should be doing in this case is setting the mapping error and
+carrying on.  This makes it so we would no longer call
+btrfs_read_folio() on the page as it's uptodate and eliminates the
+deadlock.
+
+With this patch we're now able to make it through a full fstests run on
+our subpage blocksize VMs.
+
+Note for stable backports: this probably goes beyond 6.1 but the code
+has been cleaned up and clearing the uptodate bit must be verified on
+each version independently.
+
+CC: stable@vger.kernel.org # 6.1+
+Reviewed-by: Qu Wenruo <wqu@suse.com>
+Signed-off-by: Josef Bacik <josef@toxicpanda.com>
+Signed-off-by: David Sterba <dsterba@suse.com>
+---
+ fs/btrfs/extent_io.c | 13 +------------
+ 1 file changed, 1 insertion(+), 12 deletions(-)
+
+diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
+index 2ebc982e8ecc..9f286f4227d6 100644
+--- a/fs/btrfs/extent_io.c
++++ b/fs/btrfs/extent_io.c
+@@ -510,13 +510,6 @@ void end_extent_writepage(struct page *page, int err, u64 start, u64 end)
+ 	btrfs_writepage_endio_finish_ordered(inode, page, start, end, uptodate);
+ 
+ 	if (!uptodate) {
+-		const struct btrfs_fs_info *fs_info = inode->root->fs_info;
+-		u32 len;
+-
+-		ASSERT(end + 1 - start <= U32_MAX);
+-		len = end + 1 - start;
+-
+-		btrfs_page_clear_uptodate(fs_info, page, start, len);
+ 		ret = err < 0 ? err : -EIO;
+ 		mapping_set_error(page->mapping, ret);
+ 	}
+@@ -558,10 +551,8 @@ static void end_bio_extent_writepage(struct btrfs_bio *bbio)
+ 				   bvec->bv_offset, bvec->bv_len);
+ 
+ 		btrfs_finish_ordered_extent(bbio->ordered, page, start, len, !error);
+-		if (error) {
+-			btrfs_page_clear_uptodate(fs_info, page, start, len);
++		if (error)
+ 			mapping_set_error(page->mapping, error);
+-		}
+ 		btrfs_page_clear_writeback(fs_info, page, start, len);
+ 	}
+ 
+@@ -1696,8 +1687,6 @@ static void extent_buffer_write_end_io(struct btrfs_bio *bbio)
+ 		struct page *page = bvec->bv_page;
+ 		u32 len = bvec->bv_len;
+ 
+-		if (!uptodate)
+-			btrfs_page_clear_uptodate(fs_info, page, start, len);
+ 		btrfs_page_clear_writeback(fs_info, page, start, len);
+ 		bio_offset += len;
+ 	}
+-- 
+2.42.0
+
+
+From 99a2efa77585de09d01ed6a013ad6bac72b57ec8 Mon Sep 17 00:00:00 2001
+From: Filipe Manana <fdmanana@suse.com>
+Date: Sat, 9 Sep 2023 13:08:31 +0100
+Subject: [PATCH 07/10] btrfs: set last dir index to the current last index
+ when opening dir
+
+When opening a directory for reading it, we set the last index where we
+stop iteration to the value in struct btrfs_inode::index_cnt. That value
+does not match the index of the most recently added directory entry but
+it's instead the index number that will be assigned the next directory
+entry.
+
+This means that if after the call to opendir(3) new directory entries are
+added, a readdir(3) call will return the first new directory entry. This
+is fine because POSIX says the following [1]:
+
+  "If a file is removed from or added to the directory after the most
+   recent call to opendir() or rewinddir(), whether a subsequent call to
+   readdir() returns an entry for that file is unspecified."
+
+For example for the test script from commit 9b378f6ad48c ("btrfs: fix
+infinite directory reads"), where we have 2000 files in a directory, ext4
+doesn't return any new directory entry after opendir(3), while xfs returns
+the first 13 new directory entries added after the opendir(3) call.
+
+If we move to a shorter example with an empty directory when opendir(3) is
+called, and 2 files added to the directory after the opendir(3) call, then
+readdir(3) on btrfs will return the first file, ext4 and xfs return the 2
+files (but in a different order). A test program for this, reported by
+Ian Johnson, is the following:
+
+   #include <dirent.h>
+   #include <stdio.h>
+
+   int main(void) {
+     DIR *dir = opendir("test");
+
+     FILE *file;
+     file = fopen("test/1", "w");
+     fwrite("1", 1, 1, file);
+     fclose(file);
+
+     file = fopen("test/2", "w");
+     fwrite("2", 1, 1, file);
+     fclose(file);
+
+     struct dirent *entry;
+     while ((entry = readdir(dir))) {
+        printf("%s\n", entry->d_name);
+     }
+     closedir(dir);
+     return 0;
+   }
+
+To make this less odd, change the behaviour to never return new entries
+that were added after the opendir(3) call. This is done by setting the
+last_index field of the struct btrfs_file_private attached to the
+directory's file handle with a value matching btrfs_inode::index_cnt
+minus 1, since that value always matches the index of the next new
+directory entry and not the index of the most recently added entry.
+
+[1] https://pubs.opengroup.org/onlinepubs/007904875/functions/readdir_r.html
+
+Link: https://lore.kernel.org/linux-btrfs/YR1P0S.NGASEG570GJ8@ianjohnson.dev/
+CC: stable@vger.kernel.org # 6.5+
+Signed-off-by: Filipe Manana <fdmanana@suse.com>
+Signed-off-by: David Sterba <dsterba@suse.com>
+---
+ fs/btrfs/inode.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
+index db2b33a822fc..7db2efd65774 100644
+--- a/fs/btrfs/inode.c
++++ b/fs/btrfs/inode.c
+@@ -5942,7 +5942,8 @@ static int btrfs_get_dir_last_index(struct btrfs_inode *dir, u64 *index)
+ 		}
+ 	}
+ 
+-	*index = dir->index_cnt;
++	/* index_cnt is the index number of next new entry, so decrement it. */
++	*index = dir->index_cnt - 1;
+ 
+ 	return 0;
+ }
+-- 
+2.42.0
+
+
+From ac960e29a1a088cecb82287d321d693c6bab7597 Mon Sep 17 00:00:00 2001
+From: Filipe Manana <fdmanana@suse.com>
+Date: Sat, 9 Sep 2023 13:08:32 +0100
+Subject: [PATCH 08/10] btrfs: refresh dir last index during a rewinddir(3)
+ call
+
+When opening a directory we find what's the index of its last entry and
+then store it in the directory's file handle private data (struct
+btrfs_file_private::last_index), so that in the case new directory entries
+are added to a directory after an opendir(3) call we don't end up in an
+infinite loop (see commit 9b378f6ad48c ("btrfs: fix infinite directory
+reads")) when calling readdir(3).
+
+However once rewinddir(3) is called, POSIX states [1] that any new
+directory entries added after the previous opendir(3) call, must be
+returned by subsequent calls to readdir(3):
+
+  "The rewinddir() function shall reset the position of the directory
+   stream to which dirp refers to the beginning of the directory.
+   It shall also cause the directory stream to refer to the current
+   state of the corresponding directory, as a call to opendir() would
+   have done."
+
+We currently don't refresh the last_index field of the struct
+btrfs_file_private associated to the directory, so after a rewinddir(3)
+we are not returning any new entries added after the opendir(3) call.
+
+Fix this by finding the current last index of the directory when llseek
+is called against the directory.
+
+This can be reproduced by the following C program provided by Ian Johnson:
+
+   #include <dirent.h>
+   #include <stdio.h>
+
+   int main(void) {
+     DIR *dir = opendir("test");
+
+     FILE *file;
+     file = fopen("test/1", "w");
+     fwrite("1", 1, 1, file);
+     fclose(file);
+
+     file = fopen("test/2", "w");
+     fwrite("2", 1, 1, file);
+     fclose(file);
+
+     rewinddir(dir);
+
+     struct dirent *entry;
+     while ((entry = readdir(dir))) {
+        printf("%s\n", entry->d_name);
+     }
+     closedir(dir);
+     return 0;
+   }
+
+Reported-by: Ian Johnson <ian@ianjohnson.dev>
+Link: https://lore.kernel.org/linux-btrfs/YR1P0S.NGASEG570GJ8@ianjohnson.dev/
+Fixes: 9b378f6ad48c ("btrfs: fix infinite directory reads")
+CC: stable@vger.kernel.org # 6.5+
+Signed-off-by: Filipe Manana <fdmanana@suse.com>
+Signed-off-by: David Sterba <dsterba@suse.com>
+---
+ fs/btrfs/inode.c | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
+index 7db2efd65774..f498c1c4068c 100644
+--- a/fs/btrfs/inode.c
++++ b/fs/btrfs/inode.c
+@@ -5980,6 +5980,19 @@ static int btrfs_opendir(struct inode *inode, struct file *file)
  	return 0;
  }
  
-@@ -1990,6 +2037,7 @@ static int scrub_simple_mirror(struct scrub_ctx *sctx,
- 	path.skip_locking = 1;
- 	/* Go through each extent items inside the logical range */
- 	while (cur_logical < logical_end) {
-+		u64 found_logical;
- 		u64 cur_physical = physical + cur_logical - logical_start;
++static loff_t btrfs_dir_llseek(struct file *file, loff_t offset, int whence)
++{
++	struct btrfs_file_private *private = file->private_data;
++	int ret;
++
++	ret = btrfs_get_dir_last_index(BTRFS_I(file_inode(file)),
++				       &private->last_index);
++	if (ret)
++		return ret;
++
++	return generic_file_llseek(file, offset, whence);
++}
++
+ struct dir_entry {
+ 	u64 ino;
+ 	u64 offset;
+@@ -11060,7 +11073,7 @@ static const struct inode_operations btrfs_dir_inode_operations = {
+ };
  
- 		/* Canceled? */
-@@ -2014,7 +2062,7 @@ static int scrub_simple_mirror(struct scrub_ctx *sctx,
+ static const struct file_operations btrfs_dir_file_operations = {
+-	.llseek		= generic_file_llseek,
++	.llseek		= btrfs_dir_llseek,
+ 	.read		= generic_read_dir,
+ 	.iterate_shared	= btrfs_real_readdir,
+ 	.open		= btrfs_opendir,
+-- 
+2.42.0
+
+
+From 41707df025a93e504c0ae49a3e8aa47cb113d1ed Mon Sep 17 00:00:00 2001
+From: Filipe Manana <fdmanana@suse.com>
+Date: Tue, 12 Sep 2023 11:45:39 +0100
+Subject: [PATCH 09/10] btrfs: fix race between reading a directory and adding
+ entries to it
+
+When opening a directory (opendir(3)) or rewinding it (rewinddir(3)), we
+are not holding the directory's inode locked, and this can result in later
+attempting to add two entries to the directory with the same index number,
+resulting in a transaction abort, with -EEXIST (-17), when inserting the
+second delayed dir index. This results in a trace like the following:
+
+  Sep 11 22:34:59 myhostname kernel: BTRFS error (device dm-3): err add delayed dir index item(name: cockroach-stderr.log) into the insertion tree of the delayed node(root id: 5, inode id: 4539217, errno: -17)
+  Sep 11 22:34:59 myhostname kernel: ------------[ cut here ]------------
+  Sep 11 22:34:59 myhostname kernel: kernel BUG at fs/btrfs/delayed-inode.c:1504!
+  Sep 11 22:34:59 myhostname kernel: invalid opcode: 0000 [#1] PREEMPT SMP NOPTI
+  Sep 11 22:34:59 myhostname kernel: CPU: 0 PID: 7159 Comm: cockroach Not tainted 6.4.15-200.fc38.x86_64 #1
+  Sep 11 22:34:59 myhostname kernel: Hardware name: ASUS ESC500 G3/P9D WS, BIOS 2402 06/27/2018
+  Sep 11 22:34:59 myhostname kernel: RIP: 0010:btrfs_insert_delayed_dir_index+0x1da/0x260
+  Sep 11 22:34:59 myhostname kernel: Code: eb dd 48 (...)
+  Sep 11 22:34:59 myhostname kernel: RSP: 0000:ffffa9980e0fbb28 EFLAGS: 00010282
+  Sep 11 22:34:59 myhostname kernel: RAX: 0000000000000000 RBX: ffff8b10b8f4a3c0 RCX: 0000000000000000
+  Sep 11 22:34:59 myhostname kernel: RDX: 0000000000000000 RSI: ffff8b177ec21540 RDI: ffff8b177ec21540
+  Sep 11 22:34:59 myhostname kernel: RBP: ffff8b110cf80888 R08: 0000000000000000 R09: ffffa9980e0fb938
+  Sep 11 22:34:59 myhostname kernel: R10: 0000000000000003 R11: ffffffff86146508 R12: 0000000000000014
+  Sep 11 22:34:59 myhostname kernel: R13: ffff8b1131ae5b40 R14: ffff8b10b8f4a418 R15: 00000000ffffffef
+  Sep 11 22:34:59 myhostname kernel: FS:  00007fb14a7fe6c0(0000) GS:ffff8b177ec00000(0000) knlGS:0000000000000000
+  Sep 11 22:34:59 myhostname kernel: CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+  Sep 11 22:34:59 myhostname kernel: CR2: 000000c00143d000 CR3: 00000001b3b4e002 CR4: 00000000001706f0
+  Sep 11 22:34:59 myhostname kernel: Call Trace:
+  Sep 11 22:34:59 myhostname kernel:  <TASK>
+  Sep 11 22:34:59 myhostname kernel:  ? die+0x36/0x90
+  Sep 11 22:34:59 myhostname kernel:  ? do_trap+0xda/0x100
+  Sep 11 22:34:59 myhostname kernel:  ? btrfs_insert_delayed_dir_index+0x1da/0x260
+  Sep 11 22:34:59 myhostname kernel:  ? do_error_trap+0x6a/0x90
+  Sep 11 22:34:59 myhostname kernel:  ? btrfs_insert_delayed_dir_index+0x1da/0x260
+  Sep 11 22:34:59 myhostname kernel:  ? exc_invalid_op+0x50/0x70
+  Sep 11 22:34:59 myhostname kernel:  ? btrfs_insert_delayed_dir_index+0x1da/0x260
+  Sep 11 22:34:59 myhostname kernel:  ? asm_exc_invalid_op+0x1a/0x20
+  Sep 11 22:34:59 myhostname kernel:  ? btrfs_insert_delayed_dir_index+0x1da/0x260
+  Sep 11 22:34:59 myhostname kernel:  ? btrfs_insert_delayed_dir_index+0x1da/0x260
+  Sep 11 22:34:59 myhostname kernel:  btrfs_insert_dir_item+0x200/0x280
+  Sep 11 22:34:59 myhostname kernel:  btrfs_add_link+0xab/0x4f0
+  Sep 11 22:34:59 myhostname kernel:  ? ktime_get_real_ts64+0x47/0xe0
+  Sep 11 22:34:59 myhostname kernel:  btrfs_create_new_inode+0x7cd/0xa80
+  Sep 11 22:34:59 myhostname kernel:  btrfs_symlink+0x190/0x4d0
+  Sep 11 22:34:59 myhostname kernel:  ? schedule+0x5e/0xd0
+  Sep 11 22:34:59 myhostname kernel:  ? __d_lookup+0x7e/0xc0
+  Sep 11 22:34:59 myhostname kernel:  vfs_symlink+0x148/0x1e0
+  Sep 11 22:34:59 myhostname kernel:  do_symlinkat+0x130/0x140
+  Sep 11 22:34:59 myhostname kernel:  __x64_sys_symlinkat+0x3d/0x50
+  Sep 11 22:34:59 myhostname kernel:  do_syscall_64+0x5d/0x90
+  Sep 11 22:34:59 myhostname kernel:  ? syscall_exit_to_user_mode+0x2b/0x40
+  Sep 11 22:34:59 myhostname kernel:  ? do_syscall_64+0x6c/0x90
+  Sep 11 22:34:59 myhostname kernel:  entry_SYSCALL_64_after_hwframe+0x72/0xdc
+
+The race leading to the problem happens like this:
+
+1) Directory inode X is loaded into memory, its ->index_cnt field is
+   initialized to (u64)-1 (at btrfs_alloc_inode());
+
+2) Task A is adding a new file to directory X, holding its vfs inode lock,
+   and calls btrfs_set_inode_index() to get an index number for the entry.
+
+   Because the inode's index_cnt field is set to (u64)-1 it calls
+   btrfs_inode_delayed_dir_index_count() which fails because no dir index
+   entries were added yet to the delayed inode and then it calls
+   btrfs_set_inode_index_count(). This functions finds the last dir index
+   key and then sets index_cnt to that index value + 1. It found that the
+   last index key has an offset of 100. However before it assigns a value
+   of 101 to index_cnt...
+
+3) Task B calls opendir(3), ending up at btrfs_opendir(), where the VFS
+   lock for inode X is not taken, so it calls btrfs_get_dir_last_index()
+   and sees index_cnt still with a value of (u64)-1. Because of that it
+   calls btrfs_inode_delayed_dir_index_count() which fails since no dir
+   index entries were added to the delayed inode yet, and then it also
+   calls btrfs_set_inode_index_count(). This also finds that the last
+   index key has an offset of 100, and before it assigns the value 101
+   to the index_cnt field of inode X...
+
+4) Task A assigns a value of 101 to index_cnt. And then the code flow
+   goes to btrfs_set_inode_index() where it increments index_cnt from
+   101 to 102. Task A then creates a delayed dir index entry with a
+   sequence number of 101 and adds it to the delayed inode;
+
+5) Task B assigns 101 to the index_cnt field of inode X;
+
+6) At some later point when someone tries to add a new entry to the
+   directory, btrfs_set_inode_index() will return 101 again and shortly
+   after an attempt to add another delayed dir index key with index
+   number 101 will fail with -EEXIST resulting in a transaction abort.
+
+Fix this by locking the inode at btrfs_get_dir_last_index(), which is only
+only used when opening a directory or attempting to lseek on it.
+
+Reported-by: ken <ken@bllue.org>
+Link: https://lore.kernel.org/linux-btrfs/CAE6xmH+Lp=Q=E61bU+v9eWX8gYfLvu6jLYxjxjFpo3zHVPR0EQ@mail.gmail.com/
+Reported-by: syzbot+d13490c82ad5353c779d@syzkaller.appspotmail.com
+Link: https://lore.kernel.org/linux-btrfs/00000000000036e1290603e097e0@google.com/
+Fixes: 9b378f6ad48c ("btrfs: fix infinite directory reads")
+CC: stable@vger.kernel.org # 6.5+
+Signed-off-by: Filipe Manana <fdmanana@suse.com>
+Reviewed-by: David Sterba <dsterba@suse.com>
+Signed-off-by: David Sterba <dsterba@suse.com>
+---
+ fs/btrfs/inode.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
+index f498c1c4068c..d5c112f6091b 100644
+--- a/fs/btrfs/inode.c
++++ b/fs/btrfs/inode.c
+@@ -5931,21 +5931,24 @@ static int btrfs_set_inode_index_count(struct btrfs_inode *inode)
  
- 		ret = queue_scrub_stripe(sctx, bg, device, mirror_num,
- 					 cur_logical, logical_end - cur_logical,
--					 cur_physical);
-+					 cur_physical, &found_logical);
- 		if (ret > 0) {
- 			/* No more extent, just update the accounting */
- 			sctx->stat.last_physical = physical + logical_length;
-@@ -2024,9 +2072,7 @@ static int scrub_simple_mirror(struct scrub_ctx *sctx,
- 		if (ret < 0)
- 			break;
+ static int btrfs_get_dir_last_index(struct btrfs_inode *dir, u64 *index)
+ {
+-	if (dir->index_cnt == (u64)-1) {
+-		int ret;
++	int ret = 0;
  
--		ASSERT(sctx->cur_stripe > 0);
--		cur_logical = sctx->stripes[sctx->cur_stripe - 1].logical
--			      + BTRFS_STRIPE_LEN;
-+		cur_logical = found_logical + BTRFS_STRIPE_LEN;
++	btrfs_inode_lock(dir, 0);
++	if (dir->index_cnt == (u64)-1) {
+ 		ret = btrfs_inode_delayed_dir_index_count(dir);
+ 		if (ret) {
+ 			ret = btrfs_set_inode_index_count(dir);
+ 			if (ret)
+-				return ret;
++				goto out;
+ 		}
+ 	}
  
- 		/* Don't hold CPU for too long time */
- 		cond_resched();
+ 	/* index_cnt is the index number of next new entry, so decrement it. */
+ 	*index = dir->index_cnt - 1;
++out:
++	btrfs_inode_unlock(dir, 0);
+ 
+-	return 0;
++	return ret;
+ }
+ 
+ /*
+-- 
+2.42.0
+
+
+From 7db7b5929dadc5b28bb82c698b77460f04397032 Mon Sep 17 00:00:00 2001
+From: Josef Bacik <josef@toxicpanda.com>
+Date: Mon, 18 Sep 2023 10:34:51 -0400
+Subject: [PATCH 10/10] btrfs: properly report 0 avail for very full file
+ systems
+
+A user reported some issues with smaller file systems that get very
+full.  While investigating this issue I noticed that df wasn't showing
+100% full, despite having 0 chunk space and having < 1MiB of available
+metadata space.
+
+This turns out to be an overflow issue, we're doing:
+
+  total_available_metadata_space - SZ_4M < global_block_rsv_size
+
+to determine if there's not enough space to make metadata allocations,
+which overflows if total_available_metadata_space is < 4M.  Fix this by
+checking to see if our available space is greater than the 4M threshold.
+This makes df properly report 100% usage on the file system.
+
+CC: stable@vger.kernel.org # 4.14+
+Signed-off-by: Josef Bacik <josef@toxicpanda.com>
+Reviewed-by: David Sterba <dsterba@suse.com>
+Signed-off-by: David Sterba <dsterba@suse.com>
+---
+ fs/btrfs/super.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
+index f1dd172d8d5b..f285c26c0565 100644
+--- a/fs/btrfs/super.c
++++ b/fs/btrfs/super.c
+@@ -2111,7 +2111,7 @@ static int btrfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+ 	 * calculated f_bavail.
+ 	 */
+ 	if (!mixed && block_rsv->space_info->full &&
+-	    total_free_meta - thresh < block_rsv->size)
++	    (total_free_meta < thresh || total_free_meta - thresh < block_rsv->size))
+ 		buf->f_bavail = 0;
+ 
+ 	buf->f_type = BTRFS_SUPER_MAGIC;
 -- 
 2.42.0
 
