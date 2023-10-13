@@ -1,4 +1,4 @@
-From 1e008b94e817e0220cadbce9a6db0e682aa3c737 Mon Sep 17 00:00:00 2001
+From 2cc40d51fbd593c8d7e5d7e84ece121cf6f11994 Mon Sep 17 00:00:00 2001
 From: Albert I <kras@raphielgang.org>
 Date: Wed, 13 Sep 2023 00:21:18 +0800
 Subject: [PATCH] Remove dependency on CONFIG_ZENIFY and set ZEN tunables
@@ -32,7 +32,7 @@ Signed-off-by: Albert I <kras@raphielgang.org>
  5 files changed, 8 insertions(+), 12 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index dffee0766d5b..e946c46e475b 100644
+index 338286ececa5..6c59b8e11e26 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -78,8 +78,8 @@ unsigned int sysctl_sched_tunable_scaling = SCHED_TUNABLESCALING_LOG;
@@ -55,7 +55,7 @@ index dffee0766d5b..e946c46e475b 100644
  
  #ifdef CONFIG_SCHED_BORE
  unsigned int __read_mostly sched_bore                  = 1;
-@@ -199,7 +199,7 @@ int __weak arch_asym_cpu_priority(int cpu)
+@@ -211,7 +211,7 @@ int __weak arch_asym_cpu_priority(int cpu)
   *
   * (default: 5 msec, units: microseconds)
   */
