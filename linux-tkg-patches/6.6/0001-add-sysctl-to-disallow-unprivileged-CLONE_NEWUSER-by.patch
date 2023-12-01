@@ -1,7 +1,7 @@
-From d50977b164e708bf523a35ef53315355528c3ca6 Mon Sep 17 00:00:00 2001
+From 871fcdc6d0f47e28038d43c4f19e0bca3972e260 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <jan.steffens@gmail.com>
 Date: Mon, 16 Sep 2019 04:53:20 +0200
-Subject: [PATCH] ZEN: Add sysctl and CONFIG to disallow unprivileged
+Subject: [PATCH 1/4] ZEN: Add sysctl and CONFIG to disallow unprivileged
  CLONE_NEWUSER
 
 Our default behavior continues to match the vanilla kernel.
@@ -18,9 +18,9 @@ index 45f09bec02c485..87b20e2ee27445 100644
 --- a/include/linux/user_namespace.h
 +++ b/include/linux/user_namespace.h
 @@ -148,6 +148,8 @@ static inline void set_userns_rlimit_max(struct user_namespace *ns,
-
+ 
  #ifdef CONFIG_USER_NS
-
+ 
 +extern int unprivileged_userns_clone;
 +
  static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
@@ -29,20 +29,20 @@ index 45f09bec02c485..87b20e2ee27445 100644
 @@ -181,6 +183,8 @@ extern bool current_in_userns(const struct user_namespace *target_ns);
  struct ns_common *ns_get_owner(struct ns_common *ns);
  #else
-
+ 
 +#define unprivileged_userns_clone 0
 +
  static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
  {
  	return &init_user_ns;
 diff --git a/init/Kconfig b/init/Kconfig
-index 94125d3b6893c7..9f7139b536f638 100644
+index 6d35728b94b2b3..0562c8ca7b308d 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1247,6 +1247,22 @@ config USER_NS
-
+@@ -1226,6 +1226,22 @@ config USER_NS
+ 
  	  If unsure, say N.
-
+ 
 +config USER_NS_UNPRIVILEGED
 +	bool "Allow unprivileged users to create namespaces"
 +	default y
@@ -63,13 +63,13 @@ index 94125d3b6893c7..9f7139b536f638 100644
  	bool "PID Namespaces"
  	default y
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 08969f5aa38d59..ff601cb7a1fae0 100644
+index 3b6d20dfb9a85e..200a77738a803a 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -98,6 +98,10 @@
- #include <linux/io_uring.h>
- #include <linux/bpf.h>
-
+@@ -100,6 +100,10 @@
+ #include <linux/user_events.h>
+ #include <linux/iommu.h>
+ 
 +#ifdef CONFIG_USER_NS
 +#include <linux/user_namespace.h>
 +#endif
@@ -77,10 +77,10 @@ index 08969f5aa38d59..ff601cb7a1fae0 100644
  #include <asm/pgalloc.h>
  #include <linux/uaccess.h>
  #include <asm/mmu_context.h>
-@@ -2008,6 +2012,10 @@ static __latent_entropy struct task_struct *copy_process(
+@@ -2260,6 +2264,10 @@ __latent_entropy struct task_struct *copy_process(
  	if ((clone_flags & (CLONE_NEWUSER|CLONE_FS)) == (CLONE_NEWUSER|CLONE_FS))
  		return ERR_PTR(-EINVAL);
-
+ 
 +	if ((clone_flags & CLONE_NEWUSER) && !unprivileged_userns_clone)
 +		if (!capable(CAP_SYS_ADMIN))
 +			return ERR_PTR(-EPERM);
@@ -88,10 +88,10 @@ index 08969f5aa38d59..ff601cb7a1fae0 100644
  	/*
  	 * Thread groups must share signals as well, and detached threads
  	 * can only be started up within the thread group.
-@@ -3166,6 +3174,12 @@ int ksys_unshare(unsigned long unshare_flags)
+@@ -3413,6 +3421,12 @@ int ksys_unshare(unsigned long unshare_flags)
  	if (unshare_flags & CLONE_NEWNS)
  		unshare_flags |= CLONE_FS;
-
+ 
 +	if ((unshare_flags & CLONE_NEWUSER) && !unprivileged_userns_clone) {
 +		err = -EPERM;
 +		if (!capable(CAP_SYS_ADMIN))
@@ -102,20 +102,20 @@ index 08969f5aa38d59..ff601cb7a1fae0 100644
  	if (err)
  		goto bad_unshare_out;
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index c6d9dec11b749d..9a4514ad481b21 100644
+index 354a2d294f526a..5bc5605e7cdbcd 100644
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
-@@ -81,6 +81,9 @@
+@@ -80,6 +80,9 @@
  #ifdef CONFIG_RT_MUTEXES
  #include <linux/rtmutex.h>
  #endif
 +#ifdef CONFIG_USER_NS
 +#include <linux/user_namespace.h>
 +#endif
-
+ 
  /* shared constants to be used in various sysctls */
  const int sysctl_vals[] = { 0, 1, 2, 3, 4, 100, 200, 1000, 3000, INT_MAX, 65535, -1 };
-@@ -1659,6 +1662,15 @@ static struct ctl_table kern_table[] = {
+@@ -1623,6 +1626,15 @@ static struct ctl_table kern_table[] = {
  		.mode		= 0644,
  		.proc_handler	= proc_dointvec,
  	},
@@ -132,13 +132,13 @@ index c6d9dec11b749d..9a4514ad481b21 100644
  	{
  		.procname	= "tainted",
 diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index 54211dbd516c57..16ca0c1516298d 100644
+index 1d8e47bed3f118..fec01d016a351f 100644
 --- a/kernel/user_namespace.c
 +++ b/kernel/user_namespace.c
 @@ -22,6 +22,13 @@
  #include <linux/bsearch.h>
  #include <linux/sort.h>
-
+ 
 +/* sysctl */
 +#ifdef CONFIG_USER_NS_UNPRIVILEGED
 +int unprivileged_userns_clone = 1;
@@ -148,4 +148,262 @@ index 54211dbd516c57..16ca0c1516298d 100644
 +
  static struct kmem_cache *user_ns_cachep __read_mostly;
  static DEFINE_MUTEX(userns_state_mutex);
+ 
 
+From 768a5cf69b200e3990fbe0bb7e9017a50036844f Mon Sep 17 00:00:00 2001
+From: Javier Martinez Canillas <javierm@redhat.com>
+Date: Thu, 19 May 2022 14:40:07 +0200
+Subject: [PATCH 2/4] drivers/firmware: skip simpledrm if nvidia-drm.modeset=1
+ is set
+
+The Nvidia proprietary driver has some bugs that leads to issues if used
+with the simpledrm driver. The most noticeable is that does not register
+an emulated fbdev device.
+
+It just relies on a fbdev to be registered by another driver, that could
+be that could be attached to the framebuffer console. On UEFI machines,
+this is the efifb driver.
+
+This means that disabling the efifb driver will cause virtual consoles to
+not be present in the system when using the Nvidia driver. Legacy BIOS is
+not affected just because fbcon is not used there, but instead vgacon.
+
+Unless a VGA mode is specified using the vga= kernel command line option,
+in that case the vesafb driver is used instead and its fbdev attached to
+the fbcon.
+
+This is a problem because with CONFIG_SYSFB_SIMPLEFB=y, the sysfb platform
+code attempts to register a "simple-framebuffer" platform device (that is
+matched against simpledrm) and only registers either an "efi-framebuffer"
+or "vesa-framebuffer" if this fails to be registered due the video modes
+not being compatible.
+
+The Nvidia driver relying on another driver to register the fbdev is quite
+fragile, since it can't really assume those will stick around. For example
+there are patches posted to remove the EFI and VESA platform devices once
+a real DRM or fbdev driver probes.
+
+But in any case, moving to a simpledrm + emulated fbdev only breaks this
+assumption and causes users to not have VT if the Nvidia driver is used.
+
+So to prevent this, let's add a workaround and make the sysfb to skip the
+"simple-framebuffer" registration when nvidia-drm.modeset=1 option is set.
+
+This is quite horrible, but honestly I can't think of any other approach.
+
+For this to work, the CONFIG_FB_EFI and CONFIG_FB_VESA config options must
+be enabled besides CONFIG_DRM_SIMPLEDRM.
+
+Signed-off-by: Javier Martinez Canillas <javierm@redhat.com>
+Cherry-picked-for: https://bugs.archlinux.org/task/73720
+---
+ drivers/firmware/sysfb.c | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/firmware/sysfb.c b/drivers/firmware/sysfb.c
+index 82fcfd29bc4d29..17b7e096b6828b 100644
+--- a/drivers/firmware/sysfb.c
++++ b/drivers/firmware/sysfb.c
+@@ -34,6 +34,22 @@
+ #include <linux/screen_info.h>
+ #include <linux/sysfb.h>
+ 
++static int skip_simpledrm;
++
++static int __init simpledrm_disable(char *opt)
++{
++	if (!opt)
++                return -EINVAL;
++
++	get_option(&opt, &skip_simpledrm);
++
++	if (skip_simpledrm)
++		pr_info("The simpledrm driver will not be probed\n");
++
++	return 0;
++}
++early_param("nvidia-drm.modeset", simpledrm_disable);
++
+ static struct platform_device *pd;
+ static DEFINE_MUTEX(disable_lock);
+ static bool disabled;
+@@ -85,7 +101,7 @@ static __init int sysfb_init(void)
+ 
+ 	/* try to create a simple-framebuffer device */
+ 	compatible = sysfb_parse_mode(si, &mode);
+-	if (compatible) {
++	if (compatible && !skip_simpledrm) {
+ 		pd = sysfb_create_simplefb(si, &mode);
+ 		if (!IS_ERR(pd))
+ 			goto unlock_mutex;
+
+From 1aaa0af959bf1124cc97dd63f219b7da5f7cda31 Mon Sep 17 00:00:00 2001
+From: Hans de Goede <hdegoede@redhat.com>
+Date: Mon, 27 Nov 2023 15:37:41 +0100
+Subject: [PATCH 3/4] ACPI: video: Use acpi_video_device for cooling-dev driver
+ data
+
+The acpi_video code was storing the acpi_video_device as driver-data
+in the acpi_device children of the acpi_video_bus acpi_device.
+
+But the acpi_video driver only binds to the bus acpi_device.
+It uses, but does not bind to, the children. Since it is not
+the driver it should not be using the driver_data of the children's
+acpi_device-s.
+
+Since commit 0d16710146a1 ("ACPI: bus: Set driver_data to NULL every
+time .add() fails") the childen's driver_data ends up getting set
+to NULL after a driver fails to bind to the children leading to a NULL
+pointer deref in video_get_max_state when registering the cooling-dev:
+
+[    3.148958] BUG: kernel NULL pointer dereference, address: 0000000000000090
+<snip>
+[    3.149015] Hardware name: Sony Corporation VPCSB2X9R/VAIO, BIOS R2087H4 06/15/2012
+[    3.149021] RIP: 0010:video_get_max_state+0x17/0x30 [video]
+<snip>
+[    3.149105] Call Trace:
+[    3.149110]  <TASK>
+[    3.149114]  ? __die+0x23/0x70
+[    3.149126]  ? page_fault_oops+0x171/0x4e0
+[    3.149137]  ? exc_page_fault+0x7f/0x180
+[    3.149147]  ? asm_exc_page_fault+0x26/0x30
+[    3.149158]  ? video_get_max_state+0x17/0x30 [video 9b6f3f0d19d7b4a0e2df17a2d8b43bc19c2ed71f]
+[    3.149176]  ? __pfx_video_get_max_state+0x10/0x10 [video 9b6f3f0d19d7b4a0e2df17a2d8b43bc19c2ed71f]
+[    3.149192]  __thermal_cooling_device_register.part.0+0xf2/0x2f0
+[    3.149205]  acpi_video_bus_register_backlight.part.0.isra.0+0x414/0x570 [video 9b6f3f0d19d7b4a0e2df17a2d8b43bc19c2ed71f]
+[    3.149227]  acpi_video_register_backlight+0x57/0x80 [video 9b6f3f0d19d7b4a0e2df17a2d8b43bc19c2ed71f]
+[    3.149245]  intel_acpi_video_register+0x68/0x90 [i915 1f3a758130b32ef13d301d4f8f78c7d766d57f2a]
+[    3.149669]  intel_display_driver_register+0x28/0x50 [i915 1f3a758130b32ef13d301d4f8f78c7d766d57f2a]
+[    3.150064]  i915_driver_probe+0x790/0xb90 [i915 1f3a758130b32ef13d301d4f8f78c7d766d57f2a]
+[    3.150402]  local_pci_probe+0x45/0xa0
+[    3.150412]  pci_device_probe+0xc1/0x260
+<snip>
+
+Fix this by directly using the acpi_video_device as devdata for
+the cooling-device, which avoids the need to set driver-data on
+the children at all.
+
+Fixes: 0d16710146a1 ("ACPI: bus: Set driver_data to NULL every time .add() fails")
+Closes: https://gitlab.freedesktop.org/drm/intel/-/issues/9718
+Cc: Michal Wilczynski <michal.wilczynski@intel.com>
+Cc: 6.6+ <stable@vger.kernel.org> # 6.6+
+Signed-off-by: Hans de Goede <hdegoede@redhat.com>
+Cherry-picked-for: https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/issues/5
+---
+ drivers/acpi/acpi_video.c | 14 +++++---------
+ 1 file changed, 5 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/acpi/acpi_video.c b/drivers/acpi/acpi_video.c
+index b411948594ff89..b613b3e6e1faf0 100644
+--- a/drivers/acpi/acpi_video.c
++++ b/drivers/acpi/acpi_video.c
+@@ -253,8 +253,7 @@ static const struct backlight_ops acpi_backlight_ops = {
+ static int video_get_max_state(struct thermal_cooling_device *cooling_dev,
+ 			       unsigned long *state)
+ {
+-	struct acpi_device *device = cooling_dev->devdata;
+-	struct acpi_video_device *video = acpi_driver_data(device);
++	struct acpi_video_device *video = cooling_dev->devdata;
+ 
+ 	*state = video->brightness->count - ACPI_VIDEO_FIRST_LEVEL - 1;
+ 	return 0;
+@@ -263,8 +262,7 @@ static int video_get_max_state(struct thermal_cooling_device *cooling_dev,
+ static int video_get_cur_state(struct thermal_cooling_device *cooling_dev,
+ 			       unsigned long *state)
+ {
+-	struct acpi_device *device = cooling_dev->devdata;
+-	struct acpi_video_device *video = acpi_driver_data(device);
++	struct acpi_video_device *video = cooling_dev->devdata;
+ 	unsigned long long level;
+ 	int offset;
+ 
+@@ -283,8 +281,7 @@ static int video_get_cur_state(struct thermal_cooling_device *cooling_dev,
+ static int
+ video_set_cur_state(struct thermal_cooling_device *cooling_dev, unsigned long state)
+ {
+-	struct acpi_device *device = cooling_dev->devdata;
+-	struct acpi_video_device *video = acpi_driver_data(device);
++	struct acpi_video_device *video = cooling_dev->devdata;
+ 	int level;
+ 
+ 	if (state >= video->brightness->count - ACPI_VIDEO_FIRST_LEVEL)
+@@ -1125,7 +1122,6 @@ static int acpi_video_bus_get_one_device(struct acpi_device *device, void *arg)
+ 
+ 	strcpy(acpi_device_name(device), ACPI_VIDEO_DEVICE_NAME);
+ 	strcpy(acpi_device_class(device), ACPI_VIDEO_CLASS);
+-	device->driver_data = data;
+ 
+ 	data->device_id = device_id;
+ 	data->video = video;
+@@ -1747,8 +1743,8 @@ static void acpi_video_dev_register_backlight(struct acpi_video_device *device)
+ 	device->backlight->props.brightness =
+ 			acpi_video_get_brightness(device->backlight);
+ 
+-	device->cooling_dev = thermal_cooling_device_register("LCD",
+-				device->dev, &video_cooling_ops);
++	device->cooling_dev = thermal_cooling_device_register("LCD", device,
++							      &video_cooling_ops);
+ 	if (IS_ERR(device->cooling_dev)) {
+ 		/*
+ 		 * Set cooling_dev to NULL so we don't crash trying to free it.
+
+From 67d54da160377c61f73d817dfaa0b51f3a4ab6d8 Mon Sep 17 00:00:00 2001
+From: Mario Limonciello <mario.limonciello@amd.com>
+Date: Tue, 20 Jun 2023 15:01:17 -0500
+Subject: [PATCH 4/4] HID: amd_sfh: Check that sensors are enabled before
+ set/get report
+
+A crash was reported in amd-sfh related to hid core initialization
+before SFH initialization has run.
+
+```
+   amdtp_hid_request+0x36/0x50 [amd_sfh
+2e3095779aada9fdb1764f08ca578ccb14e41fe4]
+   sensor_hub_get_feature+0xad/0x170 [hid_sensor_hub
+d6157999c9d260a1bfa6f27d4a0dc2c3e2c5654e]
+   hid_sensor_parse_common_attributes+0x217/0x310 [hid_sensor_iio_common
+07a7935272aa9c7a28193b574580b3e953a64ec4]
+   hid_gyro_3d_probe+0x7f/0x2e0 [hid_sensor_gyro_3d
+9f2eb51294a1f0c0315b365f335617cbaef01eab]
+   platform_probe+0x44/0xa0
+   really_probe+0x19e/0x3e0
+```
+
+Ensure that sensors have been set up before calling into
+amd_sfh_get_report() or amd_sfh_set_report().
+
+Cc: stable@vger.kernel.org
+Cc: Linux regression tracking (Thorsten Leemhuis) <regressions@leemhuis.info>
+Fixes: 7bcfdab3f0c6 ("HID: amd_sfh: if no sensors are enabled, clean up")
+Reported-by: Haochen Tong <linux@hexchain.org>
+Link: https://lore.kernel.org/all/3250319.ancTxkQ2z5@zen/T/
+Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
+Cherry-picked-for: https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/issues/7
+---
+ drivers/hid/amd-sfh-hid/amd_sfh_client.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/hid/amd-sfh-hid/amd_sfh_client.c b/drivers/hid/amd-sfh-hid/amd_sfh_client.c
+index bdb578e0899f55..0f1d6778051fcf 100644
+--- a/drivers/hid/amd-sfh-hid/amd_sfh_client.c
++++ b/drivers/hid/amd-sfh-hid/amd_sfh_client.c
+@@ -25,6 +25,9 @@ void amd_sfh_set_report(struct hid_device *hid, int report_id,
+ 	struct amdtp_cl_data *cli_data = hid_data->cli_data;
+ 	int i;
+ 
++	if (!cli_data->is_any_sensor_enabled)
++		return;
++
+ 	for (i = 0; i < cli_data->num_hid_devices; i++) {
+ 		if (cli_data->hid_sensor_hubs[i] == hid) {
+ 			cli_data->cur_hid_dev = i;
+@@ -41,6 +44,9 @@ int amd_sfh_get_report(struct hid_device *hid, int report_id, int report_type)
+ 	struct request_list *req_list = &cli_data->req_list;
+ 	int i;
+ 
++	if (!cli_data->is_any_sensor_enabled)
++		return -ENODEV;
++
+ 	for (i = 0; i < cli_data->num_hid_devices; i++) {
+ 		if (cli_data->hid_sensor_hubs[i] == hid) {
+ 			struct request_list *new = kzalloc(sizeof(*new), GFP_KERNEL);
