@@ -874,7 +874,11 @@ _tkg_srcprep() {
     fi
   elif [ "${_cpusched}" = "bore" ]; then
     _msg="Applying BORE patch"
-    curl "https://raw.githubusercontent.com/CachyOS/kernel-patches/master/${_basekernel}/sched/0001-bore.patch" > "$srcdir"/0001-bore.patch
+    if [ $_kver = 606 ]; then
+        curl "https://raw.githubusercontent.com/firelzrd/bore-scheduler/841355c/patches/linux-${_basekernel}-bore/0001-linux${_basekernel}.y-bore3.5.6.patch" > "$srcdir"/0001-bore.patch
+    else
+        curl "https://raw.githubusercontent.com/CachyOS/kernel-patches/master/${_basekernel}/sched/0001-bore.patch" > "$srcdir"/0001-bore.patch
+    fi
     tkgpatch="$srcdir/0001-bore.patch" && _tkg_patcher
   elif [[ "${_cpusched}" =~ "eevdf" ]]; then
     if [[ $_kver == "604" || $_kver == "605" ]]; then

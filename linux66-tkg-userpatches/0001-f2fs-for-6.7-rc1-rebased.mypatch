@@ -1,0 +1,885 @@
+From 3d12dc7c6ca52f20986ce465e42f6caa57072531 Mon Sep 17 00:00:00 2001
+From: Chao Yu <chao@kernel.org>
+Date: Mon, 28 Aug 2023 22:04:16 +0800
+Subject: [PATCH 1/9] f2fs: compress: do sanity check on cluster when
+ CONFIG_F2FS_CHECK_FS is on
+
+This patch covers sanity check logic on cluster w/ CONFIG_F2FS_CHECK_FS,
+otherwise, there will be performance regression while querying cluster
+mapping info.
+
+Callers of f2fs_is_compressed_cluster() only care about whether cluster
+is compressed or not, rather than # of valid blocks in compressed cluster,
+so, let's adjust f2fs_is_compressed_cluster()'s logic according to
+caller's requirement.
+
+Signed-off-by: Chao Yu <chao@kernel.org>
+Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
+---
+ fs/f2fs/compress.c | 61 ++++++++++++++++++++++++++--------------------
+ fs/f2fs/data.c     |  4 +--
+ 2 files changed, 35 insertions(+), 30 deletions(-)
+
+diff --git a/fs/f2fs/compress.c b/fs/f2fs/compress.c
+index 7514661bbfbb..36e5dab6baae 100644
+--- a/fs/f2fs/compress.c
++++ b/fs/f2fs/compress.c
+@@ -893,14 +893,15 @@ static bool cluster_has_invalid_data(struct compress_ctx *cc)
+ 
+ bool f2fs_sanity_check_cluster(struct dnode_of_data *dn)
+ {
++#ifdef CONFIG_F2FS_CHECK_FS
+ 	struct f2fs_sb_info *sbi = F2FS_I_SB(dn->inode);
+ 	unsigned int cluster_size = F2FS_I(dn->inode)->i_cluster_size;
+-	bool compressed = dn->data_blkaddr == COMPRESS_ADDR;
+ 	int cluster_end = 0;
++	unsigned int count;
+ 	int i;
+ 	char *reason = "";
+ 
+-	if (!compressed)
++	if (dn->data_blkaddr != COMPRESS_ADDR)
+ 		return false;
+ 
+ 	/* [..., COMPR_ADDR, ...] */
+@@ -909,7 +910,7 @@ bool f2fs_sanity_check_cluster(struct dnode_of_data *dn)
+ 		goto out;
+ 	}
+ 
+-	for (i = 1; i < cluster_size; i++) {
++	for (i = 1, count = 1; i < cluster_size; i++, count++) {
+ 		block_t blkaddr = data_blkaddr(dn->inode, dn->node_page,
+ 							dn->ofs_in_node + i);
+ 
+@@ -929,19 +930,42 @@ bool f2fs_sanity_check_cluster(struct dnode_of_data *dn)
+ 			goto out;
+ 		}
+ 	}
++
++	f2fs_bug_on(F2FS_I_SB(dn->inode), count != cluster_size &&
++		!is_inode_flag_set(dn->inode, FI_COMPRESS_RELEASED));
++
+ 	return false;
+ out:
+ 	f2fs_warn(sbi, "access invalid cluster, ino:%lu, nid:%u, ofs_in_node:%u, reason:%s",
+ 			dn->inode->i_ino, dn->nid, dn->ofs_in_node, reason);
+ 	set_sbi_flag(sbi, SBI_NEED_FSCK);
+ 	return true;
++#else
++	return false;
++#endif
++}
++
++static int __f2fs_get_cluster_blocks(struct inode *inode,
++					struct dnode_of_data *dn)
++{
++	unsigned int cluster_size = F2FS_I(inode)->i_cluster_size;
++	int count, i;
++
++	for (i = 1, count = 1; i < cluster_size; i++) {
++		block_t blkaddr = data_blkaddr(dn->inode, dn->node_page,
++							dn->ofs_in_node + i);
++
++		if (__is_valid_data_blkaddr(blkaddr))
++			count++;
++	}
++
++	return count;
+ }
+ 
+ static int __f2fs_cluster_blocks(struct inode *inode,
+-				unsigned int cluster_idx, bool compr)
++				unsigned int cluster_idx, bool compr_blks)
+ {
+ 	struct dnode_of_data dn;
+-	unsigned int cluster_size = F2FS_I(inode)->i_cluster_size;
+ 	unsigned int start_idx = cluster_idx <<
+ 				F2FS_I(inode)->i_log_cluster_size;
+ 	int ret;
+@@ -956,31 +980,14 @@ static int __f2fs_cluster_blocks(struct inode *inode,
+ 
+ 	if (f2fs_sanity_check_cluster(&dn)) {
+ 		ret = -EFSCORRUPTED;
+-		f2fs_handle_error(F2FS_I_SB(inode), ERROR_CORRUPTED_CLUSTER);
+ 		goto fail;
+ 	}
+ 
+ 	if (dn.data_blkaddr == COMPRESS_ADDR) {
+-		int i;
+-
+-		ret = 1;
+-		for (i = 1; i < cluster_size; i++) {
+-			block_t blkaddr;
+-
+-			blkaddr = data_blkaddr(dn.inode,
+-					dn.node_page, dn.ofs_in_node + i);
+-			if (compr) {
+-				if (__is_valid_data_blkaddr(blkaddr))
+-					ret++;
+-			} else {
+-				if (blkaddr != NULL_ADDR)
+-					ret++;
+-			}
+-		}
+-
+-		f2fs_bug_on(F2FS_I_SB(inode),
+-			!compr && ret != cluster_size &&
+-			!is_inode_flag_set(inode, FI_COMPRESS_RELEASED));
++		if (compr_blks)
++			ret = __f2fs_get_cluster_blocks(inode, &dn);
++		else
++			ret = 1;
+ 	}
+ fail:
+ 	f2fs_put_dnode(&dn);
+@@ -993,7 +1000,7 @@ static int f2fs_compressed_blocks(struct compress_ctx *cc)
+ 	return __f2fs_cluster_blocks(cc->inode, cc->cluster_idx, true);
+ }
+ 
+-/* return # of valid blocks in compressed cluster */
++/* return whether cluster is compressed one or not */
+ int f2fs_is_compressed_cluster(struct inode *inode, pgoff_t index)
+ {
+ 	return __f2fs_cluster_blocks(inode,
+diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
+index 1ac34eb49a0e..cd9cedc35d7f 100644
+--- a/fs/f2fs/data.c
++++ b/fs/f2fs/data.c
+@@ -1690,9 +1690,7 @@ int f2fs_map_blocks(struct inode *inode, struct f2fs_map_blocks *map, int flag)
+ 			map->m_flags |= F2FS_MAP_NEW;
+ 	} else if (is_hole) {
+ 		if (f2fs_compressed_file(inode) &&
+-		    f2fs_sanity_check_cluster(&dn) &&
+-		    (flag != F2FS_GET_BLOCK_FIEMAP ||
+-		     IS_ENABLED(CONFIG_F2FS_CHECK_FS))) {
++		    f2fs_sanity_check_cluster(&dn)) {
+ 			err = -EFSCORRUPTED;
+ 			f2fs_handle_error(sbi,
+ 					ERROR_CORRUPTED_CLUSTER);
+-- 
+2.42.1
+
+
+From 0e4950e3471835092c6f326d4fe2881e0e4564dd Mon Sep 17 00:00:00 2001
+From: Chao Yu <chao@kernel.org>
+Date: Mon, 4 Sep 2023 23:12:42 +0800
+Subject: [PATCH 2/9] f2fs: compress: fix to avoid fragment w/ OPU during
+ f2fs_ioc_compress_file()
+
+If file has both cold and compress flag, during f2fs_ioc_compress_file(),
+f2fs will trigger IPU for non-compress cluster and OPU for compress
+cluster, so that, data of the file may be fragmented.
+
+Fix it by always triggering OPU for IOs from user mode compression.
+
+Signed-off-by: Chao Yu <chao@kernel.org>
+Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
+---
+ fs/f2fs/data.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
+index cd9cedc35d7f..96342aba8022 100644
+--- a/fs/f2fs/data.c
++++ b/fs/f2fs/data.c
+@@ -2665,6 +2665,11 @@ bool f2fs_should_update_outplace(struct inode *inode, struct f2fs_io_info *fio)
+ 		return true;
+ 	if (f2fs_is_atomic_file(inode))
+ 		return true;
++	/* rewrite low ratio compress data w/ OPU mode to avoid fragmentation */
++	if (f2fs_compressed_file(inode) &&
++		F2FS_OPTION(sbi).compress_mode == COMPR_MODE_USER &&
++		is_inode_flag_set(inode, FI_ENABLE_COMPRESS))
++		return true;
+ 
+ 	/* swap file is migrating in aligned write mode */
+ 	if (is_inode_flag_set(inode, FI_ALIGNED_WRITE))
+-- 
+2.42.1
+
+
+From bbdb2a2af51ecb928c3759bce92854760a656192 Mon Sep 17 00:00:00 2001
+From: Jaegeuk Kim <jaegeuk@kernel.org>
+Date: Tue, 19 Sep 2023 17:43:52 -0700
+Subject: [PATCH 3/9] f2fs: preload extent_cache for POSIX_FADV_WILLNEED
+
+This patch tries to preload extent_cache given POSIX_FADV_WILLNEED, which is
+more useful for generic usecases.
+
+Reviewed-by: Chao Yu <chao@kernel.org>
+Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
+---
+ fs/f2fs/file.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index a06f03d23762..7951f07bf132 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -4859,6 +4859,9 @@ static int f2fs_file_fadvise(struct file *filp, loff_t offset, loff_t len,
+ 		filp->f_mode &= ~FMODE_RANDOM;
+ 		spin_unlock(&filp->f_lock);
+ 		return 0;
++	} else if (advice == POSIX_FADV_WILLNEED && offset == 0) {
++		/* Load extent cache at the first readahead. */
++		f2fs_precache_extents(inode);
+ 	}
+ 
+ 	err = generic_fadvise(filp, offset, len, advice);
+-- 
+2.42.1
+
+
+From 78550d27af627978e5eae7b2214f51351338a8a2 Mon Sep 17 00:00:00 2001
+From: Jaegeuk Kim <jaegeuk@kernel.org>
+Date: Tue, 3 Oct 2023 15:51:49 -0700
+Subject: [PATCH 4/9] f2fs: stop iterating f2fs_map_block if hole exists
+
+Let's avoid unnecessary f2fs_map_block calls to load extents.
+
+ # f2fs_io fadvise willneed 0 4096 /data/local/tmp/test
+
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 386, start blkaddr = 0x34ac00, len = 0x1400, flags = 2,
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 5506, start blkaddr = 0x34c200, len = 0x1000, flags = 2,
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 9602, start blkaddr = 0x34d600, len = 0x1200, flags = 2,
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 14210, start blkaddr = 0x34ec00, len = 0x400, flags = 2,
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 15235, start blkaddr = 0x34f401, len = 0xbff, flags = 2,
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 18306, start blkaddr = 0x350200, len = 0x1200, flags = 2
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 22915, start blkaddr = 0x351601, len = 0xa7d, flags = 2
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 25600, start blkaddr = 0x351601, len = 0x0, flags = 0
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 25601, start blkaddr = 0x351601, len = 0x0, flags = 0
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 25602, start blkaddr = 0x351601, len = 0x0, flags = 0
+  ...
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 1037188, start blkaddr = 0x351601, len = 0x0, flags = 0
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 1038206, start blkaddr = 0x351601, len = 0x0, flags = 0
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 1039224, start blkaddr = 0x351601, len = 0x0, flags = 0
+  f2fs_map_blocks: dev = (254,51), ino = 85845, file offset = 2075548, start blkaddr = 0x351601, len = 0x0, flags = 0
+
+Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
+---
+ fs/f2fs/file.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index 7951f07bf132..06d35b8aceef 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -3271,7 +3271,7 @@ int f2fs_precache_extents(struct inode *inode)
+ 		f2fs_down_write(&fi->i_gc_rwsem[WRITE]);
+ 		err = f2fs_map_blocks(inode, &map, F2FS_GET_BLOCK_PRECACHE);
+ 		f2fs_up_write(&fi->i_gc_rwsem[WRITE]);
+-		if (err)
++		if (err || !map.m_len)
+ 			return err;
+ 
+ 		map.m_lblk = m_next_extent;
+-- 
+2.42.1
+
+
+From 3118e61c41e3e041b8b3837a3e4a3cc80c1bfa9a Mon Sep 17 00:00:00 2001
+From: Daniel Rosenberg <drosen@google.com>
+Date: Mon, 2 Oct 2023 16:09:35 -0700
+Subject: [PATCH 5/9] f2fs: Support Block Size == Page Size
+
+This allows f2fs to support cases where the block size = page size for
+both 4K and 16K block sizes. Other sizes should work as well, should the
+need arise. This does not currently support 4K Block size filesystems if
+the page size is 16K.
+
+Signed-off-by: Daniel Rosenberg <drosen@google.com>
+Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
+---
+ fs/f2fs/data.c          |  2 +-
+ fs/f2fs/inode.c         |  2 +-
+ fs/f2fs/node.c          |  2 +-
+ fs/f2fs/super.c         |  4 +--
+ include/linux/f2fs_fs.h | 69 ++++++++++++++++++++++++-----------------
+ 5 files changed, 46 insertions(+), 33 deletions(-)
+
+diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
+index 96342aba8022..4e42b5f24deb 100644
+--- a/fs/f2fs/data.c
++++ b/fs/f2fs/data.c
+@@ -4076,7 +4076,7 @@ static int check_swap_activate(struct swap_info_struct *sis,
+ 	sis->highest_bit = cur_lblock - 1;
+ out:
+ 	if (not_aligned)
+-		f2fs_warn(sbi, "Swapfile (%u) is not align to section: 1) creat(), 2) ioctl(F2FS_IOC_SET_PIN_FILE), 3) fallocate(%u * N)",
++		f2fs_warn(sbi, "Swapfile (%u) is not align to section: 1) creat(), 2) ioctl(F2FS_IOC_SET_PIN_FILE), 3) fallocate(%lu * N)",
+ 			  not_aligned, blks_per_sec * F2FS_BLKSIZE);
+ 	return ret;
+ }
+diff --git a/fs/f2fs/inode.c b/fs/f2fs/inode.c
+index cde243840abd..cafb81588359 100644
+--- a/fs/f2fs/inode.c
++++ b/fs/f2fs/inode.c
+@@ -315,7 +315,7 @@ static bool sanity_check_inode(struct inode *inode, struct page *node_page)
+ 			f2fs_has_inline_xattr(inode) &&
+ 			(!fi->i_inline_xattr_size ||
+ 			fi->i_inline_xattr_size > MAX_INLINE_XATTR_SIZE)) {
+-			f2fs_warn(sbi, "%s: inode (ino=%lx) has corrupted i_inline_xattr_size: %d, max: %zu",
++			f2fs_warn(sbi, "%s: inode (ino=%lx) has corrupted i_inline_xattr_size: %d, max: %lu",
+ 				  __func__, inode->i_ino, fi->i_inline_xattr_size,
+ 				  MAX_INLINE_XATTR_SIZE);
+ 			return false;
+diff --git a/fs/f2fs/node.c b/fs/f2fs/node.c
+index 8b30f11f37b4..6c7f6a649d27 100644
+--- a/fs/f2fs/node.c
++++ b/fs/f2fs/node.c
+@@ -633,7 +633,7 @@ static void f2fs_ra_node_pages(struct page *parent, int start, int n)
+ 
+ 	/* Then, try readahead for siblings of the desired node */
+ 	end = start + n;
+-	end = min(end, NIDS_PER_BLOCK);
++	end = min(end, (int)NIDS_PER_BLOCK);
+ 	for (i = start; i < end; i++) {
+ 		nid = get_nid(parent, i, false);
+ 		f2fs_ra_node_page(sbi, nid);
+diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
+index bc303a052215..d2eafb56af81 100644
+--- a/fs/f2fs/super.c
++++ b/fs/f2fs/super.c
+@@ -3502,7 +3502,7 @@ static int sanity_check_raw_super(struct f2fs_sb_info *sbi,
+ 		return -EFSCORRUPTED;
+ 	}
+ 
+-	/* Currently, support 512/1024/2048/4096 bytes sector size */
++	/* Currently, support 512/1024/2048/4096/16K bytes sector size */
+ 	if (le32_to_cpu(raw_super->log_sectorsize) >
+ 				F2FS_MAX_LOG_SECTOR_SIZE ||
+ 		le32_to_cpu(raw_super->log_sectorsize) <
+@@ -4948,7 +4948,7 @@ static int __init init_f2fs_fs(void)
+ 	int err;
+ 
+ 	if (PAGE_SIZE != F2FS_BLKSIZE) {
+-		printk("F2FS not supported on PAGE_SIZE(%lu) != %d\n",
++		printk("F2FS not supported on PAGE_SIZE(%lu) != BLOCK_SIZE(%lu)\n",
+ 				PAGE_SIZE, F2FS_BLKSIZE);
+ 		return -EINVAL;
+ 	}
+diff --git a/include/linux/f2fs_fs.h b/include/linux/f2fs_fs.h
+index cf1adceb0269..039fe0ce8d83 100644
+--- a/include/linux/f2fs_fs.h
++++ b/include/linux/f2fs_fs.h
+@@ -13,10 +13,10 @@
+ 
+ #define F2FS_SUPER_OFFSET		1024	/* byte-size offset */
+ #define F2FS_MIN_LOG_SECTOR_SIZE	9	/* 9 bits for 512 bytes */
+-#define F2FS_MAX_LOG_SECTOR_SIZE	12	/* 12 bits for 4096 bytes */
+-#define F2FS_LOG_SECTORS_PER_BLOCK	3	/* log number for sector/blk */
+-#define F2FS_BLKSIZE			4096	/* support only 4KB block */
+-#define F2FS_BLKSIZE_BITS		12	/* bits for F2FS_BLKSIZE */
++#define F2FS_MAX_LOG_SECTOR_SIZE	PAGE_SHIFT	/* Max is Block Size */
++#define F2FS_LOG_SECTORS_PER_BLOCK	(PAGE_SHIFT - 9) /* log number for sector/blk */
++#define F2FS_BLKSIZE			PAGE_SIZE /* support only block == page */
++#define F2FS_BLKSIZE_BITS		PAGE_SHIFT /* bits for F2FS_BLKSIZE */
+ #define F2FS_MAX_EXTENSION		64	/* # of extension entries */
+ #define F2FS_EXTENSION_LEN		8	/* max size of extension */
+ #define F2FS_BLK_ALIGN(x)	(((x) + F2FS_BLKSIZE - 1) >> F2FS_BLKSIZE_BITS)
+@@ -211,14 +211,14 @@ struct f2fs_checkpoint {
+ 	unsigned char sit_nat_version_bitmap[];
+ } __packed;
+ 
+-#define CP_CHKSUM_OFFSET	4092	/* default chksum offset in checkpoint */
++#define CP_CHKSUM_OFFSET	(F2FS_BLKSIZE - sizeof(__le32))	/* default chksum offset in checkpoint */
+ #define CP_MIN_CHKSUM_OFFSET						\
+ 	(offsetof(struct f2fs_checkpoint, sit_nat_version_bitmap))
+ 
+ /*
+  * For orphan inode management
+  */
+-#define F2FS_ORPHANS_PER_BLOCK	1020
++#define F2FS_ORPHANS_PER_BLOCK	((F2FS_BLKSIZE - 4 * sizeof(__le32)) / sizeof(__le32))
+ 
+ #define GET_ORPHAN_BLOCKS(n)	(((n) + F2FS_ORPHANS_PER_BLOCK - 1) / \
+ 					F2FS_ORPHANS_PER_BLOCK)
+@@ -244,14 +244,31 @@ struct f2fs_extent {
+ #define F2FS_NAME_LEN		255
+ /* 200 bytes for inline xattrs by default */
+ #define DEFAULT_INLINE_XATTR_ADDRS	50
+-#define DEF_ADDRS_PER_INODE	923	/* Address Pointers in an Inode */
++
++#define OFFSET_OF_END_OF_I_EXT		360
++#define SIZE_OF_I_NID			20
++
++struct node_footer {
++	__le32 nid;		/* node id */
++	__le32 ino;		/* inode number */
++	__le32 flag;		/* include cold/fsync/dentry marks and offset */
++	__le64 cp_ver;		/* checkpoint version */
++	__le32 next_blkaddr;	/* next node page block address */
++} __packed;
++
++/* Address Pointers in an Inode */
++#define DEF_ADDRS_PER_INODE	((F2FS_BLKSIZE - OFFSET_OF_END_OF_I_EXT	\
++					- SIZE_OF_I_NID	\
++					- sizeof(struct node_footer)) / sizeof(__le32))
+ #define CUR_ADDRS_PER_INODE(inode)	(DEF_ADDRS_PER_INODE - \
+ 					get_extra_isize(inode))
+ #define DEF_NIDS_PER_INODE	5	/* Node IDs in an Inode */
+ #define ADDRS_PER_INODE(inode)	addrs_per_inode(inode)
+-#define DEF_ADDRS_PER_BLOCK	1018	/* Address Pointers in a Direct Block */
++/* Address Pointers in a Direct Block */
++#define DEF_ADDRS_PER_BLOCK	((F2FS_BLKSIZE - sizeof(struct node_footer)) / sizeof(__le32))
+ #define ADDRS_PER_BLOCK(inode)	addrs_per_block(inode)
+-#define NIDS_PER_BLOCK		1018	/* Node IDs in an Indirect Block */
++/* Node IDs in an Indirect Block */
++#define NIDS_PER_BLOCK		((F2FS_BLKSIZE - sizeof(struct node_footer)) / sizeof(__le32))
+ 
+ #define ADDRS_PER_PAGE(page, inode)	\
+ 	(IS_INODE(page) ? ADDRS_PER_INODE(inode) : ADDRS_PER_BLOCK(inode))
+@@ -343,14 +360,6 @@ enum {
+ 
+ #define OFFSET_BIT_MASK		GENMASK(OFFSET_BIT_SHIFT - 1, 0)
+ 
+-struct node_footer {
+-	__le32 nid;		/* node id */
+-	__le32 ino;		/* inode number */
+-	__le32 flag;		/* include cold/fsync/dentry marks and offset */
+-	__le64 cp_ver;		/* checkpoint version */
+-	__le32 next_blkaddr;	/* next node page block address */
+-} __packed;
+-
+ struct f2fs_node {
+ 	/* can be one of three types: inode, direct, and indirect types */
+ 	union {
+@@ -364,7 +373,7 @@ struct f2fs_node {
+ /*
+  * For NAT entries
+  */
+-#define NAT_ENTRY_PER_BLOCK (PAGE_SIZE / sizeof(struct f2fs_nat_entry))
++#define NAT_ENTRY_PER_BLOCK (F2FS_BLKSIZE / sizeof(struct f2fs_nat_entry))
+ 
+ struct f2fs_nat_entry {
+ 	__u8 version;		/* latest version of cached nat entry */
+@@ -379,12 +388,13 @@ struct f2fs_nat_block {
+ /*
+  * For SIT entries
+  *
+- * Each segment is 2MB in size by default so that a bitmap for validity of
+- * there-in blocks should occupy 64 bytes, 512 bits.
++ * A validity bitmap of 64 bytes covers 512 blocks of area. For a 4K page size,
++ * this results in a segment size of 2MB. For 16k pages, the default segment size
++ * is 8MB.
+  * Not allow to change this.
+  */
+ #define SIT_VBLOCK_MAP_SIZE 64
+-#define SIT_ENTRY_PER_BLOCK (PAGE_SIZE / sizeof(struct f2fs_sit_entry))
++#define SIT_ENTRY_PER_BLOCK (F2FS_BLKSIZE / sizeof(struct f2fs_sit_entry))
+ 
+ /*
+  * F2FS uses 4 bytes to represent block address. As a result, supported size of
+@@ -419,7 +429,7 @@ struct f2fs_sit_block {
+  * For segment summary
+  *
+  * One summary block contains exactly 512 summary entries, which represents
+- * exactly 2MB segment by default. Not allow to change the basic units.
++ * exactly one segment by default. Not allow to change the basic units.
+  *
+  * NOTE: For initializing fields, you must use set_summary
+  *
+@@ -430,12 +440,12 @@ struct f2fs_sit_block {
+  * from node's page's beginning to get a data block address.
+  * ex) data_blkaddr = (block_t)(nodepage_start_address + ofs_in_node)
+  */
+-#define ENTRIES_IN_SUM		512
++#define ENTRIES_IN_SUM		(F2FS_BLKSIZE / 8)
+ #define	SUMMARY_SIZE		(7)	/* sizeof(struct summary) */
+ #define	SUM_FOOTER_SIZE		(5)	/* sizeof(struct summary_footer) */
+ #define SUM_ENTRY_SIZE		(SUMMARY_SIZE * ENTRIES_IN_SUM)
+ 
+-/* a summary entry for a 4KB-sized block in a segment */
++/* a summary entry for a block in a segment */
+ struct f2fs_summary {
+ 	__le32 nid;		/* parent node id */
+ 	union {
+@@ -519,7 +529,7 @@ struct f2fs_journal {
+ 	};
+ } __packed;
+ 
+-/* 4KB-sized summary block structure */
++/* Block-sized summary block structure */
+ struct f2fs_summary_block {
+ 	struct f2fs_summary entries[ENTRIES_IN_SUM];
+ 	struct f2fs_journal journal;
+@@ -560,11 +570,14 @@ typedef __le32	f2fs_hash_t;
+  * Note: there are more reserved space in inline dentry than in regular
+  * dentry, when converting inline dentry we should handle this carefully.
+  */
+-#define NR_DENTRY_IN_BLOCK	214	/* the number of dentry in a block */
++
++/* the number of dentry in a block */
++#define NR_DENTRY_IN_BLOCK	((BITS_PER_BYTE * F2FS_BLKSIZE) / \
++					((SIZE_OF_DIR_ENTRY + F2FS_SLOT_LEN) * BITS_PER_BYTE + 1))
+ #define SIZE_OF_DIR_ENTRY	11	/* by byte */
+ #define SIZE_OF_DENTRY_BITMAP	((NR_DENTRY_IN_BLOCK + BITS_PER_BYTE - 1) / \
+ 					BITS_PER_BYTE)
+-#define SIZE_OF_RESERVED	(PAGE_SIZE - ((SIZE_OF_DIR_ENTRY + \
++#define SIZE_OF_RESERVED	(F2FS_BLKSIZE - ((SIZE_OF_DIR_ENTRY + \
+ 				F2FS_SLOT_LEN) * \
+ 				NR_DENTRY_IN_BLOCK + SIZE_OF_DENTRY_BITMAP))
+ #define MIN_INLINE_DENTRY_SIZE		40	/* just include '.' and '..' entries */
+@@ -577,7 +590,7 @@ struct f2fs_dir_entry {
+ 	__u8 file_type;		/* file type */
+ } __packed;
+ 
+-/* 4KB-sized directory entry block */
++/* Block-sized directory entry block */
+ struct f2fs_dentry_block {
+ 	/* validity bitmap for directory entries in each block */
+ 	__u8 dentry_bitmap[SIZE_OF_DENTRY_BITMAP];
+-- 
+2.42.1
+
+
+From e6b9e77cd5fe5b01a61224d3fc1d343bd5d3581e Mon Sep 17 00:00:00 2001
+From: Chao Yu <chao@kernel.org>
+Date: Tue, 10 Oct 2023 09:34:59 +0800
+Subject: [PATCH 6/9] f2fs: let f2fs_precache_extents() traverses in file range
+
+Rather than in range of [0, max_file_blocks()), since data after EOF
+is alwasy zero, it's unnecessary to preload mapping info of the data.
+
+Signed-off-by: Chao Yu <chao@kernel.org>
+Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
+---
+ fs/f2fs/file.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index 06d35b8aceef..304d0516d3a4 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -3263,7 +3263,7 @@ int f2fs_precache_extents(struct inode *inode)
+ 	map.m_next_extent = &m_next_extent;
+ 	map.m_seg_type = NO_CHECK_TYPE;
+ 	map.m_may_create = false;
+-	end = max_file_blocks(inode);
++	end = F2FS_BLK_ALIGN(i_size_read(inode));
+ 
+ 	while (map.m_lblk < end) {
+ 		map.m_len = end - map.m_lblk;
+-- 
+2.42.1
+
+
+From 9211ce4d0d320ace9b438c4cc8073bbc2b8e5268 Mon Sep 17 00:00:00 2001
+From: Daeho Jeong <daehojeong@google.com>
+Date: Tue, 10 Oct 2023 12:36:28 -0700
+Subject: [PATCH 7/9] f2fs: clean up zones when not successfully unmounted
+
+We can't trust write pointers when the previous mount was not
+successfully unmounted.
+
+Signed-off-by: Daeho Jeong <daehojeong@google.com>
+Reviewed-by: Chao Yu <chao@kernel.org>
+Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
+---
+ fs/f2fs/segment.c | 92 ++++++++++++++++++++++++++++-------------------
+ 1 file changed, 56 insertions(+), 36 deletions(-)
+
+diff --git a/fs/f2fs/segment.c b/fs/f2fs/segment.c
+index d05b41608fc0..727d016318f9 100644
+--- a/fs/f2fs/segment.c
++++ b/fs/f2fs/segment.c
+@@ -4910,22 +4910,31 @@ static int check_zone_write_pointer(struct f2fs_sb_info *sbi,
+ 	}
+ 
+ 	/*
+-	 * The write pointer matches with the valid blocks or
+-	 * already points to the end of the zone.
++	 * When safely unmounted in the previous mount, we can trust write
++	 * pointers. Otherwise, finish zones.
+ 	 */
+-	if ((last_valid_block + 1 == wp_block) ||
+-			(zone->wp == zone->start + zone->len))
+-		return 0;
+-
+-	if (last_valid_block + 1 == zone_block) {
++	if (is_set_ckpt_flags(sbi, CP_UMOUNT_FLAG)) {
+ 		/*
+-		 * If there is no valid block in the zone and if write pointer
+-		 * is not at zone start, reset the write pointer.
++		 * The write pointer matches with the valid blocks or
++		 * already points to the end of the zone.
+ 		 */
+-		f2fs_notice(sbi,
+-			    "Zone without valid block has non-zero write "
+-			    "pointer. Reset the write pointer: wp[0x%x,0x%x]",
+-			    wp_segno, wp_blkoff);
++		if ((last_valid_block + 1 == wp_block) ||
++				(zone->wp == zone->start + zone->len))
++			return 0;
++	}
++
++	if (last_valid_block + 1 == zone_block) {
++		if (is_set_ckpt_flags(sbi, CP_UMOUNT_FLAG)) {
++			/*
++			 * If there is no valid block in the zone and if write
++			 * pointer is not at zone start, reset the write
++			 * pointer.
++			 */
++			f2fs_notice(sbi,
++			      "Zone without valid block has non-zero write "
++			      "pointer. Reset the write pointer: wp[0x%x,0x%x]",
++			      wp_segno, wp_blkoff);
++		}
+ 		ret = __f2fs_issue_discard_zone(sbi, fdev->bdev, zone_block,
+ 					zone->len >> log_sectors_per_block);
+ 		if (ret)
+@@ -4935,18 +4944,20 @@ static int check_zone_write_pointer(struct f2fs_sb_info *sbi,
+ 		return ret;
+ 	}
+ 
+-	/*
+-	 * If there are valid blocks and the write pointer doesn't
+-	 * match with them, we need to report the inconsistency and
+-	 * fill the zone till the end to close the zone. This inconsistency
+-	 * does not cause write error because the zone will not be selected
+-	 * for write operation until it get discarded.
+-	 */
+-	f2fs_notice(sbi, "Valid blocks are not aligned with write pointer: "
+-		    "valid block[0x%x,0x%x] wp[0x%x,0x%x]",
+-		    GET_SEGNO(sbi, last_valid_block),
+-		    GET_BLKOFF_FROM_SEG0(sbi, last_valid_block),
+-		    wp_segno, wp_blkoff);
++	if (is_set_ckpt_flags(sbi, CP_UMOUNT_FLAG)) {
++		/*
++		 * If there are valid blocks and the write pointer doesn't match
++		 * with them, we need to report the inconsistency and fill
++		 * the zone till the end to close the zone. This inconsistency
++		 * does not cause write error because the zone will not be
++		 * selected for write operation until it get discarded.
++		 */
++		f2fs_notice(sbi, "Valid blocks are not aligned with write "
++			    "pointer: valid block[0x%x,0x%x] wp[0x%x,0x%x]",
++			    GET_SEGNO(sbi, last_valid_block),
++			    GET_BLKOFF_FROM_SEG0(sbi, last_valid_block),
++			    wp_segno, wp_blkoff);
++	}
+ 
+ 	ret = blkdev_zone_mgmt(fdev->bdev, REQ_OP_ZONE_FINISH,
+ 				zone->start, zone->len, GFP_NOFS);
+@@ -5020,18 +5031,27 @@ static int fix_curseg_write_pointer(struct f2fs_sb_info *sbi, int type)
+ 	if (zone.type != BLK_ZONE_TYPE_SEQWRITE_REQ)
+ 		return 0;
+ 
+-	wp_block = zbd->start_blk + (zone.wp >> log_sectors_per_block);
+-	wp_segno = GET_SEGNO(sbi, wp_block);
+-	wp_blkoff = wp_block - START_BLOCK(sbi, wp_segno);
+-	wp_sector_off = zone.wp & GENMASK(log_sectors_per_block - 1, 0);
+-
+-	if (cs->segno == wp_segno && cs->next_blkoff == wp_blkoff &&
+-		wp_sector_off == 0)
+-		return 0;
++	/*
++	 * When safely unmounted in the previous mount, we could use current
++	 * segments. Otherwise, allocate new sections.
++	 */
++	if (is_set_ckpt_flags(sbi, CP_UMOUNT_FLAG)) {
++		wp_block = zbd->start_blk + (zone.wp >> log_sectors_per_block);
++		wp_segno = GET_SEGNO(sbi, wp_block);
++		wp_blkoff = wp_block - START_BLOCK(sbi, wp_segno);
++		wp_sector_off = zone.wp & GENMASK(log_sectors_per_block - 1, 0);
++
++		if (cs->segno == wp_segno && cs->next_blkoff == wp_blkoff &&
++				wp_sector_off == 0)
++			return 0;
+ 
+-	f2fs_notice(sbi, "Unaligned curseg[%d] with write pointer: "
+-		    "curseg[0x%x,0x%x] wp[0x%x,0x%x]",
+-		    type, cs->segno, cs->next_blkoff, wp_segno, wp_blkoff);
++		f2fs_notice(sbi, "Unaligned curseg[%d] with write pointer: "
++			    "curseg[0x%x,0x%x] wp[0x%x,0x%x]", type, cs->segno,
++			    cs->next_blkoff, wp_segno, wp_blkoff);
++	} else {
++		f2fs_notice(sbi, "Not successfully unmounted in the previous "
++			    "mount");
++	}
+ 
+ 	f2fs_notice(sbi, "Assign new section to curseg[%d]: "
+ 		    "curseg[0x%x,0x%x]", type, cs->segno, cs->next_blkoff);
+-- 
+2.42.1
+
+
+From d83faa7b02341f2ad6f68ae67ed9a36db1f0f2f1 Mon Sep 17 00:00:00 2001
+From: KaiLong Wang <wangkailong@jari.cn>
+Date: Fri, 13 Oct 2023 14:45:42 +0800
+Subject: [PATCH 8/9] f2fs: Clean up errors in segment.h
+
+Fix the following errors reported by checkpatch:
+
+ERROR: spaces required around that ':' (ctx:VxW)
+
+Signed-off-by: KaiLong Wang <wangkailong@jari.cn>
+Reviewed-by: Chao Yu <chao@kernel.org>
+Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
+---
+ fs/f2fs/segment.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/fs/f2fs/segment.h b/fs/f2fs/segment.h
+index 2ca8fb5d0dc4..8129be788bd5 100644
+--- a/fs/f2fs/segment.h
++++ b/fs/f2fs/segment.h
+@@ -108,11 +108,11 @@ static inline void sanity_check_seg_type(struct f2fs_sb_info *sbi,
+ 	((sbi)->segs_per_sec - ((sbi)->unusable_blocks_per_sec >>\
+ 	(sbi)->log_blocks_per_seg))
+ #define GET_SEC_FROM_SEG(sbi, segno)				\
+-	(((segno) == -1) ? -1: (segno) / (sbi)->segs_per_sec)
++	(((segno) == -1) ? -1 : (segno) / (sbi)->segs_per_sec)
+ #define GET_SEG_FROM_SEC(sbi, secno)				\
+ 	((secno) * (sbi)->segs_per_sec)
+ #define GET_ZONE_FROM_SEC(sbi, secno)				\
+-	(((secno) == -1) ? -1: (secno) / (sbi)->secs_per_zone)
++	(((secno) == -1) ? -1 : (secno) / (sbi)->secs_per_zone)
+ #define GET_ZONE_FROM_SEG(sbi, segno)				\
+ 	GET_ZONE_FROM_SEC(sbi, GET_SEC_FROM_SEG(sbi, segno))
+ 
+-- 
+2.42.1
+
+
+From fa73a7c90174aa575fe64a50315c567b054cc7fe Mon Sep 17 00:00:00 2001
+From: Daeho Jeong <daehojeong@google.com>
+Date: Fri, 20 Oct 2023 09:36:45 -0700
+Subject: [PATCH 9/9] f2fs: finish previous checkpoints before returning from
+ remount
+
+Flush remaining checkpoint requests at the end of remount, since a new
+checkpoint would be triggered while remount and we need to take care of
+it before returning from remount, in order to avoid the below race
+condition.
+
+  - Thread                          - checkpoint thread
+  do_remount()
+   down_write(&sb->s_umount);
+   f2fs_remount()
+    f2fs_disable_checkpoint(sbi) -> add checkpoints to the list
+                                    block_operations()
+                                     down_read_trylock(&sb->s_umount) = 0
+   up_write(&sb->s_umount);
+                                     f2fs_quota_sync()
+                                      dquot_writeback_dquots()
+                                       WARN_ON_ONCE(!rwsem_is_locked(&sb->s_umount));
+
+Signed-off-by: Daeho Jeong <daehojeong@google.com>
+Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
+---
+ fs/f2fs/super.c | 59 +++++++++++++++++++++++++++----------------------
+ 1 file changed, 32 insertions(+), 27 deletions(-)
+
+diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
+index d2eafb56af81..f266cc385d71 100644
+--- a/fs/f2fs/super.c
++++ b/fs/f2fs/super.c
+@@ -2319,9 +2319,9 @@ static int f2fs_remount(struct super_block *sb, int *flags, char *data)
+ 	unsigned long old_sb_flags;
+ 	int err;
+ 	bool need_restart_gc = false, need_stop_gc = false;
+-	bool need_restart_ckpt = false, need_stop_ckpt = false;
+ 	bool need_restart_flush = false, need_stop_flush = false;
+ 	bool need_restart_discard = false, need_stop_discard = false;
++	bool need_enable_checkpoint = false, need_disable_checkpoint = false;
+ 	bool no_read_extent_cache = !test_opt(sbi, READ_EXTENT_CACHE);
+ 	bool no_age_extent_cache = !test_opt(sbi, AGE_EXTENT_CACHE);
+ 	bool enable_checkpoint = !test_opt(sbi, DISABLE_CHECKPOINT);
+@@ -2485,24 +2485,6 @@ static int f2fs_remount(struct super_block *sb, int *flags, char *data)
+ 		clear_sbi_flag(sbi, SBI_IS_CLOSE);
+ 	}
+ 
+-	if ((*flags & SB_RDONLY) || test_opt(sbi, DISABLE_CHECKPOINT) ||
+-			!test_opt(sbi, MERGE_CHECKPOINT)) {
+-		f2fs_stop_ckpt_thread(sbi);
+-		need_restart_ckpt = true;
+-	} else {
+-		/* Flush if the prevous checkpoint, if exists. */
+-		f2fs_flush_ckpt_thread(sbi);
+-
+-		err = f2fs_start_ckpt_thread(sbi);
+-		if (err) {
+-			f2fs_err(sbi,
+-			    "Failed to start F2FS issue_checkpoint_thread (%d)",
+-			    err);
+-			goto restore_gc;
+-		}
+-		need_stop_ckpt = true;
+-	}
+-
+ 	/*
+ 	 * We stop issue flush thread if FS is mounted as RO
+ 	 * or if flush_merge is not passed in mount option.
+@@ -2514,7 +2496,7 @@ static int f2fs_remount(struct super_block *sb, int *flags, char *data)
+ 	} else {
+ 		err = f2fs_create_flush_cmd_control(sbi);
+ 		if (err)
+-			goto restore_ckpt;
++			goto restore_gc;
+ 		need_stop_flush = true;
+ 	}
+ 
+@@ -2536,8 +2518,31 @@ static int f2fs_remount(struct super_block *sb, int *flags, char *data)
+ 			err = f2fs_disable_checkpoint(sbi);
+ 			if (err)
+ 				goto restore_discard;
++			need_enable_checkpoint = true;
+ 		} else {
+ 			f2fs_enable_checkpoint(sbi);
++			need_disable_checkpoint = true;
++		}
++	}
++
++	/*
++	 * Place this routine at the end, since a new checkpoint would be
++	 * triggered while remount and we need to take care of it before
++	 * returning from remount.
++	 */
++	if ((*flags & SB_RDONLY) || test_opt(sbi, DISABLE_CHECKPOINT) ||
++			!test_opt(sbi, MERGE_CHECKPOINT)) {
++		f2fs_stop_ckpt_thread(sbi);
++	} else {
++		/* Flush if the prevous checkpoint, if exists. */
++		f2fs_flush_ckpt_thread(sbi);
++
++		err = f2fs_start_ckpt_thread(sbi);
++		if (err) {
++			f2fs_err(sbi,
++			    "Failed to start F2FS issue_checkpoint_thread (%d)",
++			    err);
++			goto restore_checkpoint;
+ 		}
+ 	}
+ 
+@@ -2555,6 +2560,13 @@ static int f2fs_remount(struct super_block *sb, int *flags, char *data)
+ 	adjust_unusable_cap_perc(sbi);
+ 	*flags = (*flags & ~SB_LAZYTIME) | (sb->s_flags & SB_LAZYTIME);
+ 	return 0;
++restore_checkpoint:
++	if (need_enable_checkpoint) {
++		f2fs_enable_checkpoint(sbi);
++	} else if (need_disable_checkpoint) {
++		if (f2fs_disable_checkpoint(sbi))
++			f2fs_warn(sbi, "checkpoint has not been disabled");
++	}
+ restore_discard:
+ 	if (need_restart_discard) {
+ 		if (f2fs_start_discard_thread(sbi))
+@@ -2570,13 +2582,6 @@ static int f2fs_remount(struct super_block *sb, int *flags, char *data)
+ 		clear_opt(sbi, FLUSH_MERGE);
+ 		f2fs_destroy_flush_cmd_control(sbi, false);
+ 	}
+-restore_ckpt:
+-	if (need_restart_ckpt) {
+-		if (f2fs_start_ckpt_thread(sbi))
+-			f2fs_warn(sbi, "background ckpt thread has stopped");
+-	} else if (need_stop_ckpt) {
+-		f2fs_stop_ckpt_thread(sbi);
+-	}
+ restore_gc:
+ 	if (need_restart_gc) {
+ 		if (f2fs_start_gc_thread(sbi))
+-- 
+2.42.1
+
