@@ -1,4 +1,4 @@
-From 95b93e716751d24b6ca872de6f71017589c6b52b Mon Sep 17 00:00:00 2001
+From 1a07695d0d3682cde11ef7d1c21eb6ddbf5f2dbb Mon Sep 17 00:00:00 2001
 From: Rodrigo Siqueira <Rodrigo.Siqueira@amd.com>
 Date: Tue, 10 Jan 2023 10:43:17 -0500
 Subject: [PATCH 1/9] drm/amd/display: Introduce UseMinimumDCFCLK_vars to
@@ -68,7 +68,7 @@ index 9c84561ff3bc..b62a9c8706fa 100644
  					v->ProjectedDCFCLKDeepSleep[i][j],
  					(NonDPTEBandwidth + v->TotalDPTERowBandwidth[i][j]) / v->ReturnBusWidth
 diff --git a/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h b/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h
-index 2b34b02dbd45..1a7d3ab77e58 100644
+index 81e53e67cd0b..660c22a19c8d 100644
 --- a/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h
 +++ b/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h
 @@ -249,6 +249,10 @@ struct dml32_ModeSupportAndSystemConfigurationFull {
@@ -82,7 +82,7 @@ index 2b34b02dbd45..1a7d3ab77e58 100644
  struct dummy_vars {
  	struct DISPCLKDPPCLKDCFCLKDeepSleepPrefetchParametersWatermarksAndPerformanceCalculation
  	DISPCLKDPPCLKDCFCLKDeepSleepPrefetchParametersWatermarksAndPerformanceCalculation;
-@@ -1227,6 +1231,7 @@ struct vba_vars_st {
+@@ -1236,6 +1240,7 @@ struct vba_vars_st {
  	bool VActiveBandwithSupport[DC__VOLTAGE_STATES][2];
  	bool NotEnoughDETSwathFillLatencyHidingPerState[DC__VOLTAGE_STATES][2];
  	struct dummy_vars dummy_vars;
@@ -91,10 +91,10 @@ index 2b34b02dbd45..1a7d3ab77e58 100644
  
  bool CalculateMinAndMaxPrefetchMode(
 -- 
-2.42.0
+2.43.0
 
 
-From 0cf85309dde5c935b9b1b3cc0540b7b729e0c9ef Mon Sep 17 00:00:00 2001
+From 102a8bfa093079695ee76e7509ff3458bdce4b17 Mon Sep 17 00:00:00 2001
 From: Rodrigo Siqueira <Rodrigo.Siqueira@amd.com>
 Date: Tue, 10 Jan 2023 10:43:18 -0500
 Subject: [PATCH 2/9] drm/amd/display: Move two arrays of doubles to
@@ -189,7 +189,7 @@ index b62a9c8706fa..fd1379317eaa 100644
  			}
  			v->DCFCLKState[i][j] = dml_min(v->DCFCLKPerState[i], 1.05 * dml_max(DCFCLKRequiredForAverageBandwidth, DCFCLKRequiredForPeakBandwidth));
 diff --git a/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h b/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h
-index 1a7d3ab77e58..ffe187139a1c 100644
+index 660c22a19c8d..733947be3737 100644
 --- a/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h
 +++ b/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h
 @@ -251,6 +251,8 @@ struct dml32_ModeSupportAndSystemConfigurationFull {
@@ -202,10 +202,10 @@ index 1a7d3ab77e58..ffe187139a1c 100644
  
  struct dummy_vars {
 -- 
-2.42.0
+2.43.0
 
 
-From 2f22975a871fb2153c6934faf2016b505efc531c Mon Sep 17 00:00:00 2001
+From 411f7b18ecdd1cfe0256e9d96f2444f0a9483343 Mon Sep 17 00:00:00 2001
 From: Rodrigo Siqueira <Rodrigo.Siqueira@amd.com>
 Date: Tue, 10 Jan 2023 10:43:19 -0500
 Subject: [PATCH 3/9] drm/amd/display: Move
@@ -291,7 +291,7 @@ index fd1379317eaa..161c2518a85b 100644
  			MinimumTvmPlus2Tr0 = v->UrgLatency[i]
  					* (v->GPUVMEnable == true ?
 diff --git a/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h b/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h
-index ffe187139a1c..c1d01584d63a 100644
+index 733947be3737..4c5206bfad38 100644
 --- a/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h
 +++ b/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h
 @@ -253,6 +253,7 @@ struct UseMinimumDCFCLK_vars {
@@ -303,10 +303,10 @@ index ffe187139a1c..c1d01584d63a 100644
  
  struct dummy_vars {
 -- 
-2.42.0
+2.43.0
 
 
-From 0caf56d0bb597e839dd187a3906dc4e68ab946ef Mon Sep 17 00:00:00 2001
+From cff922ec6ee3f3cf4933847b838407e1e6dba66a Mon Sep 17 00:00:00 2001
 From: Rodrigo Siqueira <Rodrigo.Siqueira@amd.com>
 Date: Tue, 10 Jan 2023 10:43:20 -0500
 Subject: [PATCH 4/9] drm/amd/display: Move DynamicMetadataVMExtraLatency to
@@ -387,7 +387,7 @@ index 161c2518a85b..ae9e26a30975 100644
  					DCFCLKRequiredForPeakBandwidth = v->DCFCLKPerState[i];
  				} else {
 diff --git a/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h b/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h
-index c1d01584d63a..d7057715ce51 100644
+index 4c5206bfad38..01c767f08b38 100644
 --- a/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h
 +++ b/drivers/gpu/drm/amd/display/dc/dml/display_mode_vba.h
 @@ -254,6 +254,7 @@ struct UseMinimumDCFCLK_vars {
@@ -399,10 +399,10 @@ index c1d01584d63a..d7057715ce51 100644
  
  struct dummy_vars {
 -- 
-2.42.0
+2.43.0
 
 
-From 4d40fbbf8bfef68f7698d368da416ba9101a2d0d Mon Sep 17 00:00:00 2001
+From 8d64dd8e19fef82ee02574ac2585d80b94c03d6b Mon Sep 17 00:00:00 2001
 From: Rodrigo Siqueira <Rodrigo.Siqueira@amd.com>
 Date: Tue, 10 Jan 2023 10:43:21 -0500
 Subject: [PATCH 5/9] drm/amd/display: Use matrix of double from struct instead
@@ -466,10 +466,10 @@ index 5b47ccde6424..5779812449ba 100644
  					v->ProjectedDCFCLKDeepSleep[i][j],
  					(NonDPTEBandwidth + v->TotalDPTERowBandwidth[i][j]) / v->ReturnBusWidth
 -- 
-2.42.0
+2.43.0
 
 
-From 50221626d357e0a139fdd71c861bab8acee807ad Mon Sep 17 00:00:00 2001
+From b4d035af037cfd703e665270f7192b986dcede20 Mon Sep 17 00:00:00 2001
 From: Rodrigo Siqueira <Rodrigo.Siqueira@amd.com>
 Date: Tue, 10 Jan 2023 10:43:22 -0500
 Subject: [PATCH 6/9] drm/amd/display: Use PixelDCFCLKCyclesRequiredInPrefetch
@@ -547,10 +547,10 @@ index 5779812449ba..cb538f44c623 100644
  			}
  			v->DCFCLKState[i][j] = dml_min(v->DCFCLKPerState[i], 1.05 * dml_max(DCFCLKRequiredForAverageBandwidth, DCFCLKRequiredForPeakBandwidth));
 -- 
-2.42.0
+2.43.0
 
 
-From 686aec4a15e6f01ee740cb7c3a49c33add923240 Mon Sep 17 00:00:00 2001
+From 593d3f0686a34b073e7d7383cbc7c323a0e40f02 Mon Sep 17 00:00:00 2001
 From: Rodrigo Siqueira <Rodrigo.Siqueira@amd.com>
 Date: Tue, 10 Jan 2023 10:43:23 -0500
 Subject: [PATCH 7/9] drm/amd/display: Use PrefetchPixelLinesTime from struct
@@ -629,10 +629,10 @@ index cb538f44c623..910b2ec6e7e6 100644
  				}
  			}
 -- 
-2.42.0
+2.43.0
 
 
-From d105d2ddaeeb4f56b234779af707739a697e46bb Mon Sep 17 00:00:00 2001
+From 6711c23619ed5abee8ecc165d4930df65a8a6c6f Mon Sep 17 00:00:00 2001
 From: Rodrigo Siqueira <Rodrigo.Siqueira@amd.com>
 Date: Tue, 10 Jan 2023 10:43:24 -0500
 Subject: [PATCH 8/9] drm/amd/display: Use
@@ -715,10 +715,10 @@ index 910b2ec6e7e6..f8863a552bb2 100644
  			MinimumTvmPlus2Tr0 = v->UrgLatency[i]
  					* (v->GPUVMEnable == true ?
 -- 
-2.42.0
+2.43.0
 
 
-From 794dacd2081df6501dca9b530ffb7e76c85862ff Mon Sep 17 00:00:00 2001
+From 5da22365a175fb9dfed0d9f0f61fd14b3c34b989 Mon Sep 17 00:00:00 2001
 From: Rodrigo Siqueira <Rodrigo.Siqueira@amd.com>
 Date: Tue, 10 Jan 2023 10:43:25 -0500
 Subject: [PATCH 9/9] drm/amd/display: Use DynamicMetadataVMExtraLatency from
@@ -796,5 +796,5 @@ index f8863a552bb2..338abde6d442 100644
  					DCFCLKRequiredForPeakBandwidth = v->DCFCLKPerState[i];
  				} else {
 -- 
-2.42.0
+2.43.0
 
