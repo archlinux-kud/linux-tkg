@@ -1,4 +1,4 @@
-From 489bb7b0175c45e8f87bbe506cf91fc4e3cedc1c Mon Sep 17 00:00:00 2001
+From 24ce6a061cfa2e00458040e2239b10b7c5cd6f55 Mon Sep 17 00:00:00 2001
 From: madaidan <50278627+madaidan@users.noreply.github.com>
 Date: Sun, 9 Feb 2020 00:03:41 +0000
 Subject: [PATCH] net: tcp: add option to disable TCP simultaneous connect
@@ -62,7 +62,7 @@ index a66054d0763a..ca9fa0b0f325 100644
  	If set, provide RFC2861 behavior and time out the congestion
  	window after an idle period.  An idle period is defined at
 diff --git a/include/net/tcp.h b/include/net/tcp.h
-index 877fc1079435..3bdafab6eff7 100644
+index 65da8cc4bd62..d298dbc95c60 100644
 --- a/include/net/tcp.h
 +++ b/include/net/tcp.h
 @@ -248,6 +248,7 @@ void tcp_time_wait(struct sock *sk, int state, int timeo);
@@ -125,7 +125,7 @@ index 6ac890b4073f..6195766bd373 100644
  };
  
 diff --git a/net/ipv4/tcp_input.c b/net/ipv4/tcp_input.c
-index d64d0672b8c4..a4bada6134f4 100644
+index 602d285344f9..11743965d052 100644
 --- a/net/ipv4/tcp_input.c
 +++ b/net/ipv4/tcp_input.c
 @@ -82,6 +82,7 @@
@@ -136,7 +136,7 @@ index d64d0672b8c4..a4bada6134f4 100644
  
  #define FLAG_DATA		0x01 /* Incoming frame contained data.		*/
  #define FLAG_WIN_UPDATE		0x02 /* Incoming ACK was a window update.	*/
-@@ -6407,7 +6408,7 @@ static int tcp_rcv_synsent_state_process(struct sock *sk, struct sk_buff *skb,
+@@ -6411,7 +6412,7 @@ static int tcp_rcv_synsent_state_process(struct sock *sk, struct sk_buff *skb,
  		SKB_DR_SET(reason, TCP_RFC7323_PAWS);
  		goto discard_and_undo;
  	}
@@ -146,5 +146,5 @@ index d64d0672b8c4..a4bada6134f4 100644
  		 * simultaneous connect with crossed SYNs.
  		 * Particularly, it can be connect to self.
 -- 
-2.42.1
+2.43.0
 
