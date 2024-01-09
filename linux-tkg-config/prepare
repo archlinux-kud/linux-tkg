@@ -313,6 +313,8 @@ _set_cpu_scheduler() {
     _avail_cpu_scheds=("cfs" "eevdf" "pds" "bmq" "tt" "bore" "bore-eevdf")
   elif [ "$_kver" = "606" ]; then
     _avail_cpu_scheds=("eevdf" "bore")
+  elif [ "$_kver" = "607" ]; then
+    _avail_cpu_scheds=("eevdf" "bore")
   else
     _avail_cpu_scheds=("$_default_cpu_sched")
   fi
@@ -874,7 +876,7 @@ _tkg_srcprep() {
     fi
   elif [ "${_cpusched}" = "bore" ]; then
     _msg="Applying BORE patch"
-    if [ $_kver = 606 ]; then
+    if [ $_kver = 606 ] || [ $_kver = 607 ]; then
         curl "https://raw.githubusercontent.com/firelzrd/bore-scheduler/7725fd5/patches/linux-${_basekernel}-bore/0001-linux${_basekernel}.y-bore4.0.0.patch" > "$srcdir"/0001-bore.patch
     else
         curl "https://raw.githubusercontent.com/CachyOS/kernel-patches/master/${_basekernel}/sched/0001-bore.patch" > "$srcdir"/0001-bore.patch
