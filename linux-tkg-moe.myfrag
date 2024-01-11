@@ -1,6 +1,6 @@
 #
 # When adding a new config override to this file, please make sure that:
-# * It belongs to correct categorization and sorted alphabetically
+# * It belongs to correct categorization and sorted alphabetically, if possible
 # * Disabled entries (starts with "#" and contains "is not set" phrase) must be
 #   put before any other entries that enable or modify existing entry in config
 #
@@ -30,13 +30,28 @@
 # CONFIG_MODULE_FORCE_UNLOAD is not set
 
 #
-# Use SHA-384 instead of SHA-512 for kernel module signing infrastructure.
-# Truncated versions of SHA-2 are not suspectible to length extension attacks,
-# but this ends up being a personal preference than anything else
+# Don't allow loading modules with missing namespace imports for consistency
+#
+# CONFIG_MODULE_ALLOW_MISSING_NAMESPACE_IMPORTS is not set
+
+#
+# Use SHA3-512 instead of SHA-512 for kernel module signing infrastructure,
+# present since Linux 6.7 and requires at least OpenSSL 3.2. SHA-3 isn't
+# vulnerable to all attacks that affect previous standards.
+#
+# For older Linux kernel versions, SHA-384 is used instead since truncated
+# versions of SHA-2 are not suspectible to length extension attacks, but this
+# SHA-2 choice ends up being a personal preference than anything else.
+#
+# MODULE_SIG_HASH is overridden with an empty value in this config fragment
+# since the default value depends on selected hash algorithm. Defining them
+# this way is safe since only the last defined hash algorithm will be picked up
+# by the build, and it will gracefully ignore entries that simply don't exist
 #
 # CONFIG_MODULE_SIG_SHA512 is not set
-CONFIG_MODULE_SIG_HASH="sha384"
+CONFIG_MODULE_SIG_HASH=""
 CONFIG_MODULE_SIG_SHA384=y
+CONFIG_MODULE_SIG_SHA3_512=y
 
 #
 # Incorporate parts of the Kernel Self Protection Project's recommended
