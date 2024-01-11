@@ -1,4 +1,4 @@
-From 6fcdb312e7b684ade2e2b33594bbdb3be6e5a618 Mon Sep 17 00:00:00 2001
+From c99c659ea1b42b0cf78ef5c457c95a3c1b5b09b4 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 5 Oct 2020 04:41:59 -0700
 Subject: [PATCH 01/24] sched/task_struct: Introduce IPC classes of tasks
@@ -60,7 +60,7 @@ Changes since v1:
  2 files changed, 22 insertions(+)
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 261b13873ca0..2159c10029d0 100644
+index 536281a7dd16..c8a628dd33ad 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
 @@ -128,6 +128,8 @@ struct user_event_mm;
@@ -72,7 +72,7 @@ index 261b13873ca0..2159c10029d0 100644
  #define task_is_running(task)		(READ_ONCE((task)->__state) == TASK_RUNNING)
  
  #define task_is_traced(task)		((READ_ONCE(task->jobctl) & JOBCTL_TRACED) != 0)
-@@ -1547,6 +1549,14 @@ struct task_struct {
+@@ -1548,6 +1550,14 @@ struct task_struct {
  	struct user_event_mm		*user_event_mm;
  #endif
  
@@ -114,7 +114,7 @@ index 5950488e4a3b..2064c1dda1a6 100644
 2.43.0
 
 
-From acb0db7ca162a97f146c7d3175276bafe1309e60 Mon Sep 17 00:00:00 2001
+From 83de0d3b7ce0212668248bb15c34bcab404d3511 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 04:14:11 -0700
 Subject: [PATCH 02/24] sched: Add interfaces for IPC classes
@@ -296,7 +296,7 @@ index 423d08947962..afecb70512a7 100644
 2.43.0
 
 
-From be4f4deb7a2faa8c6eec469f403ba8f16fbcf1fc Mon Sep 17 00:00:00 2001
+From 3b9693ab1988015ca1d141abecd324ddfecccd68 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 30 Dec 2021 17:27:52 -0800
 Subject: [PATCH 03/24] sched/core: Initialize the IPC class of a new task
@@ -354,7 +354,7 @@ index 9bb474760140..68cdc2f3ccb9 100644
 2.43.0
 
 
-From 1705f6e56b2a7fde05880e50d084e60327e3fff7 Mon Sep 17 00:00:00 2001
+From 34c17c653ea875d61c4ce0fba5ff7336b70cd4d1 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 23 May 2022 16:58:08 -0700
 Subject: [PATCH 04/24] sched/core: Add user_tick as argument to
@@ -399,7 +399,7 @@ Changes since v1:
  3 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 2159c10029d0..6a0e0ae3d5be 100644
+index c8a628dd33ad..455cd560b47b 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
 @@ -294,7 +294,7 @@ enum {
@@ -441,7 +441,7 @@ index 63a8ce7177dd..e15e24105891 100644
 2.43.0
 
 
-From c2b4c1768d310ff21675fe9ce431c9c81215bc9d Mon Sep 17 00:00:00 2001
+From 8e250a466fbf27a431baa1c1f37a36f7d1ac4700 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 19:31:42 -0700
 Subject: [PATCH 05/24] sched/core: Update the IPC class of the current task
@@ -501,7 +501,7 @@ index cf8ec898f375..0ea632e65390 100644
 2.43.0
 
 
-From 829ca433577179708f1ea12052c1f1a407dbfd8f Mon Sep 17 00:00:00 2001
+From 72df159d8cbc14a3210da656c9159f0ca5b19170 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 6 Jun 2022 18:02:04 -0700
 Subject: [PATCH 06/24] sched/fair: Collect load-balancing stats for IPC
@@ -679,7 +679,7 @@ index 41850f4ca9de..fd31ff60bb18 100644
 2.43.0
 
 
-From bed1827e9e224f0c667a393f30a37cd8c6a59762 Mon Sep 17 00:00:00 2001
+From c6874a923a9b72a268af59ae0049a79b03b95197 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 6 Sep 2022 13:32:52 -0700
 Subject: [PATCH 07/24] sched/fair: Compute IPC class scores for load balancing
@@ -847,7 +847,7 @@ index fd31ff60bb18..9d8cedb99a12 100644
 2.43.0
 
 
-From 9431101f1a3304f98bd759ae4cb79d83f3f98338 Mon Sep 17 00:00:00 2001
+From 662e749836aa17cb43fe359a3dcf4e92abaa66f6 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 25 Jul 2022 13:36:02 -0700
 Subject: [PATCH 08/24] sched/fair: Use IPCC stats to break ties between
@@ -1000,7 +1000,7 @@ index 9d8cedb99a12..6cd96392e3d4 100644
 2.43.0
 
 
-From bbf000d44e77c31ba70d0bb896a192402f8ae29a Mon Sep 17 00:00:00 2001
+From 2ebfcae7d188f5d99cfa9977b2af8b25ff9dc611 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Fri, 20 Jan 2023 15:08:37 -0800
 Subject: [PATCH 09/24] sched/fair: Use IPCC stats to break ties between
@@ -1096,7 +1096,7 @@ index 6cd96392e3d4..0297b073ab4b 100644
 2.43.0
 
 
-From 07cfbdd148b31a2a037cc7c9b924bb13f718a10f Mon Sep 17 00:00:00 2001
+From f8d8b6426fb68d212862eeed585ba918b5555271 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 10 Aug 2022 14:43:11 -0700
 Subject: [PATCH 10/24] sched/fair: Use IPCC scores to select a busiest
@@ -1248,7 +1248,7 @@ index 0297b073ab4b..d60a263f6b53 100644
 2.43.0
 
 
-From b1bd7ddfc460f6105ae02b0003169262457d2bde Mon Sep 17 00:00:00 2001
+From 2e81ea512d656db2023182c02995b033d9ce0c66 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 16 Dec 2021 17:40:00 -0800
 Subject: [PATCH 11/24] thermal: intel: hfi: Introduce Intel Thread Director
@@ -1387,7 +1387,7 @@ index c69db6c90869..b41547912fda 100644
 2.43.0
 
 
-From 305f3481f0da9469f41f7f2fa6fe714ce780f2a2 Mon Sep 17 00:00:00 2001
+From 7715e07394f83a961e940d0aff5d324bb9876680 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 23 Sep 2020 14:57:59 -0700
 Subject: [PATCH 12/24] x86/cpufeatures: Add the Intel Thread Director feature
@@ -1491,7 +1491,7 @@ index e462c1d3800a..2ab036125a56 100644
 2.43.0
 
 
-From 7a2397bb0e97e8b1db24c31f5cd91fb0631caf69 Mon Sep 17 00:00:00 2001
+From 7089c4e264230af2cb24b9ff2d826f28ab163043 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 14 Dec 2020 11:33:57 -0800
 Subject: [PATCH 13/24] x86/sched: Update the IPC class of the current task
@@ -1720,7 +1720,7 @@ index b41547912fda..20ee4264dcd4 100644
 2.43.0
 
 
-From 08db9224dd3c8aa87f01bc33af095e9db17d39a1 Mon Sep 17 00:00:00 2001
+From 8fec56bb42a4d8e878ee608a2c414204b2c86024 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 14 Nov 2022 08:23:41 -0800
 Subject: [PATCH 14/24] thermal: intel: hfi: Store per-CPU IPCC scores
@@ -1889,7 +1889,7 @@ index 20ee4264dcd4..d822ed0bb5c1 100644
 2.43.0
 
 
-From d74198603107ac8e890becd6ffd9e58af959350d Mon Sep 17 00:00:00 2001
+From f03e1a83197cbaed54837e07d32a7ca1b2db8571 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 25 May 2022 04:41:40 -0700
 Subject: [PATCH 15/24] thermal: intel: hfi: Report the IPC class score of a
@@ -2023,7 +2023,7 @@ index d822ed0bb5c1..fec2c01fda1b 100644
 2.43.0
 
 
-From 8a5c748203b83db542ff5a69e79a6747891ee105 Mon Sep 17 00:00:00 2001
+From 5fba7272f37b1639c0790aeb72e0bf82c818a5e5 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Thu, 18 Aug 2022 13:24:41 -0700
 Subject: [PATCH 16/24] thermal: intel: hfi: Define a default class for
@@ -2110,7 +2110,7 @@ index fec2c01fda1b..e23c49da02ee 100644
 2.43.0
 
 
-From a6c3102d9347a1b66a5ff5e411def27e48292402 Mon Sep 17 00:00:00 2001
+From 06d9ed99292a55d447f166afb05da01cf64fbe9b Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 12 Oct 2020 16:58:58 -0700
 Subject: [PATCH 17/24] thermal: intel: hfi: Enable the Intel Thread Director
@@ -2266,7 +2266,7 @@ index e23c49da02ee..75bf18dc7f51 100644
 2.43.0
 
 
-From 124a48f13b97abd4b7a04bdc06d853d8ec3974e9 Mon Sep 17 00:00:00 2001
+From 7f7227381ec00aea2bcb65c1e263874445ae4b95 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Fri, 22 Jul 2022 17:17:38 -0700
 Subject: [PATCH 18/24] sched/task_struct: Add helpers for IPC classification
@@ -2316,10 +2316,10 @@ Changes since v1:
  1 file changed, 11 insertions(+), 1 deletion(-)
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 6a0e0ae3d5be..70f3c3cc44bb 100644
+index 455cd560b47b..c2bd227f72d6 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -1554,7 +1554,17 @@ struct task_struct {
+@@ -1555,7 +1555,17 @@ struct task_struct {
  	 * A hardware-defined classification of task that reflects but is
  	 * not identical to the number of instructions per cycle.
  	 */
@@ -2342,7 +2342,7 @@ index 6a0e0ae3d5be..70f3c3cc44bb 100644
 2.43.0
 
 
-From b70a1f423a2258ec59a0b97c141b87d69b8e99f7 Mon Sep 17 00:00:00 2001
+From 924e2c8cec89329bb27743c3c428e71ecf4ec001 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 2 Aug 2022 04:01:15 -0700
 Subject: [PATCH 19/24] sched/core: Initialize helpers of task classification
@@ -2399,7 +2399,7 @@ index 0ea632e65390..444ab454924a 100644
 2.43.0
 
 
-From f28da536c55aba32b38f5668bf95fab4b2d60249 Mon Sep 17 00:00:00 2001
+From 3e20a7e3c26e5507700afe4043e601d64c6ba303 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 24 May 2022 03:48:37 -0700
 Subject: [PATCH 20/24] sched/fair: Introduce sched_smt_siblings_idle()
@@ -2474,10 +2474,10 @@ Changes since v1:
  2 files changed, 14 insertions(+), 4 deletions(-)
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 70f3c3cc44bb..1a809d970cb0 100644
+index c2bd227f72d6..6fc840790454 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -2488,4 +2488,6 @@ static inline int sched_core_idle_cpu(int cpu) { return idle_cpu(cpu); }
+@@ -2489,4 +2489,6 @@ static inline int sched_core_idle_cpu(int cpu) { return idle_cpu(cpu); }
  
  extern void sched_set_stop_task(int cpu, struct task_struct *stop);
  
@@ -2536,7 +2536,7 @@ index d60a263f6b53..58329f004d62 100644
 2.43.0
 
 
-From 674bacdf1385abfe724193ea2cd069945380f988 Mon Sep 17 00:00:00 2001
+From 0d8df8243941064fbf03abc6db0af96558131f8b Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 21 Jun 2022 16:52:44 -0700
 Subject: [PATCH 21/24] x86/sched/ipcc: Implement model-specific checks for
@@ -2674,7 +2674,7 @@ index 685e7b3b5375..dd73fc8be49b 100644
 2.43.0
 
 
-From 7f0ebbec5df5fd6754f2a9d4e1a9065888740794 Mon Sep 17 00:00:00 2001
+From dc96b07c89fc3a6c48027ba0be738c395c77ff15 Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Tue, 22 Sep 2020 13:14:07 -0700
 Subject: [PATCH 22/24] x86/cpufeatures: Add feature bit for HRESET
@@ -2746,7 +2746,7 @@ index 4dbd13ecc0d1..8ca66e5c18f7 100644
 2.43.0
 
 
-From dd40e0a31c5c187beb1cafd4846c20f8822bedd5 Mon Sep 17 00:00:00 2001
+From 8f4ce0b24baea0b603261c5603b33d0f5879397f Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Wed, 14 Oct 2020 09:33:43 -0700
 Subject: [PATCH 23/24] x86/hreset: Configure history reset
@@ -2835,7 +2835,7 @@ index 4e5ffc8b0e46..8b995217bb12 100644
 2.43.0
 
 
-From 81e0b2c50adba9266926d80601b2d3eaa2c038be Mon Sep 17 00:00:00 2001
+From 30794b802e0c1bc33c45863f967ebb1d589c772e Mon Sep 17 00:00:00 2001
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 Date: Mon, 23 May 2022 09:36:27 -0700
 Subject: [PATCH 24/24] x86/process: Reset hardware history in context switch
