@@ -1,42 +1,118 @@
 #
-# KEEP ALPHABETICALLY SORTED, DISABLED ENTRIES FIRST
+# When adding a new config override to this file, please make sure that:
+# * It belongs to correct categorization and sorted alphabetically
+# * Disabled entries (starts with "#" and contains "is not set" phrase) must be
+#   put before any other entries that enable or modify existing entry in config
+#
+# On linux-tkg, contents of this file (and all other *.myfrag files) are
+# appended as it is into main kernel config file after olddefconfig (which in
+# turn runs after linux-tkg initial modifications being set). If there are
+# entries that don't exist originally due to user patches or changes within
+# upstream kernel source that don't immediately get reflected in linux-tkg,
+# you still need to confirm choices for those missing entries beforehand.
+#
+
+#
+# Don't build io_uring kernel infrastructure and any module that depends on it.
+#
+# Requires "Kconfig: Stop hiding io_uring behind CONFIG_EXPERT" user patch,
+# otherwise only userspace block driver gets disabled if EXPERT isn't enabled
 #
 # CONFIG_BLKDEV_UBLK_LEGACY_OPCODES is not set
 # CONFIG_BLK_DEV_UBLK is not set
-# CONFIG_DEFAULT_CAKE is not set
-# CONFIG_DEFAULT_FQ_CODEL is not set
+# CONFIG_IO_URING is not set
+# CONFIG_IO_WQ is not set
+
+#
+# Don't allow modules to be forcefully loaded or unloaded for security reasons
+#
+# CONFIG_MODULE_FORCE_LOAD is not set
+# CONFIG_MODULE_FORCE_UNLOAD is not set
+
+#
+# Use SHA-384 instead of SHA-512 for kernel module signing infrastructure.
+# Truncated versions of SHA-2 are not suspectible to length extension attacks,
+# but this ends up being a personal preference than anything else
+#
+# CONFIG_MODULE_SIG_SHA512 is not set
+CONFIG_MODULE_SIG_HASH="sha384"
+CONFIG_MODULE_SIG_SHA384=y
+
+#
+# Incorporate parts of the Kernel Self Protection Project's recommended
+# settings, maintained by Linux Kernel Security team.
+#
+#   https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project/Recommended_Settings
+#
+# We don't blindly follow all the recommendations as it means breaking many
+# features that might be desired for average desktop users
+#
+# CONFIG_IOMMU_DEFAULT_DMA_LAZY is not set
+# CONFIG_IOMMU_DEFAULT_PASSTHROUGH is not set
+# CONFIG_LEGACY_TIOCSTI is not set
+# CONFIG_LEGACY_VSYSCALL_XONLY is not set
+CONFIG_INIT_ON_ALLOC_DEFAULT_ON=y
+CONFIG_INIT_ON_FREE_DEFAULT_ON=y
+CONFIG_IOMMU_DEFAULT_DMA_STRICT=y
+CONFIG_LEGACY_VSYSCALL_NONE=y
+CONFIG_RANDOMIZE_KSTACK_OFFSET_DEFAULT=y
+
+#
+# The following hardening config entries require out-of-tree kernel patches.
+# Those can mainly be found on linux-hardened and deal with additional settings
+# that aren't normally possible on a vanilla, non-distribution Linux kernel
+#
+# CONFIG_OVERLAY_FS_UNPRIVILEGED is not set
+# CONFIG_TCP_SIMULT_CONNECT_DEFAULT_ON is not set
+CONFIG_SECURITY_PERF_EVENTS_RESTRICT=y
+CONFIG_SECURITY_TIOCSTI_RESTRICT=y
+
+#
+# Force kernel mitigation for Gather Data Sampling (CVE-2022-40982) on machines
+# without updated microcode by disabling AVX. If updated microcode is present,
+# this config and gather_data_sampling=force command line will have no effect
+#
+CONFIG_GDS_FORCE_MITIGATION=y
+
+#
+# Set AppArmor as the default major LSM. AppArmor itself is enabled by default
+# on Arch Linux kernel already, but please verify that your AppArmor setup is
+# working first
+#
 # CONFIG_DEFAULT_SECURITY_DAC is not set
 # CONFIG_DEFAULT_SECURITY_SELINUX is not set
 # CONFIG_DEFAULT_SECURITY_SMACK is not set
 # CONFIG_DEFAULT_SECURITY_TOMOYO is not set
-# CONFIG_IOMMU_DEFAULT_DMA_LAZY is not set
-# CONFIG_IOMMU_DEFAULT_PASSTHROUGH is not set
-# CONFIG_IO_URING is not set
-# CONFIG_IO_WQ is not set
-# CONFIG_LEGACY_TIOCSTI is not set
-# CONFIG_LEGACY_VSYSCALL_XONLY is not set
-# CONFIG_MODULE_FORCE_LOAD is not set
-# CONFIG_MODULE_FORCE_UNLOAD is not set
-# CONFIG_MODULE_SIG_SHA512 is not set
-# CONFIG_OVERLAY_FS_UNPRIVILEGED is not set
-# CONFIG_RANDOM_TRUST_CPU is not set
-# CONFIG_TCP_SIMULT_CONNECT_DEFAULT_ON is not set
+CONFIG_DEFAULT_SECURITY_APPARMOR=y
+CONFIG_LSM="landlock,lockdown,yama,integrity,apparmor,bpf"
+
+#
+# Use Fair Queue (FQ) by default for network queue discipline (net_sch).
+#
+# TkG defaults to Common Applications Kept Enhanced (CAKE), but FQ is always
+# desired and is still the recommended one by upstream maintainers for BBR
+#
+# CONFIG_DEFAULT_CAKE is not set
+# CONFIG_DEFAULT_FQ_CODEL is not set
 CONFIG_DEFAULT_FQ=y
 CONFIG_DEFAULT_NET_SCH="fq"
-CONFIG_DEFAULT_SECURITY_APPARMOR=y
-CONFIG_GDS_FORCE_MITIGATION=y
-CONFIG_INIT_ON_ALLOC_DEFAULT_ON=y
-CONFIG_INIT_ON_FREE_DEFAULT_ON=y
-CONFIG_IOMMU_DEFAULT_DMA_STRICT=y
-CONFIG_IPC_CLASSES=y
-CONFIG_LEGACY_VSYSCALL_NONE=y
-CONFIG_LSM="landlock,lockdown,yama,integrity,apparmor,bpf"
-CONFIG_MODULE_SIG_SHA384=y
-CONFIG_MODULE_SIG_HASH="sha384"
 CONFIG_NET_SCH_CAKE=m
 CONFIG_NET_SCH_FQ=y
 CONFIG_NET_SCH_FQ_CODEL=m
-CONFIG_RANDOMIZE_KSTACK_OFFSET_DEFAULT=y
+
+#
+# Trust bootloader for entropy source, but not the CPU. This probably remains
+# part of personal preference, but vulnerable sources will still be vulnerable
+#
+# CONFIG_RANDOM_TRUST_CPU is not set
 CONFIG_RANDOM_TRUST_BOOTLOADER=y
-CONFIG_SECURITY_PERF_EVENTS_RESTRICT=y
-CONFIG_SECURITY_TIOCSTI_RESTRICT=y
+
+#
+# Enable support for Intel Thread Director, which has yet to be merged upstream.
+#
+#   https://lore.kernel.org/all/20230613042422.5344-1-ricardo.neri-calderon@linux.intel.com/
+#
+# This improves performance on Intel processors based on Hybrid architecture,
+# starting from the 12th Gen / Alder Lake
+#
+CONFIG_IPC_CLASSES=y
