@@ -1480,8 +1480,9 @@ _tkg_srcprep() {
        _msg="Patching Bcache filesystem support override"
        _tkg_patcher
 
-       _enable "BCACHEFS_FS" "BCACHEFS_QUOTA" "BCACHEFS_POSIX_ACL"
-       _disable "BCACHEFS_DEBUG" "BCACHEFS_TESTS" "DEBUG_CLOSURES" "BCACHEFS_LOCK_TIME_STATS"
+       _module "BCACHEFS_FS"
+       _enable "BCACHEFS_QUOTA" "BCACHEFS_POSIX_ACL" "BCACHEFS_DEBUG_TRANSACTIONS" "BCACHEFS_LOCK_TIME_STATS"
+       _disable "BCACHEFS_DEBUG" "BCACHEFS_TESTS" "BCACHEFS_NO_LATENCY_ACCT" "DEBUG_CLOSURES"
     fi
   fi
 
