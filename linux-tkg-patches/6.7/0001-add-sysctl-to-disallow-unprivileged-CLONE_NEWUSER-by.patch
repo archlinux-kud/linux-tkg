@@ -1,7 +1,7 @@
-From 3c466db555f67d6c35a877413a1dd1625bfccaa8 Mon Sep 17 00:00:00 2001
+From 35d79b574508f84805b19ef3e1c4b21b9605e946 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <jan.steffens@gmail.com>
 Date: Mon, 16 Sep 2019 04:53:20 +0200
-Subject: [PATCH 1/2] ZEN: Add sysctl and CONFIG to disallow unprivileged
+Subject: [PATCH 1/4] ZEN: Add sysctl and CONFIG to disallow unprivileged
  CLONE_NEWUSER
 
 Our default behavior continues to match the vanilla kernel.
@@ -14,7 +14,7 @@ Our default behavior continues to match the vanilla kernel.
  5 files changed, 53 insertions(+)
 
 diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-index 6030a8235617..60b7fe5fa74a 100644
+index 6030a823561735..60b7fe5fa74ad4 100644
 --- a/include/linux/user_namespace.h
 +++ b/include/linux/user_namespace.h
 @@ -156,6 +156,8 @@ static inline void set_userns_rlimit_max(struct user_namespace *ns,
@@ -36,7 +36,7 @@ index 6030a8235617..60b7fe5fa74a 100644
  {
  	return &init_user_ns;
 diff --git a/init/Kconfig b/init/Kconfig
-index 9ffb103fc927..f91ccd3c1456 100644
+index 9ffb103fc927bc..f91ccd3c1456d9 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
 @@ -1226,6 +1226,22 @@ config USER_NS
@@ -63,7 +63,7 @@ index 9ffb103fc927..f91ccd3c1456 100644
  	bool "PID Namespaces"
  	default y
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 10917c3e1f03..458360cf9bfb 100644
+index 10917c3e1f0366..458360cf9bfbc0 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
 @@ -100,6 +100,10 @@
@@ -102,7 +102,7 @@ index 10917c3e1f03..458360cf9bfb 100644
  	if (err)
  		goto bad_unshare_out;
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 157f7ce2942d..881fc4f5d61e 100644
+index 157f7ce2942d26..881fc4f5d61e35 100644
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
 @@ -80,6 +80,9 @@
@@ -132,7 +132,7 @@ index 157f7ce2942d..881fc4f5d61e 100644
  	{
  		.procname	= "tainted",
 diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index eabe8bcc7042..ac9d1f702086 100644
+index eabe8bcc704265..ac9d1f702086e6 100644
 --- a/kernel/user_namespace.c
 +++ b/kernel/user_namespace.c
 @@ -22,6 +22,13 @@
@@ -149,14 +149,11 @@ index eabe8bcc7042..ac9d1f702086 100644
  static struct kmem_cache *user_ns_cachep __ro_after_init;
  static DEFINE_MUTEX(userns_state_mutex);
  
--- 
-2.43.0
 
-
-From 105cf0388dae7281e11a92ed55877912b95c5c26 Mon Sep 17 00:00:00 2001
+From d7cb932d45ed4d5560fc0a96a8e3728debf5fe90 Mon Sep 17 00:00:00 2001
 From: Javier Martinez Canillas <javierm@redhat.com>
 Date: Thu, 19 May 2022 14:40:07 +0200
-Subject: [PATCH 2/2] drivers/firmware: skip simpledrm if nvidia-drm.modeset=1
+Subject: [PATCH 2/4] drivers/firmware: skip simpledrm if nvidia-drm.modeset=1
  is set
 
 The Nvidia proprietary driver has some bugs that leads to issues if used
@@ -204,7 +201,7 @@ Cherry-picked-for: https://bugs.archlinux.org/task/73720
  1 file changed, 17 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/firmware/sysfb.c b/drivers/firmware/sysfb.c
-index 82fcfd29bc4d..17b7e096b682 100644
+index 82fcfd29bc4d29..17b7e096b6828b 100644
 --- a/drivers/firmware/sysfb.c
 +++ b/drivers/firmware/sysfb.c
 @@ -34,6 +34,22 @@
@@ -239,6 +236,198 @@ index 82fcfd29bc4d..17b7e096b682 100644
  		pd = sysfb_create_simplefb(si, &mode);
  		if (!IS_ERR(pd))
  			goto unlock_mutex;
--- 
-2.43.0
 
+From 7c13cc521f78fd261de3001dac48fd572baae671 Mon Sep 17 00:00:00 2001
+From: Benjamin Berg <benjamin.berg@intel.com>
+Date: Thu, 11 Jan 2024 18:06:29 +0100
+Subject: [PATCH 3/4] wifi: ath11k: rely on mac80211 debugfs handling for vif
+
+mac80211 started to delete debugfs entries in certain cases, causing a
+conflict between ath11k also trying to delete them later on. Fix this by
+relying on mac80211 to delete the entries when appropriate and adding
+them from the vif_add_debugfs handler.
+
+Fixes: 0a3d898ee9a8 ("wifi: mac80211: add/remove driver debugfs entries as appropriate")
+Bugzilla: https://bugzilla.kernel.org/show_bug.cgi?id=218364
+Signed-off-by: Benjamin Berg <benjamin.berg@intel.com>
+Cherry-picked-for: https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/issues/18
+---
+ drivers/net/wireless/ath/ath11k/core.h    |  4 ----
+ drivers/net/wireless/ath/ath11k/debugfs.c | 25 +++++++++--------------
+ drivers/net/wireless/ath/ath11k/debugfs.h | 12 ++---------
+ drivers/net/wireless/ath/ath11k/mac.c     | 12 +----------
+ 4 files changed, 13 insertions(+), 40 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath11k/core.h b/drivers/net/wireless/ath/ath11k/core.h
+index f12b606e2d2e56..667d55e261560f 100644
+--- a/drivers/net/wireless/ath/ath11k/core.h
++++ b/drivers/net/wireless/ath/ath11k/core.h
+@@ -368,10 +368,6 @@ struct ath11k_vif {
+ 	struct ieee80211_chanctx_conf chanctx;
+ 	struct ath11k_arp_ns_offload arp_ns_offload;
+ 	struct ath11k_rekey_data rekey_data;
+-
+-#ifdef CONFIG_ATH11K_DEBUGFS
+-	struct dentry *debugfs_twt;
+-#endif /* CONFIG_ATH11K_DEBUGFS */
+ };
+ 
+ struct ath11k_vif_iter {
+diff --git a/drivers/net/wireless/ath/ath11k/debugfs.c b/drivers/net/wireless/ath/ath11k/debugfs.c
+index be76e7d1c4366e..3ba6aa077e36d2 100644
+--- a/drivers/net/wireless/ath/ath11k/debugfs.c
++++ b/drivers/net/wireless/ath/ath11k/debugfs.c
+@@ -1893,35 +1893,30 @@ static const struct file_operations ath11k_fops_twt_resume_dialog = {
+ 	.open = simple_open
+ };
+ 
+-void ath11k_debugfs_add_interface(struct ath11k_vif *arvif)
++void ath11k_debugfs_op_add_interface(struct ieee80211_hw *hw,
++				     struct ieee80211_vif *vif)
+ {
++	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+ 	struct ath11k_base *ab = arvif->ar->ab;
++	struct dentry *debugfs_twt;
+ 
+ 	if (arvif->vif->type != NL80211_IFTYPE_AP &&
+ 	    !(arvif->vif->type == NL80211_IFTYPE_STATION &&
+ 	      test_bit(WMI_TLV_SERVICE_STA_TWT, ab->wmi_ab.svc_map)))
+ 		return;
+ 
+-	arvif->debugfs_twt = debugfs_create_dir("twt",
+-						arvif->vif->debugfs_dir);
+-	debugfs_create_file("add_dialog", 0200, arvif->debugfs_twt,
++	debugfs_twt = debugfs_create_dir("twt",
++					 arvif->vif->debugfs_dir);
++	debugfs_create_file("add_dialog", 0200, debugfs_twt,
+ 			    arvif, &ath11k_fops_twt_add_dialog);
+ 
+-	debugfs_create_file("del_dialog", 0200, arvif->debugfs_twt,
++	debugfs_create_file("del_dialog", 0200, debugfs_twt,
+ 			    arvif, &ath11k_fops_twt_del_dialog);
+ 
+-	debugfs_create_file("pause_dialog", 0200, arvif->debugfs_twt,
++	debugfs_create_file("pause_dialog", 0200, debugfs_twt,
+ 			    arvif, &ath11k_fops_twt_pause_dialog);
+ 
+-	debugfs_create_file("resume_dialog", 0200, arvif->debugfs_twt,
++	debugfs_create_file("resume_dialog", 0200, debugfs_twt,
+ 			    arvif, &ath11k_fops_twt_resume_dialog);
+ }
+ 
+-void ath11k_debugfs_remove_interface(struct ath11k_vif *arvif)
+-{
+-	if (!arvif->debugfs_twt)
+-		return;
+-
+-	debugfs_remove_recursive(arvif->debugfs_twt);
+-	arvif->debugfs_twt = NULL;
+-}
+diff --git a/drivers/net/wireless/ath/ath11k/debugfs.h b/drivers/net/wireless/ath/ath11k/debugfs.h
+index 3af0169f6cf218..b0bdd5e5f82b22 100644
+--- a/drivers/net/wireless/ath/ath11k/debugfs.h
++++ b/drivers/net/wireless/ath/ath11k/debugfs.h
+@@ -306,8 +306,8 @@ static inline int ath11k_debugfs_rx_filter(struct ath11k *ar)
+ 	return ar->debug.rx_filter;
+ }
+ 
+-void ath11k_debugfs_add_interface(struct ath11k_vif *arvif);
+-void ath11k_debugfs_remove_interface(struct ath11k_vif *arvif);
++void ath11k_debugfs_op_add_interface(struct ieee80211_hw *hw,
++				     struct ieee80211_vif *vif);
+ void ath11k_debugfs_add_dbring_entry(struct ath11k *ar,
+ 				     enum wmi_direct_buffer_module id,
+ 				     enum ath11k_dbg_dbr_event event,
+@@ -386,14 +386,6 @@ static inline int ath11k_debugfs_get_fw_stats(struct ath11k *ar,
+ 	return 0;
+ }
+ 
+-static inline void ath11k_debugfs_add_interface(struct ath11k_vif *arvif)
+-{
+-}
+-
+-static inline void ath11k_debugfs_remove_interface(struct ath11k_vif *arvif)
+-{
+-}
+-
+ static inline void
+ ath11k_debugfs_add_dbring_entry(struct ath11k *ar,
+ 				enum wmi_direct_buffer_module id,
+diff --git a/drivers/net/wireless/ath/ath11k/mac.c b/drivers/net/wireless/ath/ath11k/mac.c
+index 7f7b3981777377..6acf11fafb22e5 100644
+--- a/drivers/net/wireless/ath/ath11k/mac.c
++++ b/drivers/net/wireless/ath/ath11k/mac.c
+@@ -6750,13 +6750,6 @@ static int ath11k_mac_op_add_interface(struct ieee80211_hw *hw,
+ 		goto err;
+ 	}
+ 
+-	/* In the case of hardware recovery, debugfs files are
+-	 * not deleted since ieee80211_ops.remove_interface() is
+-	 * not invoked. In such cases, try to delete the files.
+-	 * These will be re-created later.
+-	 */
+-	ath11k_debugfs_remove_interface(arvif);
+-
+ 	memset(arvif, 0, sizeof(*arvif));
+ 
+ 	arvif->ar = ar;
+@@ -6933,8 +6926,6 @@ static int ath11k_mac_op_add_interface(struct ieee80211_hw *hw,
+ 
+ 	ath11k_dp_vdev_tx_attach(ar, arvif);
+ 
+-	ath11k_debugfs_add_interface(arvif);
+-
+ 	if (vif->type != NL80211_IFTYPE_MONITOR &&
+ 	    test_bit(ATH11K_FLAG_MONITOR_CONF_ENABLED, &ar->monitor_flags)) {
+ 		ret = ath11k_mac_monitor_vdev_create(ar);
+@@ -7050,8 +7041,6 @@ static void ath11k_mac_op_remove_interface(struct ieee80211_hw *hw,
+ 	/* Recalc txpower for remaining vdev */
+ 	ath11k_mac_txpower_recalc(ar);
+ 
+-	ath11k_debugfs_remove_interface(arvif);
+-
+ 	/* TODO: recal traffic pause state based on the available vdevs */
+ 
+ 	mutex_unlock(&ar->conf_mutex);
+@@ -9149,6 +9138,7 @@ static const struct ieee80211_ops ath11k_ops = {
+ #endif
+ 
+ #ifdef CONFIG_ATH11K_DEBUGFS
++	.vif_add_debugfs		= ath11k_debugfs_op_add_interface,
+ 	.sta_add_debugfs		= ath11k_debugfs_sta_op_add,
+ #endif
+ 
+
+From 3a88b77d3cb9f9cd8a8aee052ab479b73aeb2e80 Mon Sep 17 00:00:00 2001
+From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
+Date: Sat, 13 Jan 2024 15:29:25 +0100
+Subject: [PATCH 4/4] arch/Kconfig: Default to maximum amount of ASLR bits
+
+To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
+avoid having to enable `CONFIG_EXPERT`.
+---
+ arch/Kconfig | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/Kconfig b/arch/Kconfig
+index f4b210ab061291..837d0dbb28ea08 100644
+--- a/arch/Kconfig
++++ b/arch/Kconfig
+@@ -1032,7 +1032,7 @@ config ARCH_MMAP_RND_BITS
+ 	int "Number of bits to use for ASLR of mmap base address" if EXPERT
+ 	range ARCH_MMAP_RND_BITS_MIN ARCH_MMAP_RND_BITS_MAX
+ 	default ARCH_MMAP_RND_BITS_DEFAULT if ARCH_MMAP_RND_BITS_DEFAULT
+-	default ARCH_MMAP_RND_BITS_MIN
++	default ARCH_MMAP_RND_BITS_MAX
+ 	depends on HAVE_ARCH_MMAP_RND_BITS
+ 	help
+ 	  This value can be used to select the number of bits to use to
+@@ -1066,7 +1066,7 @@ config ARCH_MMAP_RND_COMPAT_BITS
+ 	int "Number of bits to use for ASLR of mmap base address for compatible applications" if EXPERT
+ 	range ARCH_MMAP_RND_COMPAT_BITS_MIN ARCH_MMAP_RND_COMPAT_BITS_MAX
+ 	default ARCH_MMAP_RND_COMPAT_BITS_DEFAULT if ARCH_MMAP_RND_COMPAT_BITS_DEFAULT
+-	default ARCH_MMAP_RND_COMPAT_BITS_MIN
++	default ARCH_MMAP_RND_COMPAT_BITS_MAX
+ 	depends on HAVE_ARCH_MMAP_RND_COMPAT_BITS
+ 	help
+ 	  This value can be used to select the number of bits to use to
