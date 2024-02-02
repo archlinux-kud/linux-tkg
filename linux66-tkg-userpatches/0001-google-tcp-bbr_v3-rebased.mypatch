@@ -1,4 +1,4 @@
-From 2d4672d1204cf78daca7a88fd6ddeb66a1066806 Mon Sep 17 00:00:00 2001
+From bf0a3fc41b3facb37fdceee039b79a24dd0dfa9c Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Tue, 11 Jun 2019 12:26:55 -0400
 Subject: [PATCH 01/18] net-tcp_bbr: broaden app-limited rate sample detection
@@ -57,7 +57,7 @@ index 984ab4a0421e..037f54263aee 100644
 2.43.0
 
 
-From 5671caf0c11f6fafcaa0ca5464f1df99723734b2 Mon Sep 17 00:00:00 2001
+From 04da93cf69c69564507eec0046148f2d4242dec4 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Sun, 24 Jun 2018 21:55:59 -0400
 Subject: [PATCH 02/18] net-tcp_bbr: v2: shrink delivered_mstamp,
@@ -138,7 +138,7 @@ index a8f6d9d06f2e..763362159fe9 100644
 2.43.0
 
 
-From b53c9b9da68b7d61e00d1cd187409afcfa26a251 Mon Sep 17 00:00:00 2001
+From e07a9c3659c6ef3f069941169aea5458d210a44d Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Sat, 5 Aug 2017 11:49:50 -0400
 Subject: [PATCH 03/18] net-tcp_bbr: v2: snapshot packets in flight at transmit
@@ -256,7 +256,7 @@ index 763362159fe9..1424911b1b9e 100644
 2.43.0
 
 
-From da7812d9d9bb7cf639add0d1748b8aff2fb67491 Mon Sep 17 00:00:00 2001
+From adb04c27fadfa23ccfb7771dba972e3f33d420c2 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Thu, 12 Oct 2017 23:44:27 -0400
 Subject: [PATCH 04/18] net-tcp_bbr: v2: count packets lost over TCP rate
@@ -333,7 +333,7 @@ index 1424911b1b9e..8737f2134648 100644
 2.43.0
 
 
-From 4db5f5919615b7f634c277da86c9292d8e689b00 Mon Sep 17 00:00:00 2001
+From cfe4192e93db5bcd75ff0a5d1fb0269394592470 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Mon, 19 Nov 2018 13:48:36 -0500
 Subject: [PATCH 05/18] net-tcp_bbr: v2: export FLAG_ECE in rate_sample.is_ece
@@ -378,7 +378,7 @@ index 04e171ad335c..9e2d1fc0b577 100644
 2.43.0
 
 
-From 070c0d1814d49eea34546251c8ac500742f3229c Mon Sep 17 00:00:00 2001
+From 99df78583f84db07a861812d44ab41bcb5ad8a0b Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Tue, 7 Aug 2018 21:52:06 -0400
 Subject: [PATCH 06/18] net-tcp_bbr: v2: introduce ca_ops->skb_marked_lost() CC
@@ -442,7 +442,7 @@ index 9e2d1fc0b577..291a1473c2c4 100644
 2.43.0
 
 
-From 9aa30a4839b9625dd8d20f39357358d5a782f3e5 Mon Sep 17 00:00:00 2001
+From 6e58cfaf51ba479c5469d6262d1e0c428331683a Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Wed, 1 May 2019 20:16:33 -0400
 Subject: [PATCH 07/18] net-tcp_bbr: v2: adjust skb tx.in_flight upon merge in
@@ -506,7 +506,7 @@ index 291a1473c2c4..827f44822a98 100644
 2.43.0
 
 
-From dfcb55082965e88a11b6a81c5a4baee9daa932be Mon Sep 17 00:00:00 2001
+From 17801368544c65643a66cbe95ebe89672c49acc1 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Wed, 1 May 2019 20:16:25 -0400
 Subject: [PATCH 08/18] net-tcp_bbr: v2: adjust skb tx.in_flight upon split in
@@ -610,7 +610,7 @@ index fcb94b0edfa5..b58f6b63407c 100644
 2.43.0
 
 
-From f8792a4f5720d34eaea826d679977f3f28e88394 Mon Sep 17 00:00:00 2001
+From b00fc7f570d7a082f1e417fa582c2d1159232551 Mon Sep 17 00:00:00 2001
 From: Yousuk Seung <ysseung@google.com>
 Date: Wed, 23 May 2018 17:55:54 -0700
 Subject: [PATCH 09/18] net-tcp: add new ca opts flag TCP_CONG_WANTS_CE_EVENTS
@@ -690,7 +690,7 @@ index 827f44822a98..646181b55aee 100644
 2.43.0
 
 
-From b2235401d7c5e881afb2c6e0f967252061be1c47 Mon Sep 17 00:00:00 2001
+From 73f9f7803686cab824617e63aea347b93ac70193 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Fri, 27 Sep 2019 17:10:26 -0400
 Subject: [PATCH 10/18] net-tcp: re-generalize TSO sizing in TCP CC module API
@@ -817,7 +817,7 @@ index b58f6b63407c..f572219dfaa9 100644
 2.43.0
 
 
-From 106ad29076fe13ec2f059e4bb7866dc021875be8 Mon Sep 17 00:00:00 2001
+From 4a1aec35250adcac343fd75339b7815468709ab6 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Sat, 16 Nov 2019 13:16:25 -0500
 Subject: [PATCH 11/18] net-tcp: add fast_ack_mode=1: skip rwin check in
@@ -852,10 +852,10 @@ index 3c5efeeb024f..a0f4015daa17 100644
  	u32	chrono_stat[3];	/* Time in jiffies for chrono_stat stats */
  	u8	chrono_type:2,	/* current chronograph type */
 diff --git a/net/ipv4/tcp.c b/net/ipv4/tcp.c
-index f124f6c63915..f274e83c40e5 100644
+index fb417aee86e6..cdbfb0cc720a 100644
 --- a/net/ipv4/tcp.c
 +++ b/net/ipv4/tcp.c
-@@ -3079,6 +3079,7 @@ int tcp_disconnect(struct sock *sk, int flags)
+@@ -3080,6 +3080,7 @@ int tcp_disconnect(struct sock *sk, int flags)
  	tp->rx_opt.dsack = 0;
  	tp->rx_opt.num_sacks = 0;
  	tp->rcv_ooopack = 0;
@@ -900,7 +900,7 @@ index 646181b55aee..75f512c3fe71 100644
 2.43.0
 
 
-From d5396ee90514d5260846677428badbc153223da9 Mon Sep 17 00:00:00 2001
+From 76b8061ad092436f01c95c9fa7a3f40073fee919 Mon Sep 17 00:00:00 2001
 From: Jianfeng Wang <jfwang@google.com>
 Date: Fri, 19 Jun 2020 17:33:45 +0000
 Subject: [PATCH 12/18] net-tcp_bbr: v2: record app-limited status of
@@ -952,7 +952,7 @@ index f572219dfaa9..4b668f3ca1b1 100644
 2.43.0
 
 
-From 2b4f7b0885bba2849552046f2c2eb0087ef5e233 Mon Sep 17 00:00:00 2001
+From 723cd3fcff0c96e21f89dd73a5568b13be7518d4 Mon Sep 17 00:00:00 2001
 From: Jianfeng Wang <jfwang@google.com>
 Date: Tue, 16 Jun 2020 17:41:19 +0000
 Subject: [PATCH 13/18] net-tcp_bbr: v2: inform CC module of losses repaired by
@@ -1004,7 +1004,7 @@ index 75f512c3fe71..52b5696f2029 100644
 2.43.0
 
 
-From ae7595f9e1ef7572ef38ef1a0e127e039308051d Mon Sep 17 00:00:00 2001
+From 0e174784a158fb54251b01b55007025e1a28bda8 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Mon, 21 Sep 2020 14:46:26 -0400
 Subject: [PATCH 14/18] net-tcp_bbr: v2: introduce is_acking_tlp_retrans_seq
@@ -1084,7 +1084,7 @@ index 52b5696f2029..602d285344f9 100644
 2.43.0
 
 
-From 1c84d891822788839b2db88767bfe9f7b52054f2 Mon Sep 17 00:00:00 2001
+From 97c375b235f32cea95e709c6fb4b2a461d79d927 Mon Sep 17 00:00:00 2001
 From: David Morley <morleyd@google.com>
 Date: Fri, 14 Jul 2023 11:07:56 -0400
 Subject: [PATCH 15/18] tcp: introduce per-route feature RTAX_FEATURE_ECN_LOW
@@ -1204,7 +1204,7 @@ index 4b668f3ca1b1..ce5ab882c94b 100644
 2.43.0
 
 
-From a4f1074cd6f8a81a7331453c111805f2b781caa8 Mon Sep 17 00:00:00 2001
+From fdc3967f74311e531df759fcab697c96c9d197a9 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Tue, 11 Jun 2019 12:54:22 -0400
 Subject: [PATCH 16/18] net-tcp_bbr: v3: update TCP "bbr" congestion control
@@ -1344,7 +1344,7 @@ Change-Id: I125cf26ba2a7a686f2fa5e87f4c2afceb65f7a05
  5 files changed, 1742 insertions(+), 525 deletions(-)
 
 diff --git a/include/net/inet_connection_sock.h b/include/net/inet_connection_sock.h
-index 5d2fcc137b88..3f7d429f73e5 100644
+index 01a73bf74fa1..8e1b76b796ab 100644
 --- a/include/net/inet_connection_sock.h
 +++ b/include/net/inet_connection_sock.h
 @@ -135,8 +135,8 @@ struct inet_connection_sock {
@@ -4079,7 +4079,7 @@ index cd31cd8cdc69..4fec37e8f900 100644
 2.43.0
 
 
-From 3857a57e10e89c081316472a2c2b60290cc99b35 Mon Sep 17 00:00:00 2001
+From 1f2ef0bac2c75d3c66ec1f8a13e0ad0394ab01d0 Mon Sep 17 00:00:00 2001
 From: Adithya Abraham Philip <abrahamphilip@google.com>
 Date: Fri, 11 Jun 2021 21:56:10 +0000
 Subject: [PATCH 17/18] net-tcp_bbr: v3: ensure ECN-enabled BBR flows set ECT
@@ -4147,7 +4147,7 @@ index ce5ab882c94b..e09eebb304de 100644
 2.43.0
 
 
-From 3b20510935bfd2ab7731f979bc2edd9e9977d875 Mon Sep 17 00:00:00 2001
+From 0d9d9c5e8a164e6225bfe703412cdc97b500e7f6 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Sun, 23 Jul 2023 23:25:34 -0400
 Subject: [PATCH 18/18] tcp: export TCPI_OPT_ECN_LOW in tcp_info tcpi_options
@@ -4176,10 +4176,10 @@ index 879eeb0a084b..77270053a5e3 100644
  /*
   * Sender's congestion state indicating normal or abnormal situations
 diff --git a/net/ipv4/tcp.c b/net/ipv4/tcp.c
-index f274e83c40e5..d25d51d69fa9 100644
+index cdbfb0cc720a..eebf6aaaaa26 100644
 --- a/net/ipv4/tcp.c
 +++ b/net/ipv4/tcp.c
-@@ -3771,6 +3771,8 @@ void tcp_get_info(struct sock *sk, struct tcp_info *info)
+@@ -3772,6 +3772,8 @@ void tcp_get_info(struct sock *sk, struct tcp_info *info)
  		info->tcpi_options |= TCPI_OPT_ECN;
  	if (tp->ecn_flags & TCP_ECN_SEEN)
  		info->tcpi_options |= TCPI_OPT_ECN_SEEN;
