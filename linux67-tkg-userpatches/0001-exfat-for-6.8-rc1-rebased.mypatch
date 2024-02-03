@@ -1,0 +1,822 @@
+From 192f7248a205f16bd51c84dab1d8ac7f7c0479af Mon Sep 17 00:00:00 2001
+From: John Sanpe <sanpeqf@gmail.com>
+Date: Tue, 5 Dec 2023 23:58:37 +0800
+Subject: [PATCH 1/4] exfat: using hweight instead of internal logic
+
+Replace the internal table lookup algorithm with the hweight
+library, which has instruction set acceleration capabilities.
+
+Use it to increase the length of a single calculation of
+the exfat_find_free_bitmap function to the long type.
+
+Signed-off-by: John Sanpe <sanpeqf@gmail.com>
+Acked-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/balloc.c | 48 +++++++++++++++++++++--------------------------
+ 1 file changed, 21 insertions(+), 27 deletions(-)
+
+diff --git a/fs/exfat/balloc.c b/fs/exfat/balloc.c
+index e918decb3735..3e3e9e4cce2f 100644
+--- a/fs/exfat/balloc.c
++++ b/fs/exfat/balloc.c
+@@ -5,11 +5,22 @@
+ 
+ #include <linux/blkdev.h>
+ #include <linux/slab.h>
++#include <linux/bitmap.h>
+ #include <linux/buffer_head.h>
+ 
+ #include "exfat_raw.h"
+ #include "exfat_fs.h"
+ 
++#if BITS_PER_LONG == 32
++#define __le_long __le32
++#define lel_to_cpu(A) le32_to_cpu(A)
++#elif BITS_PER_LONG == 64
++#define __le_long __le64
++#define lel_to_cpu(A) le64_to_cpu(A)
++#else
++#error "BITS_PER_LONG not 32 or 64"
++#endif
++
+ static const unsigned char free_bit[] = {
+ 	0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2,/*  0 ~  19*/
+ 	0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 5, 0, 1, 0, 2, 0, 1, 0, 3,/* 20 ~  39*/
+@@ -26,22 +37,6 @@ static const unsigned char free_bit[] = {
+ 	0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0                /*240 ~ 254*/
+ };
+ 
+-static const unsigned char used_bit[] = {
+-	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3,/*  0 ~  19*/
+-	2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4,/* 20 ~  39*/
+-	2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5,/* 40 ~  59*/
+-	4, 5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,/* 60 ~  79*/
+-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4,/* 80 ~  99*/
+-	3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6,/*100 ~ 119*/
+-	4, 5, 5, 6, 5, 6, 6, 7, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4,/*120 ~ 139*/
+-	3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,/*140 ~ 159*/
+-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5,/*160 ~ 179*/
+-	4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4, 5,/*180 ~ 199*/
+-	3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6,/*200 ~ 219*/
+-	5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,/*220 ~ 239*/
+-	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8             /*240 ~ 255*/
+-};
+-
+ /*
+  *  Allocation Bitmap Management Functions
+  */
+@@ -244,25 +239,24 @@ int exfat_count_used_clusters(struct super_block *sb, unsigned int *ret_count)
+ 	unsigned int count = 0;
+ 	unsigned int i, map_i = 0, map_b = 0;
+ 	unsigned int total_clus = EXFAT_DATA_CLUSTER_COUNT(sbi);
+-	unsigned int last_mask = total_clus & BITS_PER_BYTE_MASK;
+-	unsigned char clu_bits;
+-	const unsigned char last_bit_mask[] = {0, 0b00000001, 0b00000011,
+-		0b00000111, 0b00001111, 0b00011111, 0b00111111, 0b01111111};
++	unsigned int last_mask = total_clus & (BITS_PER_LONG - 1);
++	unsigned long *bitmap, clu_bits;
+ 
+ 	total_clus &= ~last_mask;
+-	for (i = 0; i < total_clus; i += BITS_PER_BYTE) {
+-		clu_bits = *(sbi->vol_amap[map_i]->b_data + map_b);
+-		count += used_bit[clu_bits];
+-		if (++map_b >= (unsigned int)sb->s_blocksize) {
++	for (i = 0; i < total_clus; i += BITS_PER_LONG) {
++		bitmap = (void *)(sbi->vol_amap[map_i]->b_data + map_b);
++		count += hweight_long(*bitmap);
++		map_b += sizeof(long);
++		if (map_b >= (unsigned int)sb->s_blocksize) {
+ 			map_i++;
+ 			map_b = 0;
+ 		}
+ 	}
+ 
+ 	if (last_mask) {
+-		clu_bits = *(sbi->vol_amap[map_i]->b_data + map_b);
+-		clu_bits &= last_bit_mask[last_mask];
+-		count += used_bit[clu_bits];
++		bitmap = (void *)(sbi->vol_amap[map_i]->b_data + map_b);
++		clu_bits = lel_to_cpu(*(__le_long *)bitmap);
++		count += hweight_long(clu_bits & BITMAP_LAST_WORD_MASK(last_mask));
+ 	}
+ 
+ 	*ret_count = count;
+-- 
+2.43.0
+
+
+From 8746f408a0d07a3c198bed2bcf2d997e7d37cc28 Mon Sep 17 00:00:00 2001
+From: John Sanpe <sanpeqf@gmail.com>
+Date: Fri, 8 Dec 2023 07:47:01 +0800
+Subject: [PATCH 2/4] exfat: using ffs instead of internal logic
+
+Replaced the internal table lookup algorithm with ffs of
+the bitops library with better performance.
+
+Use it to increase the single processing length of the
+exfat_find_free_bitmap function, from single-byte search to long type.
+
+Signed-off-by: John Sanpe <sanpeqf@gmail.com>
+Acked-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/balloc.c   | 41 +++++++++++++++--------------------------
+ fs/exfat/exfat_fs.h |  3 +--
+ 2 files changed, 16 insertions(+), 28 deletions(-)
+
+diff --git a/fs/exfat/balloc.c b/fs/exfat/balloc.c
+index 3e3e9e4cce2f..0356c88252bd 100644
+--- a/fs/exfat/balloc.c
++++ b/fs/exfat/balloc.c
+@@ -14,29 +14,15 @@
+ #if BITS_PER_LONG == 32
+ #define __le_long __le32
+ #define lel_to_cpu(A) le32_to_cpu(A)
++#define cpu_to_lel(A) cpu_to_le32(A)
+ #elif BITS_PER_LONG == 64
+ #define __le_long __le64
+ #define lel_to_cpu(A) le64_to_cpu(A)
++#define cpu_to_lel(A) cpu_to_le64(A)
+ #else
+ #error "BITS_PER_LONG not 32 or 64"
+ #endif
+ 
+-static const unsigned char free_bit[] = {
+-	0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2,/*  0 ~  19*/
+-	0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 5, 0, 1, 0, 2, 0, 1, 0, 3,/* 20 ~  39*/
+-	0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2,/* 40 ~  59*/
+-	0, 1, 0, 6, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4,/* 60 ~  79*/
+-	0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 5, 0, 1, 0, 2,/* 80 ~  99*/
+-	0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3,/*100 ~ 119*/
+-	0, 1, 0, 2, 0, 1, 0, 7, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2,/*120 ~ 139*/
+-	0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 5,/*140 ~ 159*/
+-	0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2,/*160 ~ 179*/
+-	0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 6, 0, 1, 0, 2, 0, 1, 0, 3,/*180 ~ 199*/
+-	0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2,/*200 ~ 219*/
+-	0, 1, 0, 5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4,/*220 ~ 239*/
+-	0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0                /*240 ~ 254*/
+-};
+-
+ /*
+  *  Allocation Bitmap Management Functions
+  */
+@@ -195,32 +181,35 @@ unsigned int exfat_find_free_bitmap(struct super_block *sb, unsigned int clu)
+ {
+ 	unsigned int i, map_i, map_b, ent_idx;
+ 	unsigned int clu_base, clu_free;
+-	unsigned char k, clu_mask;
++	unsigned long clu_bits, clu_mask;
+ 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
++	__le_long bitval;
+ 
+ 	WARN_ON(clu < EXFAT_FIRST_CLUSTER);
+-	ent_idx = CLUSTER_TO_BITMAP_ENT(clu);
+-	clu_base = BITMAP_ENT_TO_CLUSTER(ent_idx & ~(BITS_PER_BYTE_MASK));
++	ent_idx = ALIGN_DOWN(CLUSTER_TO_BITMAP_ENT(clu), BITS_PER_LONG);
++	clu_base = BITMAP_ENT_TO_CLUSTER(ent_idx);
+ 	clu_mask = IGNORED_BITS_REMAINED(clu, clu_base);
+ 
+ 	map_i = BITMAP_OFFSET_SECTOR_INDEX(sb, ent_idx);
+ 	map_b = BITMAP_OFFSET_BYTE_IN_SECTOR(sb, ent_idx);
+ 
+ 	for (i = EXFAT_FIRST_CLUSTER; i < sbi->num_clusters;
+-	     i += BITS_PER_BYTE) {
+-		k = *(sbi->vol_amap[map_i]->b_data + map_b);
++	     i += BITS_PER_LONG) {
++		bitval = *(__le_long *)(sbi->vol_amap[map_i]->b_data + map_b);
+ 		if (clu_mask > 0) {
+-			k |= clu_mask;
++			bitval |= cpu_to_lel(clu_mask);
+ 			clu_mask = 0;
+ 		}
+-		if (k < 0xFF) {
+-			clu_free = clu_base + free_bit[k];
++		if (lel_to_cpu(bitval) != ULONG_MAX) {
++			clu_bits = lel_to_cpu(bitval);
++			clu_free = clu_base + ffz(clu_bits);
+ 			if (clu_free < sbi->num_clusters)
+ 				return clu_free;
+ 		}
+-		clu_base += BITS_PER_BYTE;
++		clu_base += BITS_PER_LONG;
++		map_b += sizeof(long);
+ 
+-		if (++map_b >= sb->s_blocksize ||
++		if (map_b >= sb->s_blocksize ||
+ 		    clu_base >= sbi->num_clusters) {
+ 			if (++map_i >= sbi->map_sectors) {
+ 				clu_base = EXFAT_FIRST_CLUSTER;
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index a7a2c35d74fb..8030780a199b 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -135,8 +135,7 @@ enum {
+ #define BITMAP_OFFSET_BIT_IN_SECTOR(sb, ent) (ent & BITS_PER_SECTOR_MASK(sb))
+ #define BITMAP_OFFSET_BYTE_IN_SECTOR(sb, ent) \
+ 	((ent / BITS_PER_BYTE) & ((sb)->s_blocksize - 1))
+-#define BITS_PER_BYTE_MASK	0x7
+-#define IGNORED_BITS_REMAINED(clu, clu_base) ((1 << ((clu) - (clu_base))) - 1)
++#define IGNORED_BITS_REMAINED(clu, clu_base) ((1UL << ((clu) - (clu_base))) - 1)
+ 
+ #define ES_ENTRY_NUM(name_len)	(ES_IDX_LAST_FILENAME(name_len) + 1)
+ /* 19 entries = 1 file entry + 1 stream entry + 17 filename entries */
+-- 
+2.43.0
+
+
+From aac22207f44a881c1051b2d113e5f292bff3af33 Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Mon, 13 Mar 2023 12:38:53 +0800
+Subject: [PATCH 3/4] exfat: change to get file size from DataLength
+
+In stream extension directory entry, the ValidDataLength
+field describes how far into the data stream user data has
+been written, and the DataLength field describes the file
+size.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/exfat_fs.h |   2 +
+ fs/exfat/file.c     | 118 ++++++++++++++++++++++++++++++++++++++++-
+ fs/exfat/inode.c    | 124 ++++++++++++++++++++++++++++++++++++++------
+ fs/exfat/namei.c    |   6 +++
+ 4 files changed, 231 insertions(+), 19 deletions(-)
+
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index 8030780a199b..9474cd50da6d 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -207,6 +207,7 @@ struct exfat_dir_entry {
+ 	unsigned char flags;
+ 	unsigned short attr;
+ 	loff_t size;
++	loff_t valid_size;
+ 	unsigned int num_subdirs;
+ 	struct timespec64 atime;
+ 	struct timespec64 mtime;
+@@ -316,6 +317,7 @@ struct exfat_inode_info {
+ 	loff_t i_size_aligned;
+ 	/* on-disk position of directory entry or 0 */
+ 	loff_t i_pos;
++	loff_t valid_size;
+ 	/* hash by i_location */
+ 	struct hlist_node i_hash_fat;
+ 	/* protect bmap against truncate */
+diff --git a/fs/exfat/file.c b/fs/exfat/file.c
+index bfdfafe00993..270e2f934124 100644
+--- a/fs/exfat/file.c
++++ b/fs/exfat/file.c
+@@ -11,6 +11,7 @@
+ #include <linux/fsnotify.h>
+ #include <linux/security.h>
+ #include <linux/msdos_fs.h>
++#include <linux/writeback.h>
+ 
+ #include "exfat_raw.h"
+ #include "exfat_fs.h"
+@@ -26,6 +27,7 @@ static int exfat_cont_expand(struct inode *inode, loff_t size)
+ 		return err;
+ 
+ 	inode_set_mtime_to_ts(inode, inode_set_ctime_current(inode));
++	EXFAT_I(inode)->valid_size = size;
+ 	mark_inode_dirty(inode);
+ 
+ 	if (!IS_SYNC(inode))
+@@ -146,6 +148,9 @@ int __exfat_truncate(struct inode *inode)
+ 		ei->start_clu = EXFAT_EOF_CLUSTER;
+ 	}
+ 
++	if (i_size_read(inode) < ei->valid_size)
++		ei->valid_size = i_size_read(inode);
++
+ 	if (ei->type == TYPE_FILE)
+ 		ei->attr |= EXFAT_ATTR_ARCHIVE;
+ 
+@@ -474,15 +479,124 @@ int exfat_file_fsync(struct file *filp, loff_t start, loff_t end, int datasync)
+ 	return blkdev_issue_flush(inode->i_sb->s_bdev);
+ }
+ 
++static int exfat_file_zeroed_range(struct file *file, loff_t start, loff_t end)
++{
++	int err;
++	struct inode *inode = file_inode(file);
++	struct address_space *mapping = inode->i_mapping;
++	const struct address_space_operations *ops = mapping->a_ops;
++
++	while (start < end) {
++		u32 zerofrom, len;
++		struct page *page = NULL;
++
++		zerofrom = start & (PAGE_SIZE - 1);
++		len = PAGE_SIZE - zerofrom;
++		if (start + len > end)
++			len = end - start;
++
++		err = ops->write_begin(file, mapping, start, len, &page, NULL);
++		if (err)
++			goto out;
++
++		zero_user_segment(page, zerofrom, zerofrom + len);
++
++		err = ops->write_end(file, mapping, start, len, len, page, NULL);
++		if (err < 0)
++			goto out;
++		start += len;
++
++		balance_dirty_pages_ratelimited(mapping);
++		cond_resched();
++	}
++
++out:
++	return err;
++}
++
++static ssize_t exfat_file_write_iter(struct kiocb *iocb, struct iov_iter *iter)
++{
++	ssize_t ret;
++	struct file *file = iocb->ki_filp;
++	struct inode *inode = file_inode(file);
++	struct exfat_inode_info *ei = EXFAT_I(inode);
++	loff_t pos = iocb->ki_pos;
++	loff_t valid_size;
++
++	inode_lock(inode);
++
++	valid_size = ei->valid_size;
++
++	ret = generic_write_checks(iocb, iter);
++	if (ret < 0)
++		goto unlock;
++
++	if (pos > valid_size) {
++		ret = exfat_file_zeroed_range(file, valid_size, pos);
++		if (ret < 0 && ret != -ENOSPC) {
++			exfat_err(inode->i_sb,
++				"write: fail to zero from %llu to %llu(%zd)",
++				valid_size, pos, ret);
++		}
++		if (ret < 0)
++			goto unlock;
++	}
++
++	ret = __generic_file_write_iter(iocb, iter);
++	if (ret < 0)
++		goto unlock;
++
++	inode_unlock(inode);
++
++	if (pos > valid_size)
++		pos = valid_size;
++
++	if (iocb_is_dsync(iocb) && iocb->ki_pos > pos) {
++		ssize_t err = vfs_fsync_range(file, pos, iocb->ki_pos - 1,
++				iocb->ki_flags & IOCB_SYNC);
++		if (err < 0)
++			return err;
++	}
++
++	return ret;
++
++unlock:
++	inode_unlock(inode);
++
++	return ret;
++}
++
++static int exfat_file_mmap(struct file *file, struct vm_area_struct *vma)
++{
++	int ret;
++	struct inode *inode = file_inode(file);
++	struct exfat_inode_info *ei = EXFAT_I(inode);
++	loff_t start = ((loff_t)vma->vm_pgoff << PAGE_SHIFT);
++	loff_t end = min_t(loff_t, i_size_read(inode),
++			start + vma->vm_end - vma->vm_start);
++
++	if ((vma->vm_flags & VM_WRITE) && ei->valid_size < end) {
++		ret = exfat_file_zeroed_range(file, ei->valid_size, end);
++		if (ret < 0) {
++			exfat_err(inode->i_sb,
++				  "mmap: fail to zero from %llu to %llu(%d)",
++				  start, end, ret);
++			return ret;
++		}
++	}
++
++	return generic_file_mmap(file, vma);
++}
++
+ const struct file_operations exfat_file_operations = {
+ 	.llseek		= generic_file_llseek,
+ 	.read_iter	= generic_file_read_iter,
+-	.write_iter	= generic_file_write_iter,
++	.write_iter	= exfat_file_write_iter,
+ 	.unlocked_ioctl = exfat_ioctl,
+ #ifdef CONFIG_COMPAT
+ 	.compat_ioctl = exfat_compat_ioctl,
+ #endif
+-	.mmap		= generic_file_mmap,
++	.mmap		= exfat_file_mmap,
+ 	.fsync		= exfat_file_fsync,
+ 	.splice_read	= filemap_splice_read,
+ 	.splice_write	= iter_file_splice_write,
+diff --git a/fs/exfat/inode.c b/fs/exfat/inode.c
+index e7ff58b8e68c..b02677c9fd45 100644
+--- a/fs/exfat/inode.c
++++ b/fs/exfat/inode.c
+@@ -75,8 +75,8 @@ int __exfat_write_inode(struct inode *inode, int sync)
+ 	if (ei->start_clu == EXFAT_EOF_CLUSTER)
+ 		on_disk_size = 0;
+ 
+-	ep2->dentry.stream.valid_size = cpu_to_le64(on_disk_size);
+-	ep2->dentry.stream.size = ep2->dentry.stream.valid_size;
++	ep2->dentry.stream.valid_size = cpu_to_le64(ei->valid_size);
++	ep2->dentry.stream.size = cpu_to_le64(on_disk_size);
+ 	if (on_disk_size) {
+ 		ep2->dentry.stream.flags = ei->flags;
+ 		ep2->dentry.stream.start_clu = cpu_to_le32(ei->start_clu);
+@@ -278,6 +278,7 @@ static int exfat_get_block(struct inode *inode, sector_t iblock,
+ 	unsigned int cluster, sec_offset;
+ 	sector_t last_block;
+ 	sector_t phys = 0;
++	sector_t valid_blks;
+ 	loff_t pos;
+ 
+ 	mutex_lock(&sbi->s_lock);
+@@ -306,17 +307,32 @@ static int exfat_get_block(struct inode *inode, sector_t iblock,
+ 	mapped_blocks = sbi->sect_per_clus - sec_offset;
+ 	max_blocks = min(mapped_blocks, max_blocks);
+ 
+-	/* Treat newly added block / cluster */
+-	if (iblock < last_block)
+-		create = 0;
+-
+-	if (create || buffer_delay(bh_result)) {
+-		pos = EXFAT_BLK_TO_B((iblock + 1), sb);
++	pos = EXFAT_BLK_TO_B((iblock + 1), sb);
++	if ((create && iblock >= last_block) || buffer_delay(bh_result)) {
+ 		if (ei->i_size_ondisk < pos)
+ 			ei->i_size_ondisk = pos;
+ 	}
+ 
++	map_bh(bh_result, sb, phys);
++	if (buffer_delay(bh_result))
++		clear_buffer_delay(bh_result);
++
+ 	if (create) {
++		valid_blks = EXFAT_B_TO_BLK_ROUND_UP(ei->valid_size, sb);
++
++		if (iblock + max_blocks < valid_blks) {
++			/* The range has been written, map it */
++			goto done;
++		} else if (iblock < valid_blks) {
++			/*
++			 * The range has been partially written,
++			 * map the written part.
++			 */
++			max_blocks = valid_blks - iblock;
++			goto done;
++		}
++
++		/* The area has not been written, map and mark as new. */
+ 		err = exfat_map_new_buffer(ei, bh_result, pos);
+ 		if (err) {
+ 			exfat_fs_error(sb,
+@@ -324,11 +340,55 @@ static int exfat_get_block(struct inode *inode, sector_t iblock,
+ 					pos, ei->i_size_aligned);
+ 			goto unlock_ret;
+ 		}
++	} else {
++		valid_blks = EXFAT_B_TO_BLK(ei->valid_size, sb);
++
++		if (iblock + max_blocks < valid_blks) {
++			/* The range has been written, map it */
++			goto done;
++		} else if (iblock < valid_blks) {
++			/*
++			 * The area has been partially written,
++			 * map the written part.
++			 */
++			max_blocks = valid_blks - iblock;
++			goto done;
++		} else if (iblock == valid_blks &&
++			   (ei->valid_size & (sb->s_blocksize - 1))) {
++			/*
++			 * The block has been partially written,
++			 * zero the unwritten part and map the block.
++			 */
++			loff_t size, off;
++
++			max_blocks = 1;
++
++			/*
++			 * For direct read, the unwritten part will be zeroed in
++			 * exfat_direct_IO()
++			 */
++			if (!bh_result->b_folio)
++				goto done;
++
++			pos -= sb->s_blocksize;
++			size = ei->valid_size - pos;
++			off = pos & (PAGE_SIZE - 1);
++
++			folio_set_bh(bh_result, bh_result->b_folio, off);
++			err = bh_read(bh_result, 0);
++			if (err < 0)
++				goto unlock_ret;
++
++			folio_zero_segment(bh_result->b_folio, off + size,
++					off + sb->s_blocksize);
++		} else {
++			/*
++			 * The range has not been written, clear the mapped flag
++			 * to only zero the cache and do not read from disk.
++			 */
++			clear_buffer_mapped(bh_result);
++		}
+ 	}
+-
+-	if (buffer_delay(bh_result))
+-		clear_buffer_delay(bh_result);
+-	map_bh(bh_result, sb, phys);
+ done:
+ 	bh_result->b_size = EXFAT_BLK_TO_B(max_blocks, sb);
+ unlock_ret:
+@@ -343,6 +403,17 @@ static int exfat_read_folio(struct file *file, struct folio *folio)
+ 
+ static void exfat_readahead(struct readahead_control *rac)
+ {
++	struct address_space *mapping = rac->mapping;
++	struct inode *inode = mapping->host;
++	struct exfat_inode_info *ei = EXFAT_I(inode);
++	loff_t pos = readahead_pos(rac);
++
++	/* Range cross valid_size, read it page by page. */
++	if (ei->valid_size < i_size_read(inode) &&
++	    pos <= ei->valid_size &&
++	    ei->valid_size < pos + readahead_length(rac))
++		return;
++
+ 	mpage_readahead(rac, exfat_get_block);
+ }
+ 
+@@ -370,9 +441,7 @@ static int exfat_write_begin(struct file *file, struct address_space *mapping,
+ 	int ret;
+ 
+ 	*pagep = NULL;
+-	ret = cont_write_begin(file, mapping, pos, len, pagep, fsdata,
+-			       exfat_get_block,
+-			       &EXFAT_I(mapping->host)->i_size_ondisk);
++	ret = block_write_begin(mapping, pos, len, pagep, exfat_get_block);
+ 
+ 	if (ret < 0)
+ 		exfat_write_failed(mapping, pos+len);
+@@ -400,6 +469,11 @@ static int exfat_write_end(struct file *file, struct address_space *mapping,
+ 	if (err < len)
+ 		exfat_write_failed(mapping, pos+len);
+ 
++	if (!(err < 0) && pos + err > ei->valid_size) {
++		ei->valid_size = pos + err;
++		mark_inode_dirty(inode);
++	}
++
+ 	if (!(err < 0) && !(ei->attr & EXFAT_ATTR_ARCHIVE)) {
+ 		inode_set_mtime_to_ts(inode, inode_set_ctime_current(inode));
+ 		ei->attr |= EXFAT_ATTR_ARCHIVE;
+@@ -413,6 +487,8 @@ static ssize_t exfat_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
+ {
+ 	struct address_space *mapping = iocb->ki_filp->f_mapping;
+ 	struct inode *inode = mapping->host;
++	struct exfat_inode_info *ei = EXFAT_I(inode);
++	loff_t pos = iocb->ki_pos;
+ 	loff_t size = iocb->ki_pos + iov_iter_count(iter);
+ 	int rw = iov_iter_rw(iter);
+ 	ssize_t ret;
+@@ -436,8 +512,21 @@ static ssize_t exfat_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
+ 	 * condition of exfat_get_block() and ->truncate().
+ 	 */
+ 	ret = blockdev_direct_IO(iocb, inode, iter, exfat_get_block);
+-	if (ret < 0 && (rw & WRITE))
+-		exfat_write_failed(mapping, size);
++	if (ret < 0) {
++		if (rw == WRITE)
++			exfat_write_failed(mapping, size);
++
++		if (ret != -EIOCBQUEUED)
++			return ret;
++	} else
++		size = pos + ret;
++
++	/* zero the unwritten part in the partially written block */
++	if (rw == READ && pos < ei->valid_size && ei->valid_size < size) {
++		iov_iter_revert(iter, size - ei->valid_size);
++		iov_iter_zero(size - ei->valid_size, iter);
++	}
++
+ 	return ret;
+ }
+ 
+@@ -537,6 +626,7 @@ static int exfat_fill_inode(struct inode *inode, struct exfat_dir_entry *info)
+ 	ei->start_clu = info->start_clu;
+ 	ei->flags = info->flags;
+ 	ei->type = info->type;
++	ei->valid_size = info->valid_size;
+ 
+ 	ei->version = 0;
+ 	ei->hint_stat.eidx = 0;
+diff --git a/fs/exfat/namei.c b/fs/exfat/namei.c
+index 5d737e0b639a..9c549fd11fc8 100644
+--- a/fs/exfat/namei.c
++++ b/fs/exfat/namei.c
+@@ -406,6 +406,7 @@ static int exfat_find_empty_entry(struct inode *inode,
+ 		i_size_write(inode, size);
+ 		ei->i_size_ondisk += sbi->cluster_size;
+ 		ei->i_size_aligned += sbi->cluster_size;
++		ei->valid_size += sbi->cluster_size;
+ 		ei->flags = p_dir->flags;
+ 		inode->i_blocks += sbi->cluster_size >> 9;
+ 	}
+@@ -558,6 +559,8 @@ static int exfat_add_entry(struct inode *inode, const char *path,
+ 		info->size = clu_size;
+ 		info->num_subdirs = EXFAT_MIN_SUBDIR;
+ 	}
++	info->valid_size = info->size;
++
+ 	memset(&info->crtime, 0, sizeof(info->crtime));
+ 	memset(&info->mtime, 0, sizeof(info->mtime));
+ 	memset(&info->atime, 0, sizeof(info->atime));
+@@ -660,6 +663,8 @@ static int exfat_find(struct inode *dir, struct qstr *qname,
+ 	info->type = exfat_get_entry_type(ep);
+ 	info->attr = le16_to_cpu(ep->dentry.file.attr);
+ 	info->size = le64_to_cpu(ep2->dentry.stream.valid_size);
++	info->valid_size = le64_to_cpu(ep2->dentry.stream.valid_size);
++	info->size = le64_to_cpu(ep2->dentry.stream.size);
+ 	if (info->size == 0) {
+ 		info->flags = ALLOC_NO_FAT_CHAIN;
+ 		info->start_clu = EXFAT_EOF_CLUSTER;
+@@ -1288,6 +1293,7 @@ static int __exfat_rename(struct inode *old_parent_inode,
+ 			}
+ 
+ 			i_size_write(new_inode, 0);
++			new_ei->valid_size = 0;
+ 			new_ei->start_clu = EXFAT_EOF_CLUSTER;
+ 			new_ei->flags = ALLOC_NO_FAT_CHAIN;
+ 		}
+-- 
+2.43.0
+
+
+From 2b91ffeeaed9a5acfea9f2255eb64e1c3883b2b0 Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Tue, 30 May 2023 17:35:00 +0800
+Subject: [PATCH 4/4] exfat: do not zero the extended part
+
+Since the read operation beyond the ValidDataLength returns zero,
+if we just extend the size of the file, we don't need to zero the
+extended part, but only change the DataLength without changing
+the ValidDataLength.
+
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Reviewed-by: Andy Wu <Andy.Wu@sony.com>
+Reviewed-by: Aoyama Wataru <wataru.aoyama@sony.com>
+Reviewed-by: Sungjong Seo <sj1557.seo@samsung.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/file.c  | 77 +++++++++++++++++++++++++++++++++++-------------
+ fs/exfat/inode.c | 14 ++++++++-
+ 2 files changed, 70 insertions(+), 21 deletions(-)
+
+diff --git a/fs/exfat/file.c b/fs/exfat/file.c
+index 270e2f934124..d25a96a148af 100644
+--- a/fs/exfat/file.c
++++ b/fs/exfat/file.c
+@@ -18,32 +18,69 @@
+ 
+ static int exfat_cont_expand(struct inode *inode, loff_t size)
+ {
+-	struct address_space *mapping = inode->i_mapping;
+-	loff_t start = i_size_read(inode), count = size - i_size_read(inode);
+-	int err, err2;
++	int ret;
++	unsigned int num_clusters, new_num_clusters, last_clu;
++	struct exfat_inode_info *ei = EXFAT_I(inode);
++	struct super_block *sb = inode->i_sb;
++	struct exfat_sb_info *sbi = EXFAT_SB(sb);
++	struct exfat_chain clu;
+ 
+-	err = generic_cont_expand_simple(inode, size);
+-	if (err)
+-		return err;
++	ret = inode_newsize_ok(inode, size);
++	if (ret)
++		return ret;
++
++	num_clusters = EXFAT_B_TO_CLU_ROUND_UP(ei->i_size_ondisk, sbi);
++	new_num_clusters = EXFAT_B_TO_CLU_ROUND_UP(size, sbi);
++
++	if (new_num_clusters == num_clusters)
++		goto out;
++
++	exfat_chain_set(&clu, ei->start_clu, num_clusters, ei->flags);
++	ret = exfat_find_last_cluster(sb, &clu, &last_clu);
++	if (ret)
++		return ret;
+ 
++	clu.dir = (last_clu == EXFAT_EOF_CLUSTER) ?
++			EXFAT_EOF_CLUSTER : last_clu + 1;
++	clu.size = 0;
++	clu.flags = ei->flags;
++
++	ret = exfat_alloc_cluster(inode, new_num_clusters - num_clusters,
++			&clu, IS_DIRSYNC(inode));
++	if (ret)
++		return ret;
++
++	/* Append new clusters to chain */
++	if (clu.flags != ei->flags) {
++		exfat_chain_cont_cluster(sb, ei->start_clu, num_clusters);
++		ei->flags = ALLOC_FAT_CHAIN;
++	}
++	if (clu.flags == ALLOC_FAT_CHAIN)
++		if (exfat_ent_set(sb, last_clu, clu.dir))
++			goto free_clu;
++
++	if (num_clusters == 0)
++		ei->start_clu = clu.dir;
++
++out:
+ 	inode_set_mtime_to_ts(inode, inode_set_ctime_current(inode));
+-	EXFAT_I(inode)->valid_size = size;
+-	mark_inode_dirty(inode);
++	/* Expanded range not zeroed, do not update valid_size */
++	i_size_write(inode, size);
+ 
+-	if (!IS_SYNC(inode))
+-		return 0;
++	ei->i_size_aligned = round_up(size, sb->s_blocksize);
++	ei->i_size_ondisk = ei->i_size_aligned;
++	inode->i_blocks = round_up(size, sbi->cluster_size) >> 9;
+ 
+-	err = filemap_fdatawrite_range(mapping, start, start + count - 1);
+-	err2 = sync_mapping_buffers(mapping);
+-	if (!err)
+-		err = err2;
+-	err2 = write_inode_now(inode, 1);
+-	if (!err)
+-		err = err2;
+-	if (err)
+-		return err;
++	if (IS_DIRSYNC(inode))
++		return write_inode_now(inode, 1);
++
++	mark_inode_dirty(inode);
++
++	return 0;
+ 
+-	return filemap_fdatawait_range(mapping, start, start + count - 1);
++free_clu:
++	exfat_free_cluster(inode, &clu);
++	return -EIO;
+ }
+ 
+ static bool exfat_allow_set_time(struct exfat_sb_info *sbi, struct inode *inode)
+diff --git a/fs/exfat/inode.c b/fs/exfat/inode.c
+index b02677c9fd45..522edcbb2ce4 100644
+--- a/fs/exfat/inode.c
++++ b/fs/exfat/inode.c
+@@ -75,8 +75,17 @@ int __exfat_write_inode(struct inode *inode, int sync)
+ 	if (ei->start_clu == EXFAT_EOF_CLUSTER)
+ 		on_disk_size = 0;
+ 
+-	ep2->dentry.stream.valid_size = cpu_to_le64(ei->valid_size);
+ 	ep2->dentry.stream.size = cpu_to_le64(on_disk_size);
++	/*
++	 * mmap write does not use exfat_write_end(), valid_size may be
++	 * extended to the sector-aligned length in exfat_get_block().
++	 * So we need to fixup valid_size to the writren length.
++	 */
++	if (on_disk_size < ei->valid_size)
++		ep2->dentry.stream.valid_size = ep2->dentry.stream.size;
++	else
++		ep2->dentry.stream.valid_size = cpu_to_le64(ei->valid_size);
++
+ 	if (on_disk_size) {
+ 		ep2->dentry.stream.flags = ei->flags;
+ 		ep2->dentry.stream.start_clu = cpu_to_le32(ei->start_clu);
+@@ -340,6 +349,9 @@ static int exfat_get_block(struct inode *inode, sector_t iblock,
+ 					pos, ei->i_size_aligned);
+ 			goto unlock_ret;
+ 		}
++
++		ei->valid_size = EXFAT_BLK_TO_B(iblock + max_blocks, sb);
++		mark_inode_dirty(inode);
+ 	} else {
+ 		valid_blks = EXFAT_B_TO_BLK(ei->valid_size, sb);
+ 
+-- 
+2.43.0
+
