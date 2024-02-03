@@ -1,4 +1,4 @@
-From 932782254a6f4c5307813029b42a72234a1f128f Mon Sep 17 00:00:00 2001
+From a0c602ef3a2573a09f2d7c93c14df589f1006c2c Mon Sep 17 00:00:00 2001
 From: Levente Polyak <levente@leventepolyak.net>
 Date: Thu, 11 Mar 2021 23:09:50 +0100
 Subject: [PATCH] ovl: add config to disable unprivileged user namespace mounts
@@ -39,10 +39,10 @@ index fec5020c3495..d0218abbeec4 100644
 +
 +	  If unsure, say N.
 diff --git a/fs/overlayfs/super.c b/fs/overlayfs/super.c
-index a0967bb25003..dd5202b97454 100644
+index 36543e9ffd74..a0bfa8d50a9a 100644
 --- a/fs/overlayfs/super.c
 +++ b/fs/overlayfs/super.c
-@@ -1477,7 +1477,9 @@ struct file_system_type ovl_fs_type = {
+@@ -1492,7 +1492,9 @@ struct file_system_type ovl_fs_type = {
  	.name			= "overlay",
  	.init_fs_context	= ovl_init_fs_context,
  	.parameters		= ovl_parameter_spec,
