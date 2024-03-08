@@ -1,7 +1,7 @@
 From 783f80c62fa651b8a8c03ce8e6dbf3fdfbb02880 Mon Sep 17 00:00:00 2001
 From: Jan Cincera <hcincera@gmail.com>
 Date: Mon, 30 Oct 2023 20:53:18 +0900
-Subject: [PATCH 1/6] exfat: add ioctls for accessing attributes
+Subject: [PATCH 1/9] exfat: add ioctls for accessing attributes
 
 Add GET and SET attributes ioctls to enable attribute modification.
 We already do this in FAT and a few userspace utils made for it would
@@ -355,13 +355,13 @@ index 2778bd9b631e..7f87c9a5a49d 100644
  	exfat_truncate_atime(&inode->i_atime);
  	return 0;
 -- 
-2.43.0
+2.44.0
 
 
 From c856605e1cc824e1c5381f77a4126d24b77dec2a Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Thu, 20 Jul 2023 14:40:08 +0800
-Subject: [PATCH 2/6] exfat: support create zero-size directory
+Subject: [PATCH 2/9] exfat: support create zero-size directory
 
 This commit adds mount option 'zero_size_dir'. If this option
 enabled, don't allocate a cluster to directory when creating
@@ -491,13 +491,13 @@ index 7f87c9a5a49d..e7cba540c99e 100644
  	case Opt_debug:
  	case Opt_namecase:
 -- 
-2.43.0
+2.44.0
 
 
 From fc41c90b15b496925b1b82cc8aea655524064431 Mon Sep 17 00:00:00 2001
 From: John Sanpe <sanpeqf@gmail.com>
 Date: Tue, 5 Dec 2023 23:58:37 +0800
-Subject: [PATCH 3/6] exfat: using hweight instead of internal logic
+Subject: [PATCH 3/9] exfat: using hweight instead of internal logic
 
 Replace the internal table lookup algorithm with the hweight
 library, which has instruction set acceleration capabilities.
@@ -599,13 +599,13 @@ index e918decb3735..3e3e9e4cce2f 100644
  
  	*ret_count = count;
 -- 
-2.43.0
+2.44.0
 
 
 From 20db6d8c902dbefbd98c8a03bbb938485e526dad Mon Sep 17 00:00:00 2001
 From: John Sanpe <sanpeqf@gmail.com>
 Date: Fri, 8 Dec 2023 07:47:01 +0800
-Subject: [PATCH 4/6] exfat: using ffs instead of internal logic
+Subject: [PATCH 4/9] exfat: using ffs instead of internal logic
 
 Replaced the internal table lookup algorithm with ffs of
 the bitops library with better performance.
@@ -718,13 +718,13 @@ index 1144c9de3020..41cf889436a3 100644
  #define ES_ENTRY_NUM(name_len)	(ES_IDX_LAST_FILENAME(name_len) + 1)
  /* 19 entries = 1 file entry + 1 stream entry + 17 filename entries */
 -- 
-2.43.0
+2.44.0
 
 
 From 92b0c18b480d21e0477e3be12e31f2d7c40a21be Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Mon, 13 Mar 2023 12:38:53 +0800
-Subject: [PATCH 5/6] exfat: change to get file size from DataLength
+Subject: [PATCH 5/9] exfat: change to get file size from DataLength
 
 In stream extension directory entry, the ValidDataLength
 field describes how far into the data stream user data has
@@ -1163,13 +1163,13 @@ index aac1fc3393bd..c5a94e6eeb84 100644
  			new_ei->flags = ALLOC_NO_FAT_CHAIN;
  		}
 -- 
-2.43.0
+2.44.0
 
 
 From 15f1eaeb17127f8c9b0fde4a671a87c86258a2a7 Mon Sep 17 00:00:00 2001
 From: Yuezhang Mo <Yuezhang.Mo@sony.com>
 Date: Tue, 30 May 2023 17:35:00 +0800
-Subject: [PATCH 6/6] exfat: do not zero the extended part
+Subject: [PATCH 6/9] exfat: do not zero the extended part
 
 Since the read operation beyond the ValidDataLength returns zero,
 if we just extend the size of the file, we don't need to zero the
@@ -1314,5 +1314,299 @@ index e7a4ff311df9..275d9407a4f5 100644
  		valid_blks = EXFAT_B_TO_BLK(ei->valid_size, sb);
  
 -- 
-2.43.0
+2.44.0
+
+
+From 9fab0788d9f12384163ac24defcca39ab98a1612 Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Thu, 18 Jan 2024 09:52:52 +0800
+Subject: [PATCH 7/9] exfat: fix zero the unwritten part for dio read
+
+For dio read, bio will be leave in flight when a successful partial
+aio read have been setup, blockdev_direct_IO() will return
+-EIOCBQUEUED. In the case, iter->iov_offset will be not advanced,
+the oops reported by syzbot will occur if revert iter->iov_offset
+with iov_iter_revert(). The unwritten part had been zeroed by aio
+read, so there is no need to zero it in dio read.
+
+Reported-by: syzbot+fd404f6b03a58e8bc403@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=fd404f6b03a58e8bc403
+Fixes: 11a347fb6cef ("exfat: change to get file size from DataLength")
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/inode.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/fs/exfat/inode.c b/fs/exfat/inode.c
+index 275d9407a4f5..7021e0879bd3 100644
+--- a/fs/exfat/inode.c
++++ b/fs/exfat/inode.c
+@@ -498,7 +498,7 @@ static ssize_t exfat_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
+ 	struct inode *inode = mapping->host;
+ 	struct exfat_inode_info *ei = EXFAT_I(inode);
+ 	loff_t pos = iocb->ki_pos;
+-	loff_t size = iocb->ki_pos + iov_iter_count(iter);
++	loff_t size = pos + iov_iter_count(iter);
+ 	int rw = iov_iter_rw(iter);
+ 	ssize_t ret;
+ 
+@@ -522,11 +522,10 @@ static ssize_t exfat_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
+ 	 */
+ 	ret = blockdev_direct_IO(iocb, inode, iter, exfat_get_block);
+ 	if (ret < 0) {
+-		if (rw == WRITE)
++		if (rw == WRITE && ret != -EIOCBQUEUED)
+ 			exfat_write_failed(mapping, size);
+ 
+-		if (ret != -EIOCBQUEUED)
+-			return ret;
++		return ret;
+ 	} else
+ 		size = pos + ret;
+ 
+-- 
+2.44.0
+
+
+From f2f972197c2b426f38f6bbd4f447606cf41c6448 Mon Sep 17 00:00:00 2001
+From: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Date: Fri, 16 Feb 2024 20:19:55 +0800
+Subject: [PATCH 8/9] exfat: fix appending discontinuous clusters to empty file
+
+Eric Hong found that when using ftruncate to expand an empty file,
+exfat_ent_set() will fail if discontinuous clusters are allocated.
+The reason is that the empty file does not have a cluster chain,
+but exfat_ent_set() attempts to append the newly allocated cluster
+to the cluster chain. In addition, exfat_find_last_cluster() only
+supports finding the last cluster in a non-empty file.
+
+So this commit adds a check whether the file is empty. If the file
+is empty, exfat_find_last_cluster() and exfat_ent_set() are no longer
+called as they do not need to be called.
+
+Fixes: f55c096f62f1 ("exfat: do not zero the extended part")
+Reported-by: Eric Hong <erichong@qnap.com>
+Signed-off-by: Yuezhang Mo <Yuezhang.Mo@sony.com>
+Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+---
+ fs/exfat/file.c | 37 ++++++++++++++++++++++---------------
+ 1 file changed, 22 insertions(+), 15 deletions(-)
+
+diff --git a/fs/exfat/file.c b/fs/exfat/file.c
+index 53907aff0d1f..f7ed23828cdd 100644
+--- a/fs/exfat/file.c
++++ b/fs/exfat/file.c
+@@ -35,13 +35,18 @@ static int exfat_cont_expand(struct inode *inode, loff_t size)
+ 	if (new_num_clusters == num_clusters)
+ 		goto out;
+ 
+-	exfat_chain_set(&clu, ei->start_clu, num_clusters, ei->flags);
+-	ret = exfat_find_last_cluster(sb, &clu, &last_clu);
+-	if (ret)
+-		return ret;
++	if (num_clusters) {
++		exfat_chain_set(&clu, ei->start_clu, num_clusters, ei->flags);
++		ret = exfat_find_last_cluster(sb, &clu, &last_clu);
++		if (ret)
++			return ret;
++
++		clu.dir = last_clu + 1;
++	} else {
++		last_clu = EXFAT_EOF_CLUSTER;
++		clu.dir = EXFAT_EOF_CLUSTER;
++	}
+ 
+-	clu.dir = (last_clu == EXFAT_EOF_CLUSTER) ?
+-			EXFAT_EOF_CLUSTER : last_clu + 1;
+ 	clu.size = 0;
+ 	clu.flags = ei->flags;
+ 
+@@ -51,17 +56,19 @@ static int exfat_cont_expand(struct inode *inode, loff_t size)
+ 		return ret;
+ 
+ 	/* Append new clusters to chain */
+-	if (clu.flags != ei->flags) {
+-		exfat_chain_cont_cluster(sb, ei->start_clu, num_clusters);
+-		ei->flags = ALLOC_FAT_CHAIN;
+-	}
+-	if (clu.flags == ALLOC_FAT_CHAIN)
+-		if (exfat_ent_set(sb, last_clu, clu.dir))
+-			goto free_clu;
+-
+-	if (num_clusters == 0)
++	if (num_clusters) {
++		if (clu.flags != ei->flags)
++			if (exfat_chain_cont_cluster(sb, ei->start_clu, num_clusters))
++				goto free_clu;
++
++		if (clu.flags == ALLOC_FAT_CHAIN)
++			if (exfat_ent_set(sb, last_clu, clu.dir))
++				goto free_clu;
++	} else
+ 		ei->start_clu = clu.dir;
+ 
++	ei->flags = clu.flags;
++
+ out:
+ 	inode->i_mtime = inode_set_ctime_current(inode);
+ 	/* Expanded range not zeroed, do not update valid_size */
+-- 
+2.44.0
+
+
+From a5b18f8f0843a27abe536661eff09d364e3e953c Mon Sep 17 00:00:00 2001
+From: Al Viro <viro@zeniv.linux.org.uk>
+Date: Tue, 19 Sep 2023 15:53:32 -0400
+Subject: [PATCH 9/9] exfat: move freeing sbi, upcase table and dropping nls
+ into rcu-delayed helper
+
+That stuff can be accessed by ->d_hash()/->d_compare(); as it is, we have
+a hard-to-hit UAF if rcu pathwalk manages to get into ->d_hash() on a filesystem
+that is in process of getting shut down.
+
+Besides, having nls and upcase table cleanup moved from ->put_super() towards
+the place where sbi is freed makes for simpler failure exits.
+
+Acked-by: Christian Brauner <brauner@kernel.org>
+Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
+---
+ fs/exfat/exfat_fs.h |  1 +
+ fs/exfat/nls.c      | 14 ++++----------
+ fs/exfat/super.c    | 20 +++++++++++---------
+ 3 files changed, 16 insertions(+), 19 deletions(-)
+
+diff --git a/fs/exfat/exfat_fs.h b/fs/exfat/exfat_fs.h
+index 6420759f8ea3..47ea9fcb69aa 100644
+--- a/fs/exfat/exfat_fs.h
++++ b/fs/exfat/exfat_fs.h
+@@ -275,6 +275,7 @@ struct exfat_sb_info {
+ 
+ 	spinlock_t inode_hash_lock;
+ 	struct hlist_head inode_hashtable[EXFAT_HASH_SIZE];
++	struct rcu_head rcu;
+ };
+ 
+ #define EXFAT_CACHE_VALID	0
+diff --git a/fs/exfat/nls.c b/fs/exfat/nls.c
+index 705710f93e2d..afdf13c34ff5 100644
+--- a/fs/exfat/nls.c
++++ b/fs/exfat/nls.c
+@@ -655,7 +655,6 @@ static int exfat_load_upcase_table(struct super_block *sb,
+ 	unsigned int sect_size = sb->s_blocksize;
+ 	unsigned int i, index = 0;
+ 	u32 chksum = 0;
+-	int ret;
+ 	unsigned char skip = false;
+ 	unsigned short *upcase_table;
+ 
+@@ -673,8 +672,7 @@ static int exfat_load_upcase_table(struct super_block *sb,
+ 		if (!bh) {
+ 			exfat_err(sb, "failed to read sector(0x%llx)",
+ 				  (unsigned long long)sector);
+-			ret = -EIO;
+-			goto free_table;
++			return -EIO;
+ 		}
+ 		sector++;
+ 		for (i = 0; i < sect_size && index <= 0xFFFF; i += 2) {
+@@ -701,15 +699,12 @@ static int exfat_load_upcase_table(struct super_block *sb,
+ 
+ 	exfat_err(sb, "failed to load upcase table (idx : 0x%08x, chksum : 0x%08x, utbl_chksum : 0x%08x)",
+ 		  index, chksum, utbl_checksum);
+-	ret = -EINVAL;
+-free_table:
+-	exfat_free_upcase_table(sbi);
+-	return ret;
++	return -EINVAL;
+ }
+ 
+ static int exfat_load_default_upcase_table(struct super_block *sb)
+ {
+-	int i, ret = -EIO;
++	int i;
+ 	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+ 	unsigned char skip = false;
+ 	unsigned short uni = 0, *upcase_table;
+@@ -740,8 +735,7 @@ static int exfat_load_default_upcase_table(struct super_block *sb)
+ 		return 0;
+ 
+ 	/* FATAL error: default upcase table has error */
+-	exfat_free_upcase_table(sbi);
+-	return ret;
++	return -EIO;
+ }
+ 
+ int exfat_create_upcase_table(struct super_block *sb)
+diff --git a/fs/exfat/super.c b/fs/exfat/super.c
+index e7cba540c99e..d2c2f0e82a1a 100644
+--- a/fs/exfat/super.c
++++ b/fs/exfat/super.c
+@@ -39,9 +39,6 @@ static void exfat_put_super(struct super_block *sb)
+ 	exfat_free_bitmap(sbi);
+ 	brelse(sbi->boot_bh);
+ 	mutex_unlock(&sbi->s_lock);
+-
+-	unload_nls(sbi->nls_io);
+-	exfat_free_upcase_table(sbi);
+ }
+ 
+ static int exfat_sync_fs(struct super_block *sb, int wait)
+@@ -600,7 +597,7 @@ static int __exfat_fill_super(struct super_block *sb)
+ 	ret = exfat_load_bitmap(sb);
+ 	if (ret) {
+ 		exfat_err(sb, "failed to load alloc-bitmap");
+-		goto free_upcase_table;
++		goto free_bh;
+ 	}
+ 
+ 	ret = exfat_count_used_clusters(sb, &sbi->used_clusters);
+@@ -613,8 +610,6 @@ static int __exfat_fill_super(struct super_block *sb)
+ 
+ free_alloc_bitmap:
+ 	exfat_free_bitmap(sbi);
+-free_upcase_table:
+-	exfat_free_upcase_table(sbi);
+ free_bh:
+ 	brelse(sbi->boot_bh);
+ 	return ret;
+@@ -701,12 +696,10 @@ static int exfat_fill_super(struct super_block *sb, struct fs_context *fc)
+ 	sb->s_root = NULL;
+ 
+ free_table:
+-	exfat_free_upcase_table(sbi);
+ 	exfat_free_bitmap(sbi);
+ 	brelse(sbi->boot_bh);
+ 
+ check_nls_io:
+-	unload_nls(sbi->nls_io);
+ 	return err;
+ }
+ 
+@@ -771,13 +764,22 @@ static int exfat_init_fs_context(struct fs_context *fc)
+ 	return 0;
+ }
+ 
++static void delayed_free(struct rcu_head *p)
++{
++	struct exfat_sb_info *sbi = container_of(p, struct exfat_sb_info, rcu);
++
++	unload_nls(sbi->nls_io);
++	exfat_free_upcase_table(sbi);
++	exfat_free_sbi(sbi);
++}
++
+ static void exfat_kill_sb(struct super_block *sb)
+ {
+ 	struct exfat_sb_info *sbi = sb->s_fs_info;
+ 
+ 	kill_block_super(sb);
+ 	if (sbi)
+-		exfat_free_sbi(sbi);
++		call_rcu(&sbi->rcu, delayed_free);
+ }
+ 
+ static struct file_system_type exfat_fs_type = {
+-- 
+2.44.0
 
