@@ -1,0 +1,123 @@
+From 4b7b8744bfb803faeb8af20aa81a15ced7073b91 Mon Sep 17 00:00:00 2001
+From: Nekun <nekokun@firemail.cc>
+Date: Mon, 30 Oct 2023 08:33:54 +0000
+Subject: [PATCH 1/2] fs/ntfs3: Add ioctl operation for directories (FITRIM)
+
+While ntfs3 supports discards, FITRIM ioctl() command has defined
+only for regular files. This may confuse users trying to invoke
+`fstrim` utility with the directory argument (for example, call
+`fstrim <mountpoint>` which is the common practice). In this case,
+ioctl() returns -ENOTTY without any error messages in kernel ring
+buffer, this may be easily interpreted as no support for discards
+in ntfs3 driver.
+
+Currently only FITRIM command implemented in ntfs_ioctl() and
+passed inode used only for dereferencing NTFS superblock, so
+no need for separate ioctl() handler for directories, just add
+existing ntfs_ioctl() handler to ntfs_dir_operations.
+
+Signed-off-by: Nekun <nekokun@firemail.cc>
+Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
+---
+ fs/ntfs3/dir.c     | 4 ++++
+ fs/ntfs3/file.c    | 4 ++--
+ fs/ntfs3/ntfs_fs.h | 2 ++
+ 3 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/fs/ntfs3/dir.c b/fs/ntfs3/dir.c
+index effa6accf8a8..5cf3d9decf64 100644
+--- a/fs/ntfs3/dir.c
++++ b/fs/ntfs3/dir.c
+@@ -611,5 +611,9 @@ const struct file_operations ntfs_dir_operations = {
+ 	.iterate_shared	= ntfs_readdir,
+ 	.fsync		= generic_file_fsync,
+ 	.open		= ntfs_file_open,
++	.unlocked_ioctl = ntfs_ioctl,
++#ifdef CONFIG_COMPAT
++	.compat_ioctl   = ntfs_compat_ioctl,
++#endif
+ };
+ // clang-format on
+diff --git a/fs/ntfs3/file.c b/fs/ntfs3/file.c
+index 691b0c9b95ae..5418662c80d8 100644
+--- a/fs/ntfs3/file.c
++++ b/fs/ntfs3/file.c
+@@ -48,7 +48,7 @@ static int ntfs_ioctl_fitrim(struct ntfs_sb_info *sbi, unsigned long arg)
+ 	return 0;
+ }
+ 
+-static long ntfs_ioctl(struct file *filp, u32 cmd, unsigned long arg)
++long ntfs_ioctl(struct file *filp, u32 cmd, unsigned long arg)
+ {
+ 	struct inode *inode = file_inode(filp);
+ 	struct ntfs_sb_info *sbi = inode->i_sb->s_fs_info;
+@@ -61,7 +61,7 @@ static long ntfs_ioctl(struct file *filp, u32 cmd, unsigned long arg)
+ }
+ 
+ #ifdef CONFIG_COMPAT
+-static long ntfs_compat_ioctl(struct file *filp, u32 cmd, unsigned long arg)
++long ntfs_compat_ioctl(struct file *filp, u32 cmd, unsigned long arg)
+ 
+ {
+ 	return ntfs_ioctl(filp, cmd, (unsigned long)compat_ptr(arg));
+diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
+index 627419bd6f77..79356fd29a14 100644
+--- a/fs/ntfs3/ntfs_fs.h
++++ b/fs/ntfs3/ntfs_fs.h
+@@ -502,6 +502,8 @@ int ntfs3_setattr(struct mnt_idmap *idmap, struct dentry *dentry,
+ int ntfs_file_open(struct inode *inode, struct file *file);
+ int ntfs_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
+ 		__u64 start, __u64 len);
++long ntfs_ioctl(struct file *filp, u32 cmd, unsigned long arg);
++long ntfs_compat_ioctl(struct file *filp, u32 cmd, unsigned long arg);
+ extern const struct inode_operations ntfs_special_inode_operations;
+ extern const struct inode_operations ntfs_file_inode_operations;
+ extern const struct file_operations ntfs_file_operations;
+-- 
+2.44.0
+
+
+From 9fec55ae07ee056c5e2e8abc38fc5f5579b365e7 Mon Sep 17 00:00:00 2001
+From: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
+Date: Fri, 10 Nov 2023 20:59:22 +0100
+Subject: [PATCH 2/2] fs/ntfs3: Slightly simplify ntfs_inode_printk()
+
+The size passed to snprintf() includes the space for the trailing space.
+So there is no reason here not to use all the available space.
+
+So remove the -1 when computing 'name_len'.
+While at it, use the size of the array directly instead of the intermediate
+'name_len' variable.
+
+snprintf() also guaranties that the buffer if NULL terminated, so there is
+no need to write an additional trailing NULL "To be sure".
+
+Signed-off-by: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
+Signed-off-by: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
+---
+ fs/ntfs3/super.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+index c55a29793a8d..cef5467fd928 100644
+--- a/fs/ntfs3/super.c
++++ b/fs/ntfs3/super.c
+@@ -122,13 +122,12 @@ void ntfs_inode_printk(struct inode *inode, const char *fmt, ...)
+ 
+ 	if (name) {
+ 		struct dentry *de = d_find_alias(inode);
+-		const u32 name_len = ARRAY_SIZE(s_name_buf) - 1;
+ 
+ 		if (de) {
+ 			spin_lock(&de->d_lock);
+-			snprintf(name, name_len, " \"%s\"", de->d_name.name);
++			snprintf(name, sizeof(s_name_buf), " \"%s\"",
++				 de->d_name.name);
+ 			spin_unlock(&de->d_lock);
+-			name[name_len] = 0; /* To be sure. */
+ 		} else {
+ 			name[0] = 0;
+ 		}
+-- 
+2.44.0
+
