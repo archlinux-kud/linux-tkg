@@ -1,7 +1,7 @@
-From 4132a92f617b76b6ee86151dec2bcf487673a5dc Mon Sep 17 00:00:00 2001
+From 07dd14a9b26f2624ac4af608f73e8d857c4d642c Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Tue, 11 Jun 2019 12:26:55 -0400
-Subject: [PATCH 01/18] net-tcp_bbr: broaden app-limited rate sample detection
+Subject: [PATCH 01/19] net-tcp_bbr: broaden app-limited rate sample detection
 
 This commit is a bug fix for the Linux TCP app-limited
 (application-limited) logic that is used for collecting rate
@@ -54,13 +54,13 @@ index 1f9f6c1c196b..b6cb292779a6 100644
  	event = icsk->icsk_pending;
  
 -- 
-2.43.0
+2.44.0
 
 
-From 90a0a2eb0a2dae205453e497fb64a58342559756 Mon Sep 17 00:00:00 2001
+From 582a6b429b284e412da005ffcc33a49b53cc4ff0 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Sun, 24 Jun 2018 21:55:59 -0400
-Subject: [PATCH 02/18] net-tcp_bbr: v2: shrink delivered_mstamp,
+Subject: [PATCH 02/19] net-tcp_bbr: v2: shrink delivered_mstamp,
  first_tx_mstamp to u32 to free up 8 bytes
 
 Free up some space for tracking inflight and losses for each
@@ -135,13 +135,13 @@ index a8f6d9d06f2e..763362159fe9 100644
  	rs->interval_us = max(snd_us, ack_us);
  
 -- 
-2.43.0
+2.44.0
 
 
-From d28058ac1684405e09aec28341c971d0acaa8eef Mon Sep 17 00:00:00 2001
+From 1ae7124f36936d0749a572bcbe1786db155edbb7 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Sat, 5 Aug 2017 11:49:50 -0400
-Subject: [PATCH 03/18] net-tcp_bbr: v2: snapshot packets in flight at transmit
+Subject: [PATCH 03/19] net-tcp_bbr: v2: snapshot packets in flight at transmit
  time and pass in rate_sample
 
 CC algorithms may want to snapshot the number of packets in flight at
@@ -253,13 +253,13 @@ index 763362159fe9..1424911b1b9e 100644
  
  		/* Record send time of most recently ACKed packet: */
 -- 
-2.43.0
+2.44.0
 
 
-From 68f60063d43f25cb04e8e7e368fb6c82860309fe Mon Sep 17 00:00:00 2001
+From b175feeb4362d4dd0ccb428ff36fef9395c607f3 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Thu, 12 Oct 2017 23:44:27 -0400
-Subject: [PATCH 04/18] net-tcp_bbr: v2: count packets lost over TCP rate
+Subject: [PATCH 04/19] net-tcp_bbr: v2: count packets lost over TCP rate
  sampling interval
 
 For understanding the relationship between inflight and packet loss
@@ -330,13 +330,13 @@ index 1424911b1b9e..8737f2134648 100644
  	rs->delivered_ce = tp->delivered_ce - rs->prior_delivered_ce;
  	/* delivered_ce occupies less than 32 bits in the skb control block */
 -- 
-2.43.0
+2.44.0
 
 
-From e2bf09dff9b4329f8be6ab5760dd00e0d8eba253 Mon Sep 17 00:00:00 2001
+From bd61ce57141d23ac67106c251b32ab8a9b710e19 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Mon, 19 Nov 2018 13:48:36 -0500
-Subject: [PATCH 05/18] net-tcp_bbr: v2: export FLAG_ECE in rate_sample.is_ece
+Subject: [PATCH 05/19] net-tcp_bbr: v2: export FLAG_ECE in rate_sample.is_ece
 
 For understanding the relationship between inflight and ECN signals,
 to try to find the highest inflight value that has acceptable levels
@@ -375,13 +375,13 @@ index 6517c9e5958c..f47e73152c8a 100644
  	tcp_cong_control(sk, ack, delivered, flag, sack_state.rate);
  	tcp_xmit_recovery(sk, rexmit);
 -- 
-2.43.0
+2.44.0
 
 
-From d5527e2464d0e962254c69fc080dfb24b05280b6 Mon Sep 17 00:00:00 2001
+From 491bae9746da27aba01b1ee9a7d971f9959abe52 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Tue, 7 Aug 2018 21:52:06 -0400
-Subject: [PATCH 06/18] net-tcp_bbr: v2: introduce ca_ops->skb_marked_lost() CC
+Subject: [PATCH 06/19] net-tcp_bbr: v2: introduce ca_ops->skb_marked_lost() CC
  module callback API
 
 For connections experiencing reordering, RACK can mark packets lost
@@ -439,13 +439,13 @@ index f47e73152c8a..fc9cf65596fd 100644
  
  void tcp_mark_skb_lost(struct sock *sk, struct sk_buff *skb)
 -- 
-2.43.0
+2.44.0
 
 
-From b95c1ba9516c770691043dc642be021a41124bbe Mon Sep 17 00:00:00 2001
+From 687d737796cf7fd43e8126f8078e7eab701a1036 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Wed, 1 May 2019 20:16:33 -0400
-Subject: [PATCH 07/18] net-tcp_bbr: v2: adjust skb tx.in_flight upon merge in
+Subject: [PATCH 07/19] net-tcp_bbr: v2: adjust skb tx.in_flight upon merge in
  tcp_shifted_skb()
 
 When tcp_shifted_skb() updates state as adjacent SACKed skbs are
@@ -503,13 +503,13 @@ index fc9cf65596fd..a34b7b01e265 100644
  	 * in theory this shouldn't be necessary but as long as DSACK
  	 * code can come after this skb later on it's better to keep
 -- 
-2.43.0
+2.44.0
 
 
-From db580a2b4db0a05d98891a58ff15c38fbcefaa85 Mon Sep 17 00:00:00 2001
+From a93762ff1507f4b4eec2ef2a05fbb97b7c808e66 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Wed, 1 May 2019 20:16:25 -0400
-Subject: [PATCH 08/18] net-tcp_bbr: v2: adjust skb tx.in_flight upon split in
+Subject: [PATCH 08/19] net-tcp_bbr: v2: adjust skb tx.in_flight upon split in
  tcp_fragment()
 
 When we fragment an skb that has already been sent, we need to update
@@ -607,13 +607,13 @@ index 7d74f47b2e97..485b61b56e6c 100644
  
  	/* Link BUFF into the send queue. */
 -- 
-2.43.0
+2.44.0
 
 
-From 88af8950dcb5d8193dcde0792842bb7dee11468e Mon Sep 17 00:00:00 2001
+From d64d7b4688f000f79c0b8e241c7786333eb271ee Mon Sep 17 00:00:00 2001
 From: Yousuk Seung <ysseung@google.com>
 Date: Wed, 23 May 2018 17:55:54 -0700
-Subject: [PATCH 09/18] net-tcp: add new ca opts flag TCP_CONG_WANTS_CE_EVENTS
+Subject: [PATCH 09/19] net-tcp: add new ca opts flag TCP_CONG_WANTS_CE_EVENTS
 
 Add a a new ca opts flag TCP_CONG_WANTS_CE_EVENTS that allows a
 congestion control module to receive CE events.
@@ -687,13 +687,13 @@ index a34b7b01e265..0594184ff416 100644
  		tp->ecn_flags |= TCP_ECN_SEEN;
  		break;
 -- 
-2.43.0
+2.44.0
 
 
-From cd923d5cf7876b0c7ea88774a7a9bbf45ff669c6 Mon Sep 17 00:00:00 2001
+From 63055efd8205f2241c7384b61e4abba69a69ef22 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Fri, 27 Sep 2019 17:10:26 -0400
-Subject: [PATCH 10/18] net-tcp: re-generalize TSO sizing in TCP CC module API
+Subject: [PATCH 10/19] net-tcp: re-generalize TSO sizing in TCP CC module API
 
 Reorganize the API for CC modules so that the CC module once again
 gets complete control of the TSO sizing decision. This is how the API
@@ -815,13 +815,13 @@ index 485b61b56e6c..dc3a7c139a63 100644
  }
  
 -- 
-2.43.0
+2.44.0
 
 
-From fbf54e4c2d89b18486611f7f4533049d2a7edbd6 Mon Sep 17 00:00:00 2001
+From c9a431fbb76e54d6f5c6dabeec98f4688add8cb1 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Sat, 16 Nov 2019 13:16:25 -0500
-Subject: [PATCH 11/18] net-tcp: add fast_ack_mode=1: skip rwin check in
+Subject: [PATCH 11/19] net-tcp: add fast_ack_mode=1: skip rwin check in
  tcp_fast_ack_mode__tcp_ack_snd_check()
 
 Add logic for an experimental TCP connection behavior, enabled with
@@ -854,10 +854,10 @@ index b646b574b060..cd28fb5b4d10 100644
  	u32	chrono_stat[3];	/* Time in jiffies for chrono_stat stats */
  	u8	chrono_type:2,	/* current chronograph type */
 diff --git a/net/ipv4/tcp.c b/net/ipv4/tcp.c
-index 7bce79beca2b..ae3b19d0a302 100644
+index b30ef770a6cc..251d7c9d7f94 100644
 --- a/net/ipv4/tcp.c
 +++ b/net/ipv4/tcp.c
-@@ -3080,6 +3080,7 @@ int tcp_disconnect(struct sock *sk, int flags)
+@@ -3090,6 +3090,7 @@ int tcp_disconnect(struct sock *sk, int flags)
  	tp->rx_opt.dsack = 0;
  	tp->rx_opt.num_sacks = 0;
  	tp->rcv_ooopack = 0;
@@ -899,13 +899,13 @@ index 0594184ff416..2fec2b628316 100644
  	    tcp_in_quickack_mode(sk) ||
  	    /* Protocol state mandates a one-time immediate ACK */
 -- 
-2.43.0
+2.44.0
 
 
-From 32c4e651d87435133cd2e86df2930c6811f99d5a Mon Sep 17 00:00:00 2001
+From 935e27963eeb105341ed04b38b0b9a28df305901 Mon Sep 17 00:00:00 2001
 From: Jianfeng Wang <jfwang@google.com>
 Date: Fri, 19 Jun 2020 17:33:45 +0000
-Subject: [PATCH 12/18] net-tcp_bbr: v2: record app-limited status of
+Subject: [PATCH 12/19] net-tcp_bbr: v2: record app-limited status of
  TLP-repaired flight
 
 When sending a TLP retransmit, record whether the outstanding flight
@@ -952,13 +952,13 @@ index dc3a7c139a63..7d19f47cec33 100644
  		goto rearm_timer;
  
 -- 
-2.43.0
+2.44.0
 
 
-From cea0667f4ddc36bd3524557eb52127b8dcd05ac0 Mon Sep 17 00:00:00 2001
+From a00d1635fe513aa860a62b231763db11e93b5dde Mon Sep 17 00:00:00 2001
 From: Jianfeng Wang <jfwang@google.com>
 Date: Tue, 16 Jun 2020 17:41:19 +0000
-Subject: [PATCH 13/18] net-tcp_bbr: v2: inform CC module of losses repaired by
+Subject: [PATCH 13/19] net-tcp_bbr: v2: inform CC module of losses repaired by
  TLP probe
 
 Before this commit, when there is a packet loss that creates a sequence
@@ -1004,13 +1004,13 @@ index 2fec2b628316..46373b7a71ee 100644
  		tcp_set_ca_state(sk, TCP_CA_CWR);
  		tcp_end_cwnd_reduction(sk);
 -- 
-2.43.0
+2.44.0
 
 
-From c01e4f03c50af64060b3d5e1ba0635683c56e5a0 Mon Sep 17 00:00:00 2001
+From 13e7b782df0be4812fa9598371fcf2529bce8103 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Mon, 21 Sep 2020 14:46:26 -0400
-Subject: [PATCH 14/18] net-tcp_bbr: v2: introduce is_acking_tlp_retrans_seq
+Subject: [PATCH 14/19] net-tcp_bbr: v2: introduce is_acking_tlp_retrans_seq
  into rate_sample
 
 Introduce is_acking_tlp_retrans_seq into rate_sample. This bool will
@@ -1084,13 +1084,13 @@ index 46373b7a71ee..5ef8d64b5495 100644
  
  old_ack:
 -- 
-2.43.0
+2.44.0
 
 
-From 2bbbf8557125d2971e508ef58e33e2b8953a2836 Mon Sep 17 00:00:00 2001
+From ffbbe4d90c11dcd10bd5f0f30ef46e1c440ff66b Mon Sep 17 00:00:00 2001
 From: David Morley <morleyd@google.com>
 Date: Fri, 14 Jul 2023 11:07:56 -0400
-Subject: [PATCH 15/18] tcp: introduce per-route feature RTAX_FEATURE_ECN_LOW
+Subject: [PATCH 15/19] tcp: introduce per-route feature RTAX_FEATURE_ECN_LOW
 
 Define and implement a new per-route feature, RTAX_FEATURE_ECN_LOW.
 
@@ -1208,13 +1208,13 @@ index 7d19f47cec33..83308ce173af 100644
  }
  
 -- 
-2.43.0
+2.44.0
 
 
-From c348ac2170fd964e4f2cd09829f84c3cc8a8239c Mon Sep 17 00:00:00 2001
+From 852b7b5381da96183bc42a504a7af61abafc2f18 Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Tue, 11 Jun 2019 12:54:22 -0400
-Subject: [PATCH 16/18] net-tcp_bbr: v3: update TCP "bbr" congestion control
+Subject: [PATCH 16/19] net-tcp_bbr: v3: update TCP "bbr" congestion control
  module to BBRv3
 
 BBR v3 is an enhacement to the BBR v1 algorithm. It's designed to aim for lower
@@ -4084,13 +4084,13 @@ index d557ee6f8d9a..b5621e8f5415 100644
  MODULE_DESCRIPTION("TCP BBR (Bottleneck Bandwidth and RTT)");
 +MODULE_VERSION(__stringify(BBR_VERSION));
 -- 
-2.43.0
+2.44.0
 
 
-From 14996062324daf9ac8bdac6b79b690fa29d7474c Mon Sep 17 00:00:00 2001
+From f382fc146a98970dfdd7d57ddd7cd0fe575bf196 Mon Sep 17 00:00:00 2001
 From: Adithya Abraham Philip <abrahamphilip@google.com>
 Date: Fri, 11 Jun 2021 21:56:10 +0000
-Subject: [PATCH 17/18] net-tcp_bbr: v3: ensure ECN-enabled BBR flows set ECT
+Subject: [PATCH 17/19] net-tcp_bbr: v3: ensure ECN-enabled BBR flows set ECT
  on retransmits
 
 Adds a new flag TCP_ECN_ECT_PERMANENT that is used by CCAs to
@@ -4152,13 +4152,13 @@ index 83308ce173af..b9a7cf3b7a2c 100644
  			INET_ECN_dontxmit(sk);
  		}
 -- 
-2.43.0
+2.44.0
 
 
-From 9d5dd4112b1964353ff01f94c30e0710bb7bcca1 Mon Sep 17 00:00:00 2001
+From 12c57420a91d943e259788174cf45bd29fbb640e Mon Sep 17 00:00:00 2001
 From: Neal Cardwell <ncardwell@google.com>
 Date: Sun, 23 Jul 2023 23:25:34 -0400
-Subject: [PATCH 18/18] tcp: export TCPI_OPT_ECN_LOW in tcp_info tcpi_options
+Subject: [PATCH 18/19] tcp: export TCPI_OPT_ECN_LOW in tcp_info tcpi_options
  field
 
 Analogous to other important ECN information, export TCPI_OPT_ECN_LOW
@@ -4184,10 +4184,10 @@ index c07e9f90c084..5c88336ced60 100644
  /*
   * Sender's congestion state indicating normal or abnormal situations
 diff --git a/net/ipv4/tcp.c b/net/ipv4/tcp.c
-index ae3b19d0a302..05098fb34c01 100644
+index 251d7c9d7f94..82be5b7b660d 100644
 --- a/net/ipv4/tcp.c
 +++ b/net/ipv4/tcp.c
-@@ -3807,6 +3807,8 @@ void tcp_get_info(struct sock *sk, struct tcp_info *info)
+@@ -3817,6 +3817,8 @@ void tcp_get_info(struct sock *sk, struct tcp_info *info)
  		info->tcpi_options |= TCPI_OPT_ECN;
  	if (tp->ecn_flags & TCP_ECN_SEEN)
  		info->tcpi_options |= TCPI_OPT_ECN_SEEN;
@@ -4197,5 +4197,70 @@ index ae3b19d0a302..05098fb34c01 100644
  		info->tcpi_options |= TCPI_OPT_SYN_DATA;
  	if (tp->tcp_usec_ts)
 -- 
-2.43.0
+2.44.0
+
+
+From 63ce283b81611256683859269233849bf901954f Mon Sep 17 00:00:00 2001
+From: Albert I <kras@raphielgang.org>
+Date: Fri, 8 Mar 2024 23:49:21 +0800
+Subject: [PATCH 19/19] net-tcp_bbr: v3: Silence warnings by removing constant
+ operands
+
+As reported by LLVM 17:
+
+  net/ipv4/tcp_bbr.c:1080:48: warning: use of logical '&&' with constant operand
+  [-Wconstant-logical-operand]
+   1080 |         if (!bbr->ecn_eligible && bbr_can_use_ecn(sk) &&
+        |                                                       ^
+   1081 |             bbr_param(sk, ecn_factor) &&
+        |             ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  net/ipv4/tcp_bbr.c:1188:24: warning: use of logical '&&' with constant operand
+  [-Wconstant-logical-operand]
+   1188 |             bbr->ecn_eligible && bbr_param(sk, ecn_thresh)) {
+        |                               ^  ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  net/ipv4/tcp_bbr.c:1386:24: warning: use of logical '&&' with constant operand
+  [-Wconstant-logical-operand]
+   1386 |         if (bbr->ecn_in_round && bbr_param(sk, ecn_factor)) {
+        |                               ^  ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Signed-off-by: Albert I <kras@raphielgang.org>
+---
+ net/ipv4/tcp_bbr.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/net/ipv4/tcp_bbr.c b/net/ipv4/tcp_bbr.c
+index 5fa0982a5500..7b3b335766f6 100644
+--- a/net/ipv4/tcp_bbr.c
++++ b/net/ipv4/tcp_bbr.c
+@@ -1077,7 +1077,7 @@ static int bbr_update_ecn_alpha(struct sock *sk)
+ 	bool want_ecn_alpha;
+ 
+ 	/* See if we should use ECN sender logic for this connection. */
+-	if (!bbr->ecn_eligible && bbr_can_use_ecn(sk) &&
++	if (!bbr->ecn_eligible && bbr_can_use_ecn(sk) &
+ 	    bbr_param(sk, ecn_factor) &&
+ 	    (bbr->min_rtt_us <= bbr_ecn_max_rtt_us ||
+ 	     !bbr_ecn_max_rtt_us))
+@@ -1185,7 +1185,7 @@ static bool bbr_is_inflight_too_high(const struct sock *sk,
+ 	}
+ 
+ 	if (rs->delivered_ce > 0 && rs->delivered > 0 &&
+-	    bbr->ecn_eligible && bbr_param(sk, ecn_thresh)) {
++	    bbr->ecn_eligible & bbr_param(sk, ecn_thresh)) {
+ 		ecn_thresh = (u64)rs->delivered * bbr_param(sk, ecn_thresh) >>
+ 				BBR_SCALE;
+ 		if (rs->delivered_ce > ecn_thresh) {
+@@ -1383,7 +1383,7 @@ static void bbr_adapt_lower_bounds(struct sock *sk,
+ 		return;
+ 
+ 	/* ECN response. */
+-	if (bbr->ecn_in_round && bbr_param(sk, ecn_factor)) {
++	if (bbr->ecn_in_round & bbr_param(sk, ecn_factor)) {
+ 		bbr_init_lower_bounds(sk, false);
+ 		bbr_ecn_lower_bounds(sk, &ecn_inflight_lo);
+ 	}
+-- 
+2.44.0
 
