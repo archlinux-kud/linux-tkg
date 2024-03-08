@@ -1,7 +1,7 @@
-From 4c91cbce8bf9e55746704f74085dac14ba05c242 Mon Sep 17 00:00:00 2001
+From 7d0839fab0e21802e393f49019ef77ab82923108 Mon Sep 17 00:00:00 2001
 From: zhangxirui <xirui.zhang@vivo.com>
 Date: Sat, 21 Oct 2023 06:19:07 -0600
-Subject: [PATCH 01/26] f2fs: use inode_lock_shared instead of inode_lock in
+Subject: [PATCH 01/23] f2fs: use inode_lock_shared instead of inode_lock in
  f2fs_seek_block()
 
 inode_lock_shared() -> down_read(&inode->i_rwsem)
@@ -18,7 +18,7 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 8912511980ae..745b585d42dd 100644
+index a05781e708d6..4f0a4e061840 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
 @@ -418,7 +418,7 @@ static loff_t f2fs_seek_block(struct file *file, loff_t offset, int whence)
@@ -44,13 +44,13 @@ index 8912511980ae..745b585d42dd 100644
  }
  
 -- 
-2.43.0
+2.44.0
 
 
-From a5c95082c18363a3d440e88b20d09d0302aeb12d Mon Sep 17 00:00:00 2001
+From 05c96913c89bdf8db1cc77eb6750c719e39e2f7b Mon Sep 17 00:00:00 2001
 From: Yang Hubin <yanghb2019@lzu.edu.cn>
 Date: Sat, 4 Nov 2023 00:45:01 -0700
-Subject: [PATCH 02/26] f2fs: the name of a struct is wrong in a comment.
+Subject: [PATCH 02/23] f2fs: the name of a struct is wrong in a comment.
 
 The macro SUMMARY_SIZE represents the size of the struct f2fs_summary,
 
@@ -78,13 +78,13 @@ index 039fe0ce8d83..053137a0fe45 100644
  #define SUM_ENTRY_SIZE		(SUMMARY_SIZE * ENTRIES_IN_SUM)
  
 -- 
-2.43.0
+2.44.0
 
 
-From 6b5637f1cef94b91dcb3d232067dfcfbab087a19 Mon Sep 17 00:00:00 2001
+From 0d34d77e6d7f81053cb97832918ab53a5919a9f6 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Thu, 16 Nov 2023 14:25:54 +0800
-Subject: [PATCH 03/26] f2fs: clean up w/ dotdot_name
+Subject: [PATCH 03/23] f2fs: clean up w/ dotdot_name
 
 Just cleanup, no logic changes.
 
@@ -123,13 +123,13 @@ index 7f71bae2c83b..a765db9e26c2 100644
  	if (!err)
  		clear_inode_flag(dir, FI_INLINE_DOTS);
 -- 
-2.43.0
+2.44.0
 
 
-From dd1ffda6ed7dbf226870dfdf3cd34c76ed853a63 Mon Sep 17 00:00:00 2001
+From e92dbc7c67ae66ab36c3be57a7242e051c003e4d Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Thu, 16 Nov 2023 14:25:55 +0800
-Subject: [PATCH 04/26] f2fs: use shared inode lock during f2fs_fiemap()
+Subject: [PATCH 04/23] f2fs: use shared inode lock during f2fs_fiemap()
 
 f2fs_fiemap() will only traverse metadata of inode, let's use shared
 inode lock for it to avoid unnecessary race on inode lock.
@@ -163,79 +163,13 @@ index bc3f05d43b62..f892d7bf4530 100644
  }
  
 -- 
-2.43.0
+2.44.0
 
 
-From bcc931936b4f45712ee88cf96f684e23dbdafbb7 Mon Sep 17 00:00:00 2001
-From: Chao Yu <chao@kernel.org>
-Date: Thu, 16 Nov 2023 14:25:56 +0800
-Subject: [PATCH 05/26] f2fs: fix to check return value of
- f2fs_reserve_new_block()
-
-Let's check return value of f2fs_reserve_new_block() in do_recover_data()
-rather than letting it fails silently.
-
-Also refactoring check condition on return value of f2fs_reserve_new_block()
-as below:
-- trigger f2fs_bug_on() only for ENOSPC case;
-- use do-while statement to avoid redundant codes;
-
-Signed-off-by: Chao Yu <chao@kernel.org>
-Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
----
- fs/f2fs/recovery.c | 23 +++++++++++++++++------
- 1 file changed, 17 insertions(+), 6 deletions(-)
-
-diff --git a/fs/f2fs/recovery.c b/fs/f2fs/recovery.c
-index b56d0f1078a7..16415c770b45 100644
---- a/fs/f2fs/recovery.c
-+++ b/fs/f2fs/recovery.c
-@@ -712,7 +712,16 @@ static int do_recover_data(struct f2fs_sb_info *sbi, struct inode *inode,
- 		 */
- 		if (dest == NEW_ADDR) {
- 			f2fs_truncate_data_blocks_range(&dn, 1);
--			f2fs_reserve_new_block(&dn);
-+			do {
-+				err = f2fs_reserve_new_block(&dn);
-+				if (err == -ENOSPC) {
-+					f2fs_bug_on(sbi, 1);
-+					break;
-+				}
-+			} while (err &&
-+				IS_ENABLED(CONFIG_F2FS_FAULT_INJECTION));
-+			if (err)
-+				goto err;
- 			continue;
- 		}
- 
-@@ -720,12 +729,14 @@ static int do_recover_data(struct f2fs_sb_info *sbi, struct inode *inode,
- 		if (f2fs_is_valid_blkaddr(sbi, dest, META_POR)) {
- 
- 			if (src == NULL_ADDR) {
--				err = f2fs_reserve_new_block(&dn);
--				while (err &&
--				       IS_ENABLED(CONFIG_F2FS_FAULT_INJECTION))
-+				do {
- 					err = f2fs_reserve_new_block(&dn);
--				/* We should not get -ENOSPC */
--				f2fs_bug_on(sbi, err);
-+					if (err == -ENOSPC) {
-+						f2fs_bug_on(sbi, 1);
-+						break;
-+					}
-+				} while (err &&
-+					IS_ENABLED(CONFIG_F2FS_FAULT_INJECTION));
- 				if (err)
- 					goto err;
- 			}
--- 
-2.43.0
-
-
-From 5bb9d9dedd483b636fec4c99a2f36a1b31812ffe Mon Sep 17 00:00:00 2001
+From 7a2cf26df56688f9e9780075b181a9b87a4ec5f5 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Mon, 13 Nov 2023 18:51:57 -0800
-Subject: [PATCH 06/26] f2fs: skip adding a discard command if exists
+Subject: [PATCH 05/23] f2fs: skip adding a discard command if exists
 
 When recovering zoned UFS, sometimes we add the same zone to discard multiple
 times. Simple workaround is to bypass adding it.
@@ -261,13 +195,13 @@ index 727d016318f9..f4ffd64b44b2 100644
  	}
  
 -- 
-2.43.0
+2.44.0
 
 
-From c1fab7a8abdc2474a89f6ff840da6824f6c58067 Mon Sep 17 00:00:00 2001
+From 6c55ef0dac1b221eb969ccfd33360d87967e9a5d Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Tue, 28 Nov 2023 17:31:29 +0800
-Subject: [PATCH 07/26] f2fs: introduce tracepoint for f2fs_rename()
+Subject: [PATCH 06/23] f2fs: introduce tracepoint for f2fs_rename()
 
 This patch adds tracepoints for f2fs_rename().
 
@@ -396,13 +330,13 @@ index 793f82cc1515..36d9e29ca3c5 100644
  
  	TP_PROTO(struct inode *dir, loff_t start_pos, loff_t end_pos, int err),
 -- 
-2.43.0
+2.44.0
 
 
-From 0d637c0d74ddac5d28d2d304cbe3951d3ed5c738 Mon Sep 17 00:00:00 2001
+From 1cfa80ec8b5e84b4d9bd2fe79b835aac73f0d7fc Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Tue, 28 Nov 2023 17:31:30 +0800
-Subject: [PATCH 08/26] f2fs: show i_mode in trace_f2fs_new_inode()
+Subject: [PATCH 07/23] f2fs: show i_mode in trace_f2fs_new_inode()
 
 This patch supports to show i_mode field in trace_f2fs_new_inode().
 
@@ -460,13 +394,13 @@ index 36d9e29ca3c5..479d26eae22f 100644
  );
  
 -- 
-2.43.0
+2.44.0
 
 
-From cc1df36dbfa8a318f1c5876f8906991248f2b8b4 Mon Sep 17 00:00:00 2001
+From f17a1f201bc2fce4db6646d11c5b2d81ce3625ee Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Wed, 22 Nov 2023 22:47:15 +0800
-Subject: [PATCH 09/26] f2fs: sysfs: support discard_io_aware
+Subject: [PATCH 08/23] f2fs: sysfs: support discard_io_aware
 
 It gives a way to enable/disable IO aware feature for background
 discard, so that we can tune background discard more precisely
@@ -581,13 +515,13 @@ index 417fae96890f..7099ffa57299 100644
  	ATTR_LIST(gc_mode),
  	ATTR_LIST(ipu_policy),
 -- 
-2.43.0
+2.44.0
 
 
-From 2398e95c589c8407f17f8bf693e6a4f26db663c8 Mon Sep 17 00:00:00 2001
+From f80dadf514374b309796e26a341337ef091fad3e Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 1 Dec 2023 10:38:35 -0800
-Subject: [PATCH 10/26] f2fs: allow checkpoint=disable for zoned block device
+Subject: [PATCH 09/23] f2fs: allow checkpoint=disable for zoned block device
 
 Let's allow checkpoint=disable back for zoned block device. It's very risky
 as the feature relies on fsck or runtime recovery which matches the write
@@ -615,13 +549,13 @@ index 5dfbc6b4c0ac..344437c0e8bb 100644
  		f2fs_err(sbi, "LFS is not compatible with ATGC");
  		return -EINVAL;
 -- 
-2.43.0
+2.44.0
 
 
-From f02ab9fc9e78fee4175329620eddad5b73d6de23 Mon Sep 17 00:00:00 2001
+From 2332ced66694966f4525aed107011fc97a81f4cc Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Fri, 1 Dec 2023 17:18:56 -0800
-Subject: [PATCH 11/26] f2fs: allocate new section if it's not new
+Subject: [PATCH 10/23] f2fs: allocate new section if it's not new
 
 If fsck can allocate a new zone, it'd be better to use that instead of
 allocating a new one.
@@ -693,47 +627,13 @@ index 08e2f44a1264..9081c9af977a 100644
  	/* check consistency of the zone curseg pointed to */
  	if (check_zone_write_pointer(sbi, zbd, &zone))
 -- 
-2.43.0
+2.44.0
 
 
-From d36a3569845930d13ed1312f121a707a60f2206a Mon Sep 17 00:00:00 2001
-From: Jaegeuk Kim <jaegeuk@kernel.org>
-Date: Sat, 2 Dec 2023 00:08:57 -0800
-Subject: [PATCH 12/26] f2fs: fix write pointers on zoned device after roll
- forward
-
-1. do roll forward recovery
-2. update current segments pointers
-3. fix the entire zones' write pointers
-4. do checkpoint
-
-Reviewed-by: Daeho Jeong <daehojeong@google.com>
-Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
----
- fs/f2fs/recovery.c | 2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/fs/f2fs/recovery.c b/fs/f2fs/recovery.c
-index 16415c770b45..d0f24ccbd1ac 100644
---- a/fs/f2fs/recovery.c
-+++ b/fs/f2fs/recovery.c
-@@ -917,6 +917,8 @@ int f2fs_recover_fsync_data(struct f2fs_sb_info *sbi, bool check_only)
- 	if (!err && fix_curseg_write_pointer && !f2fs_readonly(sbi->sb) &&
- 			f2fs_sb_has_blkzoned(sbi)) {
- 		err = f2fs_fix_curseg_write_pointer(sbi);
-+		if (!err)
-+			err = f2fs_check_write_pointer(sbi);
- 		ret = err;
- 	}
- 
--- 
-2.43.0
-
-
-From 5ac26fc4e8d6f41b20bb1074c5344804b9cee9b4 Mon Sep 17 00:00:00 2001
+From b65d18f214fc26b1c39bf39d546bebaa07381b84 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Sat, 2 Dec 2023 11:15:41 -0800
-Subject: [PATCH 13/26] f2fs: check write pointers when checkpoint=disable
+Subject: [PATCH 11/23] f2fs: check write pointers when checkpoint=disable
 
 Even if f2fs was rebooted as staying checkpoint=disable, let's match the write
 pointers all the time.
@@ -766,13 +666,13 @@ index 344437c0e8bb..206d03c82d96 100644
  
  	/* f2fs_recover_fsync_data() cleared this already */
 -- 
-2.43.0
+2.44.0
 
 
-From a0cb434f86faaa976e9f8b6a4fdd0a295303ee38 Mon Sep 17 00:00:00 2001
+From 3a836b353d74b5dd5a3c2e12428059685c6d4461 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@kernel.org>
 Date: Sat, 2 Dec 2023 10:16:24 -0800
-Subject: [PATCH 14/26] f2fs: let's finish or reset zones all the time
+Subject: [PATCH 12/23] f2fs: let's finish or reset zones all the time
 
 In order to limit # of open zones, let's finish or reset zones given # of
 valid blocks per section and its zone condition.
@@ -899,13 +799,13 @@ index 9081c9af977a..007ebb107236 100644
  	ret = blkdev_zone_mgmt(fdev->bdev, REQ_OP_ZONE_FINISH,
  				zone->start, zone->len, GFP_NOFS);
 -- 
-2.43.0
+2.44.0
 
 
-From 3d488a83d750691ab71951809e85d964918e31a0 Mon Sep 17 00:00:00 2001
+From 247c00faf4200a011abc3296352cfa87d0af1c49 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 10 Dec 2023 17:20:35 +0800
-Subject: [PATCH 15/26] f2fs: delete obsolete FI_FIRST_BLOCK_WRITTEN
+Subject: [PATCH 13/23] f2fs: delete obsolete FI_FIRST_BLOCK_WRITTEN
 
 Commit 3c6c2bebef79 ("f2fs: avoid punch_hole overhead when releasing
 volatile data") introduced FI_FIRST_BLOCK_WRITTEN as below reason:
@@ -930,10 +830,10 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  6 files changed, 40 deletions(-)
 
 diff --git a/fs/f2fs/compress.c b/fs/f2fs/compress.c
-index 36e5dab6baae..b35be5799726 100644
+index 62119f3f7206..c5a4364c4482 100644
 --- a/fs/f2fs/compress.c
 +++ b/fs/f2fs/compress.c
-@@ -1369,8 +1369,6 @@ static int f2fs_write_compressed_pages(struct compress_ctx *cc,
+@@ -1371,8 +1371,6 @@ static int f2fs_write_compressed_pages(struct compress_ctx *cc,
  	add_compr_block_stat(inode, cc->valid_nr_cpages);
  
  	set_inode_flag(cc->inode, FI_APPEND_WRITE);
@@ -980,7 +880,7 @@ index 86a145be4e53..be9a8e50ac50 100644
  {
  	return is_inode_flag_set(inode, FI_DROP_CACHE);
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 745b585d42dd..34e48b1065c8 100644
+index 4f0a4e061840..444cb8f190ea 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
 @@ -599,9 +599,6 @@ void f2fs_truncate_data_blocks_range(struct dnode_of_data *dn, int count)
@@ -1057,13 +957,13 @@ index 560bfcad1af2..108e3d00028a 100644
  		fi->last_disk_size = inode->i_size;
  
 -- 
-2.43.0
+2.44.0
 
 
-From 0483290c4dfa251afd20471950d46412b8b5e2a5 Mon Sep 17 00:00:00 2001
+From 65fbdb2e2177eb25a940cbd8d942ad501a71fa94 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 10 Dec 2023 17:20:36 +0800
-Subject: [PATCH 16/26] f2fs: delete obsolete FI_DROP_CACHE
+Subject: [PATCH 14/23] f2fs: delete obsolete FI_DROP_CACHE
 
 FI_DROP_CACHE was introduced in commit 1e84371ffeef ("f2fs: change
 atomic and volatile write policies") for volatile write feature,
@@ -1116,13 +1016,13 @@ index be9a8e50ac50..2f1d76088953 100644
  {
  	struct f2fs_inode *ri = F2FS_INODE(page);
 -- 
-2.43.0
+2.44.0
 
 
-From b7ddf2bfa35866d6aa336bfe1f5eb0fccc8eb353 Mon Sep 17 00:00:00 2001
+From 069f02ae2c84964417d43245fff3587c3eedb255 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 10 Dec 2023 17:20:37 +0800
-Subject: [PATCH 17/26] f2fs: introduce get_dnode_addr() to clean up codes
+Subject: [PATCH 15/23] f2fs: introduce get_dnode_addr() to clean up codes
 
 Just cleanup, no logic changes.
 
@@ -1198,7 +1098,7 @@ index 2f1d76088953..a06b8aad5117 100644
  	((is_inode_flag_set(i, FI_ACL_MODE)) ? \
  	 (F2FS_I(i)->i_acl_mode) : ((i)->i_mode))
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 34e48b1065c8..37178e4e9654 100644
+index 444cb8f190ea..a85ca9a8c188 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
 @@ -557,20 +557,14 @@ static int f2fs_file_open(struct inode *inode, struct file *filp)
@@ -1294,13 +1194,13 @@ index 108e3d00028a..b31410c4afbc 100644
  	/* deleted inode */
  	if (inode->i_nlink == 0)
 -- 
-2.43.0
+2.44.0
 
 
-From b21a98f5401573ee7ca4b7736c2826c0e1df8d1e Mon Sep 17 00:00:00 2001
+From 3d59e666379d57333a4a38cfb78d463a9a970829 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 10 Dec 2023 17:20:38 +0800
-Subject: [PATCH 18/26] f2fs: update blkaddr in __set_data_blkaddr() for
+Subject: [PATCH 16/23] f2fs: update blkaddr in __set_data_blkaddr() for
  cleanup
 
 This patch allows caller to pass blkaddr to f2fs_set_data_blkaddr()
@@ -1380,7 +1280,7 @@ index a06b8aad5117..50e666ebd987 100644
  int f2fs_reserve_new_blocks(struct dnode_of_data *dn, blkcnt_t count);
  int f2fs_reserve_new_block(struct dnode_of_data *dn);
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 37178e4e9654..cb133ea40d9d 100644
+index a85ca9a8c188..8846faaa559e 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
 @@ -582,8 +582,7 @@ void f2fs_truncate_data_blocks_range(struct dnode_of_data *dn, int count)
@@ -1393,7 +1293,7 @@ index 37178e4e9654..cb133ea40d9d 100644
  
  		if (__is_valid_data_blkaddr(blkaddr)) {
  			if (!f2fs_is_valid_blkaddr(sbi, blkaddr,
-@@ -1478,8 +1477,7 @@ static int f2fs_do_zero_range(struct dnode_of_data *dn, pgoff_t start,
+@@ -1479,8 +1478,7 @@ static int f2fs_do_zero_range(struct dnode_of_data *dn, pgoff_t start,
  		}
  
  		f2fs_invalidate_blocks(sbi, dn->data_blkaddr);
@@ -1403,7 +1303,7 @@ index 37178e4e9654..cb133ea40d9d 100644
  	}
  
  	f2fs_update_read_extent_cache_range(dn, start, 0, index - start);
-@@ -3459,8 +3457,7 @@ static int release_compress_blocks(struct dnode_of_data *dn, pgoff_t count)
+@@ -3460,8 +3458,7 @@ static int release_compress_blocks(struct dnode_of_data *dn, pgoff_t count)
  			if (blkaddr != NEW_ADDR)
  				continue;
  
@@ -1413,7 +1313,7 @@ index 37178e4e9654..cb133ea40d9d 100644
  		}
  
  		f2fs_i_compr_blocks_update(dn->inode, compr_blocks, false);
-@@ -3626,8 +3623,7 @@ static int reserve_compress_blocks(struct dnode_of_data *dn, pgoff_t count)
+@@ -3627,8 +3624,7 @@ static int reserve_compress_blocks(struct dnode_of_data *dn, pgoff_t count)
  				continue;
  			}
  
@@ -1424,13 +1324,13 @@ index 37178e4e9654..cb133ea40d9d 100644
  
  		reserved = cluster_size - compr_blocks;
 -- 
-2.43.0
+2.44.0
 
 
-From 864b3d638adc218b59b6f3d68ff08b19683cb229 Mon Sep 17 00:00:00 2001
+From 5f1adb42e786e043a62a7695adb9fedfa19ed0ce Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 10 Dec 2023 17:20:39 +0800
-Subject: [PATCH 19/26] f2fs: introduce f2fs_invalidate_internal_cache() for
+Subject: [PATCH 17/23] f2fs: introduce f2fs_invalidate_internal_cache() for
  cleanup
 
 Just cleanup, no logic changes.
@@ -1537,13 +1437,13 @@ index 007ebb107236..61da26eb61cc 100644
  			update_segment_mtime(sbi, old_blkaddr, 0);
  		update_sit_entry(sbi, old_blkaddr, -1);
 -- 
-2.43.0
+2.44.0
 
 
-From 51586d58ede342e60ab08d4f67ea1829abfa11a5 Mon Sep 17 00:00:00 2001
+From 6d4294fc2403e853fba24eb91cf840458a21922f Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Sun, 10 Dec 2023 17:20:40 +0800
-Subject: [PATCH 20/26] f2fs: add tracepoint for f2fs_vm_page_mkwrite()
+Subject: [PATCH 18/23] f2fs: add tracepoint for f2fs_vm_page_mkwrite()
 
 This patch adds to support tracepoint for f2fs_vm_page_mkwrite(),
 meanwhile it prints more details for trace_f2fs_filemap_fault().
@@ -1556,7 +1456,7 @@ Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
  2 files changed, 41 insertions(+), 23 deletions(-)
 
 diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index cb133ea40d9d..9f5ea92280d0 100644
+index 8846faaa559e..79d5b64c109c 100644
 --- a/fs/f2fs/file.c
 +++ b/fs/f2fs/file.c
 @@ -46,7 +46,7 @@ static vm_fault_t f2fs_filemap_fault(struct vm_fault *vmf)
@@ -1707,74 +1607,13 @@ index 479d26eae22f..7ed0fc430dc6 100644
  
  TRACE_EVENT(f2fs_writepages,
 -- 
-2.43.0
+2.44.0
 
 
-From c18b5fe9e4e7ad4c6592e9e9d4821b4f432117cb Mon Sep 17 00:00:00 2001
-From: Chao Yu <chao@kernel.org>
-Date: Sun, 10 Dec 2023 19:35:42 +0800
-Subject: [PATCH 21/26] f2fs: fix to tag gcing flag on page during block
- migration
-
-It needs to add missing gcing flag on page during block migration,
-in order to garantee migrated data be persisted during checkpoint,
-otherwise out-of-order persistency between data and node may cause
-data corruption after SPOR.
-
-Similar issue was fixed by commit 2d1fe8a86bf5 ("f2fs: fix to tag
-gcing flag on page during file defragment").
-
-Signed-off-by: Chao Yu <chao@kernel.org>
-Signed-off-by: Jaegeuk Kim <jaegeuk@kernel.org>
----
- fs/f2fs/compress.c | 4 +++-
- fs/f2fs/file.c     | 2 ++
- 2 files changed, 5 insertions(+), 1 deletion(-)
-
-diff --git a/fs/f2fs/compress.c b/fs/f2fs/compress.c
-index b35be5799726..c5a4364c4482 100644
---- a/fs/f2fs/compress.c
-+++ b/fs/f2fs/compress.c
-@@ -1036,8 +1036,10 @@ static void set_cluster_dirty(struct compress_ctx *cc)
- 	int i;
- 
- 	for (i = 0; i < cc->cluster_size; i++)
--		if (cc->rpages[i])
-+		if (cc->rpages[i]) {
- 			set_page_dirty(cc->rpages[i]);
-+			set_page_private_gcing(cc->rpages[i]);
-+		}
- }
- 
- static int prepare_compress_overwrite(struct compress_ctx *cc,
-diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 9f5ea92280d0..79d5b64c109c 100644
---- a/fs/f2fs/file.c
-+++ b/fs/f2fs/file.c
-@@ -1312,6 +1312,7 @@ static int __clone_blkaddrs(struct inode *src_inode, struct inode *dst_inode,
- 			}
- 			memcpy_page(pdst, 0, psrc, 0, PAGE_SIZE);
- 			set_page_dirty(pdst);
-+			set_page_private_gcing(pdst);
- 			f2fs_put_page(pdst, 1);
- 			f2fs_put_page(psrc, 1);
- 
-@@ -4051,6 +4052,7 @@ static int redirty_blocks(struct inode *inode, pgoff_t page_idx, int len)
- 		f2fs_bug_on(F2FS_I_SB(inode), !page);
- 
- 		set_page_dirty(page);
-+		set_page_private_gcing(page);
- 		f2fs_put_page(page, 1);
- 		f2fs_put_page(page, 0);
- 	}
--- 
-2.43.0
-
-
-From b5bd96aeb3f81194ce95721b77366272995d7025 Mon Sep 17 00:00:00 2001
+From 38881b19ac51b4353068d9ce8bdbf37cf5ab1b43 Mon Sep 17 00:00:00 2001
 From: Chao Yu <chao@kernel.org>
 Date: Tue, 12 Dec 2023 09:01:20 +0800
-Subject: [PATCH 22/26] f2fs: don't set FI_PREALLOCATED_ALL for partial write
+Subject: [PATCH 19/23] f2fs: don't set FI_PREALLOCATED_ALL for partial write
 
 In f2fs_preallocate_blocks(), if it is partial write in 4KB, it's not
 necessary to call f2fs_map_blocks() and set FI_PREALLOCATED_ALL flag.
@@ -1801,13 +1640,13 @@ index 79d5b64c109c..026d05a7edd8 100644
  	if (dio) {
  		map.m_seg_type = f2fs_rw_hint_to_seg_type(inode->i_write_hint);
 -- 
-2.43.0
+2.44.0
 
 
-From ec49c848130e98c9cfcc0b2e4d3f276df88fd084 Mon Sep 17 00:00:00 2001
+From 0d5840dbd9819e1e1a1b6844179e2a7427a86667 Mon Sep 17 00:00:00 2001
 From: Kevin Hao <haokexin@gmail.com>
 Date: Thu, 21 Dec 2023 14:49:16 +0800
-Subject: [PATCH 23/26] f2fs: Use wait_event_freezable_timeout() for freezable
+Subject: [PATCH 20/23] f2fs: Use wait_event_freezable_timeout() for freezable
  kthread
 
 A freezable kernel thread can enter frozen state during freezing by
@@ -1877,13 +1716,13 @@ index 61da26eb61cc..4c8836ded90f 100644
  			continue;
  		if (kthread_should_stop())
 -- 
-2.43.0
+2.44.0
 
 
-From bd57f22e64260b7b568fb482d45e56ea98b7b680 Mon Sep 17 00:00:00 2001
+From 1e25b4da9899881471c5120c2d99bba580cb64f6 Mon Sep 17 00:00:00 2001
 From: Yongpeng Yang <yangyongpeng1@oppo.com>
 Date: Fri, 22 Dec 2023 11:29:00 +0800
-Subject: [PATCH 24/26] f2fs: Constrain the modification range of dir_level in
+Subject: [PATCH 21/23] f2fs: Constrain the modification range of dir_level in
  the sysfs
 
 The {struct f2fs_sb_info}->dir_level can be modified through the sysfs
@@ -1924,13 +1763,13 @@ index 7099ffa57299..8c8424b05fc7 100644
  
  	return count;
 -- 
-2.43.0
+2.44.0
 
 
-From 6a95dc1ed9a069e9e4e6f1c09cc7bda92321b601 Mon Sep 17 00:00:00 2001
+From 2c8d10039a9d66aeccb69638d9819986173d0876 Mon Sep 17 00:00:00 2001
 From: Yongpeng Yang <yangyongpeng1@oppo.com>
 Date: Fri, 22 Dec 2023 11:29:01 +0800
-Subject: [PATCH 25/26] f2fs: Add error handling for negative returns from
+Subject: [PATCH 22/23] f2fs: Add error handling for negative returns from
  do_garbage_collect
 
 The function do_garbage_collect can return a value less than 0 due
@@ -1966,13 +1805,13 @@ index e99f58b5f15c..a079eebfb080 100644
  
  	if (seg_freed == f2fs_usable_segs_in_sec(sbi, segno)) {
 -- 
-2.43.0
+2.44.0
 
 
-From 0e934c3e88c3b5f8739a4489027302cd5dde8b2b Mon Sep 17 00:00:00 2001
+From 8ed81cc26b1f501852ba262b2c1c76521d364b11 Mon Sep 17 00:00:00 2001
 From: Zhiguo Niu <zhiguo.niu@unisoc.com>
 Date: Wed, 20 Dec 2023 09:59:58 +0800
-Subject: [PATCH 26/26] f2fs: show more discard status by sysfs
+Subject: [PATCH 23/23] f2fs: show more discard status by sysfs
 
 The current pending_discard attr just only shows the discard_cmd_cnt
 information. More discard status can be shown so that we can check
@@ -2068,5 +1907,5 @@ index 8c8424b05fc7..a7ec55c7bb20 100644
  };
  ATTRIBUTE_GROUPS(f2fs_stat);
 -- 
-2.43.0
+2.44.0
 

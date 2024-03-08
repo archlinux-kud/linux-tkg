@@ -1,4 +1,4 @@
-From bcea8a47c31527f055829869d9acd629693d4d08 Mon Sep 17 00:00:00 2001
+From 4c3c978642d20921662a565ddf144c321f380d27 Mon Sep 17 00:00:00 2001
 From: Ben Hutchings <ben@decadent.org.uk>
 Date: Mon, 11 Jan 2016 15:23:55 +0000
 Subject: [PATCH] security,perf: Allow further restriction of perf_event_open
@@ -69,7 +69,7 @@ index 5547ba68e6e4..0e86c42f834e 100644
  {
  	if (sysctl_perf_event_paranoid > 1 && !perfmon_capable())
 diff --git a/kernel/events/core.c b/kernel/events/core.c
-index 9efd0d7775e7..d57db5cb165a 100644
+index 7c0330579718..b717c32b2080 100644
 --- a/kernel/events/core.c
 +++ b/kernel/events/core.c
 @@ -415,8 +415,13 @@ static struct kmem_cache *perf_event_cache;
@@ -86,7 +86,7 @@ index 9efd0d7775e7..d57db5cb165a 100644
  
  /* Minimum for 512 kiB + 1 user control page */
  int sysctl_perf_event_mlock __read_mostly = 512 + (PAGE_SIZE / 1024); /* 'free' kiB per user */
-@@ -12423,7 +12428,7 @@ SYSCALL_DEFINE5(perf_event_open,
+@@ -12437,7 +12442,7 @@ SYSCALL_DEFINE5(perf_event_open,
  		return err;
  
  	/* Do we allow access to perf_event_open(2) ? */
@@ -140,5 +140,5 @@ index 72a5dfc38d38..33eb7d2c46e1 100644
  		 "in /etc/sysctl.conf (e.g. kernel.perf_event_paranoid = <setting>)",
  		 perf_event_paranoid());
 -- 
-2.43.0
+2.44.0
 
