@@ -62,7 +62,8 @@ url="https://www.kernel.org/"
 license=('GPL2')
 makedepends=('bison' 'xmlto' 'docbook-xsl' 'inetutils' 'bc' 'libelf' 'pahole' 'patchutils' 'flex' 'python-sphinx' 'python-sphinx_rtd_theme' 'graphviz' 'imagemagick' 'git' 'cpio' 'perl' 'tar' 'xz' 'wget')
 if [ "$_compiler_name" = "-llvm" ]; then
-  makedepends+=( 'lld' 'clang' 'llvm')
+  _llvm_pkgver=$(pacman -Si llvm | grep ^Version | grep -o '[^ :][0-9].[^ -]*')
+  makedepends+=("clang=${_llvm_pkgver}" "lld=${_llvm_pkgver}" "llvm=${_llvm_pkgver}")
 fi
 optdepends=('schedtool')
 options=('!strip' 'docs')
@@ -221,7 +222,7 @@ hackheaders() {
     ;;
   esac
   if [ "$_compiler_name" = "-llvm" ]; then
-    depends+=( 'lld' 'clang' 'llvm')
+    depends+=("clang=${_llvm_pkgver}" "lld=${_llvm_pkgver}" "llvm=${_llvm_pkgver}")
   fi
 
   _define_kernel_abs_paths
